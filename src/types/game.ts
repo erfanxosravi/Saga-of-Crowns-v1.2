@@ -25,8 +25,11 @@ export enum SocialClass {
 export enum TitleRank {
   Thrall = 'Thrall',
   Freeman = 'Freeman',
-  Bonde = 'Bonde',
-  Hersir = 'Hersir',
+  Bonde = 'Bonde', // legacy compatibility
+  Hirdman = 'Hirdman',
+  Hersir = 'Hersir', // legacy compatibility
+  Huscarl = 'Huscarl',
+  Captain = 'Captain',
   Jarl = 'Jarl',
   Konungr = 'Konungr',
   Overking = 'Overking of the North Sea',
@@ -36,6 +39,8 @@ export enum Religion {
   NorsePagan = 'Norse Pagan',
   Syncretic = 'Prime-Signed (Syncretic)',
   Christian = 'Christian',
+  Islam = 'Islam',
+  SlavicPagan = 'Slavic Pagan',
 }
 
 export enum Sex {
@@ -76,7 +81,29 @@ export type RegionGroup =
   | 'British Isles'
   | 'Ireland'
   | 'Continent'
-  | 'North Atlantic';
+  | 'North Atlantic'
+  | 'Baltic'
+  | 'Kievan Rus & Rivers'
+  | 'Iberia & Al-Andalus'
+  | 'Mediterranean'
+  | 'Miklagard & East'
+  | 'Serkland & Caliphate';
+
+export type SettlementType =
+  | 'village'
+  | 'town'
+  | 'city'
+  | 'trading_post'
+  | 'monastery'
+  | 'fortress'
+  | 'jarldom_seat'
+  | 'capital';
+
+export type SettlementStatus =
+  | 'independent'
+  | 'tributary'
+  | 'conquered'
+  | 'rebellious';
 
 export type StatKey =
   | 'health'
@@ -221,11 +248,104 @@ export type BuildingType =
   | 'pagan_hof'
   | 'stave_church';
 
+export type TributeBurden = 'none' | 'light' | 'normal' | 'heavy' | 'extortionate';
+
 export interface Holding {
   settlementId: string;
   farms: number;
   buildings: BuildingType[];
   garrison: number;
+  // Governance & Rebellion system
+  unrest: number; // 0 to 100
+  norsePopulationShare: number; // 0 to 100 percentage
+  tributeBurden: TributeBurden;
+  appointedJarl?: string; // loyal governor
+  hostagesCount?: number; // noble hostages kept in hall
+  localMarriageAlliance?: boolean;
+  religiousTolerance?: boolean;
+  lastRevoltTurn?: number;
+}
+
+export type StartingOccupation =
+  | 'thrall'
+  | 'fisherman'
+  | 'farmer'
+  | 'blacksmith'
+  | 'merchant'
+  | 'skald'
+  | 'warrior'
+  | 'sailor'
+  | 'hunter'
+  | 'seeress'
+  | 'noble';
+
+export type StartingHomeland =
+  | 'norway'
+  | 'denmark'
+  | 'sweden'
+  | 'iceland'
+  | 'orkney'
+  | 'normandy'
+  | 'rus'
+  | 'england'
+  | 'ireland';
+
+export type BattleTactic =
+  | 'shield_wall'
+  | 'svinfylking'
+  | 'ambush'
+  | 'flank_assault'
+  | 'feigned_retreat'
+  | 'berserk_charge'
+  | 'orderly_retreat';
+
+export type BattleIntent = 'raid' | 'conquer' | 'settle';
+
+export interface BattleState {
+  id: string;
+  settlementId: string;
+  intent: BattleIntent;
+  targetName: string;
+  targetNameFa: string;
+  enemyWarriors: number;
+  playerWarriors: number;
+  playerShips: number;
+  terrain: 'coastal' | 'river' | 'forest' | 'open_plains' | 'fortified_walls';
+  season: Season;
+  round: number;
+  playerMorale: number; // 0 to 100
+  enemyMorale: number; // 0 to 100
+  log: string[];
+  logFa: string[];
+  resolved: boolean;
+  won?: boolean;
+  lootSilver?: number;
+  lootFame?: number;
+  playerCasualties?: number;
+  enemyCasualties?: number;
+  capturedHostages?: number;
+}
+
+export type PlotType =
+  | 'assassination'
+  | 'poisoning'
+  | 'bribe_thing'
+  | 'secret_alliance'
+  | 'blood_feud_strike'
+  | 'mass_reprisal';
+
+export interface ActivePlot {
+  id: string;
+  type: PlotType;
+  targetName: string;
+  targetNameFa: string;
+  targetId?: string;
+  targetSettlementId?: string;
+  progress: number; // 0 to 100
+  riskLevel: 'low' | 'medium' | 'high' | 'deadly';
+  costSilver: number;
+  yearStarted: number;
+  discovered?: boolean;
 }
 
 export interface RealmState {
@@ -251,6 +371,13 @@ export interface Settlement {
   subRegion: string;
   lat: number;
   lon: number;
+  settlementType?: SettlementType;
+  norsePopulation?: number;
+  nativePopulation?: number;
+  primaryCulture?: string;
+  primaryCultureFa?: string;
+  defaultStatus?: SettlementStatus;
+  factionColor?: string;
   foundedYear?: number;
   isRiverPort?: boolean;
   riverName?: string;
@@ -264,6 +391,9 @@ export interface Settlement {
     ruler: string;
     polity: string;
     religion: Religion;
+    culture?: string;
+    factionColor?: string;
+    status?: SettlementStatus;
   }[];
 }
 
@@ -516,6 +646,13 @@ export interface FullGameState {
   marriedBloodEnemy?: boolean;
   divorcesCount?: number;
   conquestsWon?: number;
+  settlementStatuses?: Record<string, SettlementStatus>;
+  tributaries?: string[];
+  activePlots?: ActivePlot[];
+  activeBattle?: BattleState | null;
+  specialTitles?: string[];
+  startingHomeland?: StartingHomeland;
+  startingOccupation?: StartingOccupation;
   character: CharacterState;
   realm: RealmState;
   relationships: RelationshipPerson[];
@@ -560,4 +697,5 @@ export interface PremadeCharacter {
   bonusShips?: number;
   bonusWarriors?: number;
   startingFlags?: string[];
+  appearance?: CharacterAppearance;
 }

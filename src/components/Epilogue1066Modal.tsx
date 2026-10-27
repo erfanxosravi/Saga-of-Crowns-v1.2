@@ -41,9 +41,9 @@ export function Epilogue1066Modal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 bg-[#05080D]/88 backdrop-blur-xs flex items-end sm:items-center justify-center p-2.5 sm:p-4 select-none"
+      className="fixed inset-0 z-50 bg-[#05080D]/88 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 select-none"
     >
-      <div className="w-full max-w-xl max-h-[calc(100dvh-1.25rem)] sm:max-h-[min(90dvh,780px)] flex flex-col overflow-hidden rounded-2xl bg-[#0F1722] border border-[#F59E0B]/45 shadow-2xl text-start">
+      <div className="w-full max-w-xl max-h-[min(90dvh,720px)] flex flex-col overflow-hidden rounded-2xl bg-[#0F1722] border border-[#F59E0B]/45 shadow-2xl text-start">
         {/* Header */}
         <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 border-b border-[#1E2D40] bg-[#131D2B]/90 space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-mono text-[#F59E0B]">

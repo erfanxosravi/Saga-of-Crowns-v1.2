@@ -42,6 +42,9 @@ import {
   TITLE_LABELS,
 } from '../i18n/ui';
 import {
+  BattleIntent,
+  BattleState,
+  BattleTactic,
   BuildingType,
   CharacterAppearance,
   CharacterState,
@@ -57,16 +60,21 @@ import {
   Language,
   LogEntry,
   PersonalStats,
+  PlotType,
   RegionGroup,
   RelationshipPerson,
   Religion,
   Season,
+  SettlementStatus,
   Sex,
   SkillKey,
   SkillsState,
   SocialClass,
-  TitleRank,
+  StartingHomeland,
+  StartingOccupation,
   TimeStepMode,
+  TitleRank,
+  TributeBurden,
 } from '../types/game';
 import { hashSeedString, SeededRNG } from './prng';
 import { CURRENT_SAVE_VERSION, deriveAppearanceFromId } from './storage';
@@ -120,6 +128,8 @@ export interface NewGameParams {
   bonusShips?: number;
   bonusWarriors?: number;
   startingFlags?: string[];
+  startingHomeland?: StartingHomeland;
+  startingOccupation?: StartingOccupation;
 }
 
 function generateInitialFamily(
@@ -281,6 +291,94 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     }
   }
 
+  // Homeland Gameplay Bonuses
+  if (params.startingHomeland) {
+    switch (params.startingHomeland) {
+      case 'norway':
+        baseSkills.seamanship = clampSkill(baseSkills.seamanship + 10);
+        baseStats.honor = clampStat(baseStats.honor + 8);
+        break;
+      case 'denmark':
+        baseSkills.trade = clampSkill(baseSkills.trade + 8);
+        break;
+      case 'sweden':
+        baseSkills.combat = clampSkill(baseSkills.combat + 6);
+        baseSkills.trade = clampSkill(baseSkills.trade + 6);
+        break;
+      case 'iceland':
+        baseSkills.law = clampSkill(baseSkills.law + 14);
+        baseStats.wyrd = clampStat(baseStats.wyrd + 12);
+        break;
+      case 'orkney':
+        baseSkills.combat = clampSkill(baseSkills.combat + 8);
+        baseSkills.seamanship = clampSkill(baseSkills.seamanship + 8);
+        break;
+      case 'normandy':
+        baseSkills.diplomacy = clampSkill(baseSkills.diplomacy + 12);
+        break;
+      case 'rus':
+        baseSkills.trade = clampSkill(baseSkills.trade + 12);
+        baseSkills.combat = clampSkill(baseSkills.combat + 6);
+        break;
+      case 'england':
+        baseSkills.farming = clampSkill(baseSkills.farming + 12);
+        break;
+      case 'ireland':
+        baseSkills.seamanship = clampSkill(baseSkills.seamanship + 8);
+        baseSkills.combat = clampSkill(baseSkills.combat + 8);
+        break;
+    }
+  }
+
+  // Occupation Gameplay Bonuses
+  if (params.startingOccupation) {
+    switch (params.startingOccupation) {
+      case 'fisherman':
+        baseSkills.seamanship = clampSkill(baseSkills.seamanship + 14);
+        break;
+      case 'farmer':
+        baseSkills.farming = clampSkill(baseSkills.farming + 16);
+        break;
+      case 'blacksmith':
+        baseSkills.craft = clampSkill(baseSkills.craft + 18);
+        baseStats.strength = clampStat(baseStats.strength + 8);
+        break;
+      case 'merchant':
+        baseSkills.trade = clampSkill(baseSkills.trade + 18);
+        baseStats.cunning = clampStat(baseStats.cunning + 6);
+        break;
+      case 'skald':
+        baseSkills.skaldcraft = clampSkill(baseSkills.skaldcraft + 20);
+        baseStats.charisma = clampStat(baseStats.charisma + 10);
+        break;
+      case 'warrior':
+        baseSkills.combat = clampSkill(baseSkills.combat + 18);
+        baseStats.strength = clampStat(baseStats.strength + 8);
+        break;
+      case 'sailor':
+        baseSkills.seamanship = clampSkill(baseSkills.seamanship + 18);
+        baseSkills.combat = clampSkill(baseSkills.combat + 6);
+        break;
+      case 'hunter':
+        baseStats.cunning = clampStat(baseStats.cunning + 14);
+        baseSkills.combat = clampSkill(baseSkills.combat + 8);
+        break;
+      case 'seeress':
+        baseSkills.seidr = clampSkill(baseSkills.seidr + 22);
+        baseStats.wyrd = clampStat(baseStats.wyrd + 16);
+        baseStats.faith = clampStat(baseStats.faith + 10);
+        break;
+      case 'noble':
+        baseStats.charisma = clampStat(baseStats.charisma + 12);
+        baseSkills.diplomacy = clampSkill(baseSkills.diplomacy + 10);
+        break;
+      case 'thrall':
+        baseStats.strength = clampStat(baseStats.strength + 8);
+        baseStats.health = clampStat(baseStats.health + 8);
+        break;
+    }
+  }
+
   const birthYear = params.year - params.startAge;
   const holdings: Holding[] =
     classCfg.farms > 0
@@ -289,7 +387,12 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
             settlementId: settlement.id,
             farms: classCfg.farms,
             buildings: classCfg.farms >= 4 ? ['skali_hall'] : [],
-            garrison: Math.floor(classCfg.warriors / 2),
+            garrison: Math.floor(classCfg.warriors / 2) || 4,
+            unrest: 10,
+            norsePopulationShare: 75,
+            tributeBurden: 'normal',
+            hostagesCount: 0,
+            religiousTolerance: true,
           },
         ]
       : [];
@@ -382,6 +485,9 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
       holdings,
       thrallsOwned: classCfg.farms >= 2 ? Math.floor(classCfg.farms / 2) : 0,
     },
+    startingHomeland: params.startingHomeland,
+    startingOccupation: params.startingOccupation,
+    specialTitles: [],
     relationships,
     ancestors: [],
     discoveredSettlements: getNearbyDiscoveredIds(settlement.id, params.year),
@@ -752,14 +858,36 @@ export function advanceTurn(state: FullGameState): FullGameState {
   let buildingFame = 0;
   let buildingStability = 0;
   let hasBoathouseNow = false;
-  for (const h of realm.holdings) {
+  let holdingTributeSilver = 0;
+
+  const currentStatuses: Record<string, SettlementStatus> = { ...(state.settlementStatuses ?? {}) };
+  const currentTributaries = [...(state.tributaries ?? [])];
+
+  const processedHoldings: Holding[] = [];
+  let lostHoldingsCount = 0;
+
+  for (const rawHolding of realm.holdings) {
+    const h: Holding = {
+      ...rawHolding,
+      buildings: [...rawHolding.buildings],
+      unrest: rawHolding.unrest ?? 15,
+      norsePopulationShare: rawHolding.norsePopulationShare ?? 65,
+      tributeBurden: rawHolding.tributeBurden ?? 'normal',
+      hostagesCount: rawHolding.hostagesCount ?? 0,
+      localMarriageAlliance: rawHolding.localMarriageAlliance ?? false,
+      religiousTolerance: rawHolding.religiousTolerance ?? true,
+      garrison: rawHolding.garrison ?? 4,
+    };
+
     if (h.buildings.includes('kaupang_market')) buildingSilver += 18;
     if (h.buildings.includes('boathouse_naust')) hasBoathouseNow = true;
     if (h.buildings.includes('skali_hall')) {
       buildingFame += 3;
       buildingStability += 6;
     }
-    if (h.buildings.includes('ring_fortress')) buildingStability += 8;
+    if (h.buildings.includes('ring_fortress')) {
+      buildingStability += 8;
+    }
     if (h.buildings.includes('pagan_hof') && char.religion === Religion.NorsePagan) {
       char.stats.faith = clampStat(char.stats.faith + 5);
       char.stats.honor = clampStat(char.stats.honor + 4);
@@ -767,15 +895,158 @@ export function advanceTurn(state: FullGameState): FullGameState {
     if (h.buildings.includes('stave_church') && char.religion === Religion.Christian) {
       char.stats.faith = clampStat(char.stats.faith + 5);
     }
+
+    // Tribute income and unrest
+    let tSilver = 4;
+    let tUnrest = 2;
+    if (h.tributeBurden === 'extortionate') {
+      tSilver = 18;
+      tUnrest = 16;
+    } else if (h.tributeBurden === 'heavy') {
+      tSilver = 10;
+      tUnrest = 9;
+    } else if (h.tributeBurden === 'light') {
+      tSilver = 1;
+      tUnrest = -4;
+    } else if (h.tributeBurden === 'none') {
+      tSilver = 0;
+      tUnrest = -8;
+    }
+    holdingTributeSilver += tSilver;
+
+    // Unrest modifiers
+    let unrestDelta = 3 + tUnrest;
+    if (h.garrison >= 15) unrestDelta -= 8;
+    else if (h.garrison >= 8) unrestDelta -= 5;
+    else if (h.garrison < 4) unrestDelta += 5;
+    if (h.garrison === 0) unrestDelta += 8;
+
+    if (h.norsePopulationShare >= 60) unrestDelta -= 4;
+    else if (h.norsePopulationShare < 30) unrestDelta += 5;
+
+    if (h.appointedJarl) unrestDelta -= 6;
+    if (h.hostagesCount) unrestDelta -= Math.min(9, h.hostagesCount * 3);
+    if (h.localMarriageAlliance) unrestDelta -= 5;
+    if (h.religiousTolerance) unrestDelta -= 3;
+    if (h.buildings.includes('ring_fortress')) unrestDelta -= 5;
+    if (realm.stability > 70) unrestDelta -= 2;
+    if (realm.stability < 35) unrestDelta += 4;
+
+    h.unrest = Math.max(0, Math.min(100, h.unrest + unrestDelta));
+
+    const sData = SETTLEMENTS_BY_ID[h.settlementId];
+    const sName = sData?.name ?? h.settlementId;
+    const sNameFa = SETTLEMENTS_FA[h.settlementId]?.name ?? sName;
+
+    // Armed rebellion check
+    if (h.unrest >= 90) {
+      const rebelStrength = Math.round((sData?.baseDefense ?? 5) * 2.5 + rng.int(8, 16));
+      if (h.garrison >= rebelStrength) {
+        const dead = Math.min(h.garrison, rng.int(2, 5));
+        h.garrison = Math.max(1, h.garrison - dead);
+        h.unrest = 35;
+        realm.fame += 15;
+        yearlySideNotices.push({
+          id: `log_rebel_sup_${h.settlementId}_${nextYear}`,
+          year: nextYear,
+          season: nextSeason,
+          age: char.age,
+          locationName: sName,
+          category: 'Politics & Kings',
+          iconType: 'sword',
+          title: `Rebellion Suppressed in ${sName}`,
+          titleFa: `سرکوب شورش در «${sNameFa}»`,
+          text: `Local rebels took up scythes and spears in ${sName}, but your garrison crushed the uprising (-${dead} warriors).`,
+          textFa: `شورشیان محلی در «${sNameFa}» دست به شورش زدند، اما پادگان شما آنان را سرکوب کرد (-${dead} سرباز).`,
+          deltas: [`Rebellion Crushed`, `-${dead} Garrison Warriors`, '+15 Fame'],
+          deltasFa: [`سرکوب شورش`, `-${dead} سرباز پادگان`, '+15 شهرت'],
+        });
+        processedHoldings.push(h);
+      } else {
+        lostHoldingsCount += 1;
+        currentStatuses[h.settlementId] = 'rebellious';
+        realm.landFarms = Math.max(0, realm.landFarms - h.farms);
+        realm.stability = Math.max(0, realm.stability - 15);
+        realm.fame = Math.max(0, realm.fame - 35);
+        char.stats.honor = clampStat(char.stats.honor - 6);
+        yearlySideNotices.push({
+          id: `log_rebel_lost_${h.settlementId}_${nextYear}`,
+          year: nextYear,
+          season: nextSeason,
+          age: char.age,
+          locationName: sName,
+          category: 'Politics & Kings',
+          iconType: 'skull',
+          title: `Holding Lost to Revolt: ${sName}!`,
+          titleFa: `سقوط و جدایی «${sNameFa}» در پی شورش مسلحانه!`,
+          text: `Overwhelming native rebels stormed the citadel at ${sName}! Your garrison was slaughtered or fled to the ships, and the region threw off your rule.`,
+          textFa: `شورشیان بومی به ارگ «${sNameFa}» هجوم بردند! پادگان تارومار شد و این منطقه رسماً از سلطه شما خارج گشت.`,
+          deltas: [`Lost ${sName}`, `-${h.farms} Farms`, 'Stability -15', '-35 Fame'],
+          deltasFa: [`از دست رفتن ${sNameFa}`, `-${h.farms} مزرعه`, 'ثبات -15', '-35 شهرت'],
+          isDanger: true,
+        });
+      }
+    } else {
+      if (h.unrest >= 70) {
+        yearlySideNotices.push({
+          id: `log_unrest_warn_${h.settlementId}_${nextYear}`,
+          year: nextYear,
+          season: nextSeason,
+          age: char.age,
+          locationName: sName,
+          category: 'Politics & Kings',
+          iconType: 'crown',
+          title: `Simmering Unrest in ${sName}`,
+          titleFa: `هشدار: ناآرامی و خطر شورش در «${sNameFa}»`,
+          text: `Local thegns and priests in ${sName} are whispering open treason (Unrest: ${h.unrest}%). Station more hirdmen, send settlers, or lower tribute to prevent revolt!`,
+          textFa: `بزرگان و مردم بومی در «${sNameFa}» زمزمه شورش سر داده‌اند (ناآرامی: ${h.unrest}٪). برای جلوگیری از قیام، پادگان را تقویت کنید یا از خراج بکاهید!`,
+          isDanger: true,
+        });
+      }
+      processedHoldings.push(h);
+    }
   }
 
+  if (lostHoldingsCount > 0) {
+    for (const h of processedHoldings) {
+      if (h.unrest > 45) {
+        h.unrest = Math.min(100, h.unrest + 12);
+      }
+    }
+  }
+
+  realm.holdings = processedHoldings;
+
   const tradeIncome = realm.tradeNetworks * (6 + Math.floor(char.skills.trade * 0.14));
+  const tributaryIncome = currentTributaries.reduce((sum, tribId) => {
+    const s = SETTLEMENTS_BY_ID[tribId];
+    return sum + (s ? Math.round(s.baseWealth * 4.5) : 10);
+  }, 0);
   const rawShipUpkeep = realm.longships * 4 + realm.knarrs * 2;
   const shipSilverUpkeep = hasBoathouseNow ? Math.floor(rawShipUpkeep * 0.5) : rawShipUpkeep;
   const hirdSilverUpkeep = Math.floor(Math.max(0, realm.hirdWarriors - 4) * 0.45);
   const totalUpkeep = hirdSilverUpkeep + shipSilverUpkeep;
   const grossSilver =
-    realm.silver + buildingSilver + tradeIncome + realm.landFarms * 3 + thrallSilver;
+    realm.silver + buildingSilver + tradeIncome + realm.landFarms * 3 + thrallSilver + tributaryIncome + holdingTributeSilver;
+
+  if (tributaryIncome > 0 || holdingTributeSilver > 0) {
+    const totalTribSum = tributaryIncome + holdingTributeSilver;
+    yearlySideNotices.push({
+      id: `log_tribute_${nextYear}_${nextLogs.length}`,
+      year: nextYear,
+      season: nextSeason,
+      age: char.age,
+      locationName: loc.name,
+      category: 'Politics & Kings',
+      iconType: 'coin',
+      title: 'Tribute & Danegeld Collected',
+      titleFa: 'وصول خراج و باج سالانه',
+      text: `Caravans and knarrs arrived with ${totalTribSum} silver from your subject realms and conquered holdings.`,
+      textFa: `کاروان‌ها و کشتی‌های تجاری با ${totalTribSum} سکه نقره خراج و باج از متصرفات و سرزمین‌های تحت‌الحمایه به دربار رسیدند.`,
+      deltas: [`+${totalTribSum} Silver (Tribute)`],
+      deltasFa: [`+${totalTribSum} نقره (خراج)`],
+    });
+  }
 
   if (grossSilver < totalUpkeep && realm.hirdWarriors > 0) {
     realm.silver = 0;
@@ -1014,6 +1285,8 @@ export function advanceTurn(state: FullGameState): FullGameState {
     onboardingDismissed: nextOnboardingStep >= 3 ? true : state.onboardingDismissed,
     epilogue1066Shown: state.epilogue1066Shown || reached1066Now,
     pending1066Epilogue: state.pending1066Epilogue || reached1066Now,
+    settlementStatuses: currentStatuses,
+    tributaries: currentTributaries,
     character: char,
     realm,
     relationships,
@@ -1179,7 +1452,15 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
       if (existing) {
         existing.farms = Math.max(0, existing.farms + eff.landFarms);
       } else if (eff.landFarms > 0) {
-        realm.holdings.push({ settlementId: targetLoc, farms: eff.landFarms, buildings: [], garrison: 4 });
+        realm.holdings.push({
+          settlementId: targetLoc,
+          farms: eff.landFarms,
+          buildings: [],
+          garrison: 4,
+          unrest: 0,
+          norsePopulationShare: 50,
+          tributeBurden: 'normal',
+        });
       }
       deltaSummary.push(`Farms ${eff.landFarms > 0 ? `+${eff.landFarms}` : eff.landFarms}`);
       deltaSummaryFa.push(`مزرعه ${eff.landFarms > 0 ? `+${eff.landFarms}` : eff.landFarms}`);
@@ -1529,23 +1810,29 @@ export function executeRaidAction(
   const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
 
   if (margin >= 0) {
-    const baseLoot =
-      target.baseWealth * (tactic === 'ransom' ? 9 : 7) + rng.int(12, 34);
+    const isMonastery = target.settlementType === 'monastery';
+    const baseLoot = isMonastery
+      ? Math.round(target.baseWealth * 15 + rng.int(35, 75))
+      : target.baseWealth * (tactic === 'ransom' ? 9 : 7) + rng.int(12, 34);
     const casualties =
-      tactic === 'ransom'
-        ? rng.int(0, 1)
+      tactic === 'ransom' || isMonastery
+        ? rng.int(0, isMonastery ? 0 : 1)
         : Math.min(realm.hirdWarriors, rng.int(0, Math.max(1, Math.floor(target.baseDefense / 3))));
-    const fameGain = Math.round(16 + target.baseDefense * 3);
+    const fameGain = Math.round(16 + target.baseDefense * 3 + (isMonastery ? 12 : 0));
 
     realm.silver += baseLoot;
     realm.hirdWarriors = Math.max(0, realm.hirdWarriors - casualties);
     realm.fame += fameGain;
     char.skills.combat = clampSkill(char.skills.combat + 4);
     char.skills.seamanship = clampSkill(char.skills.seamanship + 2);
-    char.stats.honor = clampStat(char.stats.honor + 6);
+    char.stats.honor = clampStat(char.stats.honor + (isMonastery && char.religion === Religion.Christian ? -6 : 6));
 
     deltas.push(`+${baseLoot} Silver`, `+${fameGain} Fame`);
     deltasFa.push(`+${baseLoot} نقره`, `+${fameGain} شهرت`);
+    if (isMonastery) {
+      deltas.push('Monastery Reliquaries Sacked');
+      deltasFa.push('غارت جام‌ها و کتب زرین صومعه');
+    }
     if (casualties > 0) {
       deltas.push(`-${casualties} Warriors`);
       deltasFa.push(`-${casualties} جنگجو`);
@@ -1687,6 +1974,15 @@ export function executeSailAction(state: FullGameState, destinationId: string): 
 
   let nextSilver = state.realm.silver;
   let nextWarriors = state.realm.hirdWarriors;
+  let nextFame = state.realm.fame + (to.regionGroup === 'North Atlantic' ? 14 : 5);
+
+  // Deduct expedition provisions
+  const provisionCost = metrics.provisionSilverCost ?? 0;
+  if (provisionCost > 0) {
+    nextSilver = Math.max(0, nextSilver - provisionCost);
+    deltas.push(`Provisions: -${provisionCost} Silver`);
+    deltasFa.push(`آذوقه سفر: -${provisionCost} نقره`);
+  }
 
   if (stormHit) {
     const hpLoss =
@@ -1743,6 +2039,97 @@ export function executeSailAction(state: FullGameState, destinationId: string): 
     }
   }
 
+  // Random Sea Voyage Encounters & Hazards (~42% chance)
+  const encounterRoll = rng.int(1, 100);
+  if (encounterRoll <= 42) {
+    if (to.regionGroup === 'North Atlantic' || from.regionGroup === 'North Atlantic') {
+      if (rng.chance(0.5)) {
+        char.stats.wyrd = clampStat(char.stats.wyrd + 6);
+        char.stats.honor = clampStat(char.stats.honor + 4);
+        prose += ' In deep oceanic waters, a colossal sea-creature breached amid boiling spray — the crew whispered in awe of the legendary Hafgufa!';
+        proseFa += ' در اعماق اقیانوس، هیولای عظیم دریایی از میان گرداب کف‌آلود سر برآورد — ملوانان با وحشت و شگفتی نام «هافگوفا» را نجوا کردند!';
+        deltas.push('Hafgufa Sighting: Wyrd +6', 'Honor +4');
+        deltasFa.push('دیدار هیولای دریا (هافگوفا): سرنوشت +6', 'شرافت +4');
+      } else {
+        char.skills.seamanship = clampSkill(char.skills.seamanship + 3);
+        prose += ' Dense arctic sea fog choked the horizon, but your navigator raised the calcite sunstone (solarsteinn) to trace the hidden sun and steer safely through pack-ice.';
+        proseFa += ' مه‌های غلیظ قطبی افق را پوشانده بود، اما دیده‌بان با سنگ خورشیدی (سولارستین) نور پنهان خورشید را یافت و کشتی را سالم از میان یخ‌ها راند.';
+        deltas.push('Sunstone Navigation: Seamanship +3');
+        deltasFa.push('ناوبری با سنگ خورشیدی: دریانوردی +3');
+      }
+    } else if (
+      to.regionGroup === 'Kievan Rus & Rivers' ||
+      from.regionGroup === 'Kievan Rus & Rivers' ||
+      to.regionGroup === 'Serkland & Caliphate'
+    ) {
+      if (char.skills.combat >= 28 || nextWarriors >= 8) {
+        nextFame += 12;
+        char.skills.combat = clampSkill(char.skills.combat + 3);
+        prose += ' Dragging the dragon-ships on greased log rollers across river cataracts, your hird drove off a band of horse archers waiting at the narrows.';
+        proseFa += ' هنگام غلتاندن کشتی‌ها روی کنده‌های چوب در کنار آبشارهای صخره‌ای رودخانه، جنگجویانتان تیراندازان سواره‌نظام در کمین را پراکنده کردند.';
+        deltas.push('River Portage Defended: Combat +3', '+12 Fame');
+        deltasFa.push('دفاع در گردنه‌های رودخانه‌ای: نبرد +3', '+12 شهرت');
+      } else {
+        const arrowLoss = nextWarriors > 1 ? 1 : 0;
+        nextWarriors -= arrowLoss;
+        char.stats.health = clampStat(char.stats.health - 6);
+        prose += ' Portage over the river rapids proved grueling; steppe nomads peppered the wooden shields with arrows (-6 Health).';
+        proseFa += ' گذر از آبشارهای صخره‌ای دشوار بود؛ تیراندازان بیابانگرد سپرها را به رگبار بستند (سلامتی -6).';
+        deltas.push('Rapids Skirmish: Health -6');
+        deltasFa.push('درگیری در آبشار رودخانه: سلامتی -6');
+        if (arrowLoss > 0) {
+          deltas.push('-1 Warrior');
+          deltasFa.push('-1 جنگجو');
+        }
+      }
+    } else if (
+      to.regionGroup === 'Iberia & Al-Andalus' ||
+      to.regionGroup === 'Mediterranean' ||
+      from.regionGroup === 'Iberia & Al-Andalus'
+    ) {
+      if (rng.chance(0.6)) {
+        const loot = rng.int(10, 24);
+        nextSilver += loot;
+        nextFame += 10;
+        char.skills.combat = clampSkill(char.skills.combat + 2);
+        prose += ` Andalusian corsairs engaged your ship off the rocky promontory; after a fierce boarding action, you drove them back and stripped ${loot} silver from their lateen galley!`;
+        proseFa += ` دزدان دریایی اندلسی در نزدیکی دماغه صخره‌ای به شما حمله کردند؛ پس از نبردی سهمگین عرشه آنها را فتح کرده و ${loot} سکه نقره به غنیمت گرفتید!`;
+        deltas.push(`Corsairs Repelled: +${loot} Silver`, 'Combat +2');
+        deltasFa.push(`دفع دزدان دریایی اندلس: +${loot} نقره`, 'نبرد +2');
+      } else {
+        char.stats.health = clampStat(char.stats.health - 8);
+        prose += ' Swift southern lateen galleys harried your flanks with incendiary pots, scorching the timbers before you escaped into open waters (-8 Health).';
+        proseFa += ' قایق‌های تندرو جنوبی با پرتاب کوزه‌های آتشین به بدنه کشتی آسیب زدند تا این‌که به آب‌های باز گریختید (سلامتی -8).';
+        deltas.push('Sea Skirmish: Health -8');
+        deltasFa.push('درگیری دریایی: سلامتی -8');
+      }
+    } else if (to.regionGroup === 'Miklagard & East') {
+      nextFame += 15;
+      char.skills.diplomacy = clampSkill(char.skills.diplomacy + 3);
+      prose += ' An imperial Byzantine dromon escorted your ship into the Golden Horn under the gleaming spires of Constantinople, awe-inspiring to every northern oarsman.';
+      proseFa += ' یک کشتی جنگی درومون امپراتوری بیزانس شما را به خلیج شاخ زرین و زیر مناره‌های زرین کنستانتینوپل مشایعت کرد — شکوهی که دل هر دریانورد شمالی را لرزاند.';
+      deltas.push('Byzantine Escort: Fame +15', 'Diplomacy +3');
+      deltasFa.push('مشایعت امپراتوری روم شرقی: شهرت +15', 'دیپلماسی +3');
+    } else {
+      if (rng.chance(0.5)) {
+        char.stats.happiness = clampStat(char.stats.happiness + 5);
+        char.stats.faith = clampStat(char.stats.faith + 4);
+        prose += ' Eerie blue flames danced on the masthead through the midnight fog — the crew hailed Thor’s fiery blessing upon the voyage!';
+        proseFa += ' شعله‌های آبی‌رنگ و شگفت‌انگیز سنت‌المو در مه نیمه‌شب بر نوک دکل رقصیدند — خدمه آن را نشانه برکت و نگاه تور به سفر دانستند!';
+        deltas.push("Thor's Fire: Happiness +5", 'Faith +4');
+        deltasFa.push('آتش مقدس تور: شادی +5', 'ایمان +4');
+      } else {
+        const tradeProfit = rng.int(8, 16);
+        nextSilver += tradeProfit;
+        char.skills.trade = clampSkill(char.skills.trade + 2);
+        prose += ` Hailing a Norse merchant knarr returning from eastern river routes, you bartered walrus ivory and Baltic amber for ${tradeProfit} silver.`;
+        proseFa += ` در میانه دریا با یک کنار تجاری نورس دیدار کردید و با مبادله عاج والروس و کهربا، ${tradeProfit} سکه نقره سود کسب کردید.`;
+        deltas.push(`Knarr Meeting: +${tradeProfit} Silver`, 'Trade +2');
+        deltasFa.push(`ملاقات با کشتی بازرگانی: +${tradeProfit} نقره`, 'تجارت +2');
+      }
+    }
+  }
+
   const discovered = new Set(state.discoveredSettlements);
   getNearbyDiscoveredIds(to.id, state.year).forEach((id) => discovered.add(id));
 
@@ -1756,7 +2143,7 @@ export function executeSailAction(state: FullGameState, destinationId: string): 
       ...state.realm,
       silver: nextSilver,
       hirdWarriors: nextWarriors,
-      fame: state.realm.fame + (to.regionGroup === 'North Atlantic' ? 14 : 5),
+      fame: nextFame,
     },
     discoveredSettlements: Array.from(discovered),
     lifeLog: [
@@ -1886,7 +2273,18 @@ export function executeGeneralAction(
     if (existing) {
       existing.farms += 1;
     } else {
-      realm.holdings.push({ settlementId: loc.id, farms: 1, buildings: [], garrison: 3 });
+      realm.holdings.push({
+        settlementId: loc.id,
+        farms: 1,
+        buildings: [],
+        garrison: 3,
+        unrest: 0,
+        norsePopulationShare:
+          loc.regionGroup === 'Norway' || loc.regionGroup === 'Denmark' || loc.regionGroup === 'Sweden'
+            ? 90
+            : 35,
+        tributeBurden: 'normal',
+      });
     }
     char.skills.farming = clampSkill(char.skills.farming + 5);
     realm.fame += loc.regionGroup === 'North Atlantic' ? 18 : 8;
@@ -2389,6 +2787,9 @@ export function executeCityConquestAction(
         farms: 2,
         buildings: [],
         garrison: 10,
+        unrest: 25,
+        norsePopulationShare: 25,
+        tributeBurden: 'normal',
       });
     }
 
@@ -2481,6 +2882,568 @@ export function executeCityConquestAction(
   return nextState;
 }
 
+export type SiegeApproach = 'assault' | 'blockade' | 'demand_tribute';
+
+export function executeBesiegeAction(
+  state: FullGameState,
+  settlementId: string,
+  approach: SiegeApproach = 'assault'
+): FullGameState {
+  if (state.yearlyActivitiesUsed?.raid) return state;
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  if (!target) return state;
+  if (state.realm.longships < 1 && state.realm.hirdWarriors < 6) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const isMild = state.settings.contentIntensity === ContentIntensity.Mild;
+  const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+
+  const char: CharacterState = {
+    ...state.character,
+    stats: { ...state.character.stats },
+    skills: { ...state.character.skills },
+    traits: [...state.character.traits],
+  };
+  const realm = {
+    ...state.realm,
+    holdings: state.realm.holdings.map((h) => ({ ...h, buildings: [...h.buildings] })),
+  };
+
+  const currentStatuses = { ...(state.settlementStatuses ?? {}) };
+  const currentTributaries = [...(state.tributaries ?? [])];
+  const discovered = new Set(state.discoveredSettlements);
+  discovered.add(target.id);
+
+  let title = '';
+  let titleFa = '';
+  let text = '';
+  let textFa = '';
+  const deltas: string[] = [];
+  const deltasFa: string[] = [];
+  let isDanger = false;
+  let won = false;
+
+  if (approach === 'assault') {
+    const attackPower =
+      realm.hirdWarriors * 1.5 +
+      realm.longships * 14 +
+      char.skills.combat * 0.9 +
+      char.stats.strength * 0.4 +
+      rng.int(-12, 22);
+    const defensePower = target.baseDefense * 14 + 25;
+    won = attackPower >= defensePower;
+
+    if (won) {
+      const losses = Math.min(realm.hirdWarriors, rng.int(2, 6));
+      const spoilSilver = target.baseWealth * 15 + rng.int(25, 60);
+      realm.hirdWarriors = Math.max(0, realm.hirdWarriors - losses);
+      realm.silver += spoilSilver;
+      realm.landFarms += 2;
+      realm.fame += 45;
+      realm.stability = clampStat(realm.stability + 6);
+      char.stats.honor = clampStat(char.stats.honor + 12);
+      char.skills.combat = clampSkill(char.skills.combat + 5);
+
+      const existing = realm.holdings.find((h) => h.settlementId === target.id);
+      if (existing) {
+        existing.farms += 2;
+        existing.garrison += 8;
+      } else {
+        realm.holdings.push({
+          settlementId: target.id,
+          farms: 2,
+          buildings: [],
+          garrison: 8,
+          unrest: 25,
+          norsePopulationShare: 25,
+          tributeBurden: 'normal',
+        });
+      }
+      currentStatuses[target.id] = 'conquered';
+
+      title = `Breached the Gates of ${target.name}!`;
+      titleFa = `شکستن دروازه‌ها و تسخیر «${targetFa}»!`;
+      text = isMild
+        ? `Under covered dragon-shields, your warriors breached ${target.name}’s outer gates! The garrison yielded the citadel, 2 fertile estates, and ${spoilSilver} silver in tribute.`
+        : `Swarming the stone ramparts with battleaxes, your warband smashed the defenders of ${target.name}! Seizing 2 estates and ${spoilSilver} silver in spoils (-${losses} warriors).`;
+      textFa = isMild
+        ? `با سپرپوش‌های اژدهایی، دژ «${targetFa}» را گشودید! مدافعان تسلیم شدند و ۲ ملک حاصلخیز و ${spoilSilver} سکه نقره نصیب خاندان شد.`
+        : `با تبرزین‌های بران از باروی «${targetFa}» بالا رفتید و شهر را گشودید! ۲ ملک و ${spoilSilver} سکه نقره به چنگ آمد (-${losses} جنگجو).`;
+
+      deltas.push(`Conquered ${target.name}`, `+${spoilSilver} Silver`, '+2 Farms', '+45 Fame');
+      deltasFa.push(`تسخیر ${targetFa}`, `+${spoilSilver} نقره`, '+2 ملک', '+45 شهرت');
+      if (losses > 0) {
+        deltas.push(`-${losses} Warriors`);
+        deltasFa.push(`-${losses} جنگجو`);
+      }
+    } else {
+      isDanger = true;
+      const losses = Math.min(realm.hirdWarriors, rng.int(3, 8));
+      realm.hirdWarriors = Math.max(0, realm.hirdWarriors - losses);
+      char.stats.health = clampStat(char.stats.health - 18);
+      title = `Assault Repulsed at ${target.name}`;
+      titleFa = `عقب‌نشینی از پای دیوارهای «${targetFa}»`;
+      text = `Heavy iron-tipped stakes and catapult fire from ${target.name} broke your assault ladders! Your warband retreated back to the ships (-${losses} warriors, -18 Health).`;
+      textFa = `سنگ‌اندازها و موانع چوبی «${targetFa}» نردبان‌های یورش را شکست و ناچار به عقب‌نشینی به کشتی‌ها شدید (-${losses} جنگجو، سلامتی -18).`;
+      deltas.push(`-${losses} Warriors`, 'Health -18');
+      deltasFa.push(`-${losses} جنگجو`, 'سلامتی -18');
+    }
+  } else if (approach === 'blockade') {
+    const blockadePower =
+      (realm.longships + realm.knarrs) * 16 +
+      char.skills.seamanship * 0.8 +
+      char.stats.cunning * 0.5 +
+      rng.int(-10, 20);
+    const resistancePower = target.baseDefense * 11 + 20;
+    won = blockadePower >= resistancePower;
+
+    if (won) {
+      const ransomSilver = target.baseWealth * 12 + rng.int(15, 40);
+      realm.silver += ransomSilver;
+      realm.fame += 30;
+      char.skills.seamanship = clampSkill(char.skills.seamanship + 4);
+      char.stats.cunning = clampStat(char.stats.cunning + 3);
+
+      if (!currentTributaries.includes(target.id)) {
+        currentTributaries.push(target.id);
+      }
+      currentStatuses[target.id] = 'tributary';
+
+      title = `${target.name} Starved into Submission`;
+      titleFa = `تسلیم «${targetFa}» بر اثر محاصره دریایی`;
+      text = `Closing harbor boom-chains and throttling supply knarrs, ${target.name} had to sue for terms! They paid ${ransomSilver} silver immediately and swore annual tribute.`;
+      textFa = `با بستن دهانه بندر و قطع آذوقه، حاکم «${targetFa}» تسلیم شد، ${ransomSilver} سکه نقره باج داد و متعهد به پرداخت خراج سالانه گشت.`;
+      deltas.push(`Tributary: ${target.name}`, `+${ransomSilver} Silver`, '+30 Fame');
+      deltasFa.push(`خراجگزار: ${targetFa}`, `+${ransomSilver} نقره`, '+30 شهرت');
+    } else {
+      isDanger = true;
+      const shipDmg = Math.min(realm.silver, 8);
+      realm.silver = Math.max(0, realm.silver - shipDmg);
+      title = `Blockade Broken at ${target.name}`;
+      titleFa = `شکست محاصره در دهانه «${targetFa}»`;
+      text = `A nighttime sortie of fire-hulks from ${target.name} scattered your blockade cordon! You were forced to raise anchor and clear the channel (-8 Silver repairs).`;
+      textFa = `شبیخون قایق‌های آتشین مدافعان «${targetFa}» خط محاصره را شکست و ناچار به کشیدن لنگر شدید (-8 نقره خسارت).`;
+      deltas.push('-8 Silver (Repairs)');
+      deltasFa.push('-8 نقره (تعمیرات)');
+    }
+  } else {
+    // Demand Tribute
+    const intimiPower =
+      realm.fame * 0.12 +
+      realm.hirdWarriors * 0.8 +
+      char.skills.diplomacy * 0.7 +
+      char.skills.combat * 0.4 +
+      rng.int(-8, 16);
+    const demandDC = target.baseDefense * 9 + 25;
+    won = intimiPower >= demandDC;
+
+    if (won) {
+      const tributeSilver = target.baseWealth * 11 + rng.int(20, 45);
+      realm.silver += tributeSilver;
+      realm.fame += 25;
+      char.stats.honor = clampStat(char.stats.honor + 8);
+      char.skills.diplomacy = clampSkill(char.skills.diplomacy + 4);
+
+      if (!currentTributaries.includes(target.id)) {
+        currentTributaries.push(target.id);
+      }
+      currentStatuses[target.id] = 'tributary';
+
+      title = `Danegeld Extorted from ${target.name}`;
+      titleFa = `دریافت باج دانگلد از بزرگان «${targetFa}»`;
+      text = `Displaying drawn longships and ranked shield-walls before the harbor, ${target.name}’s council paid ${tributeSilver} silver Danegeld and swore peace-tribute.`;
+      textFa = `با صف‌آرایی ناوگان و سپرداران در ساحل، شورای «${targetFa}» ناچار به پرداخت ${tributeSilver} سکه باج و تعهد خراج صلح شد.`;
+      deltas.push(`Tributary: ${target.name}`, `+${tributeSilver} Silver`, '+25 Fame', 'Diplomacy +4');
+      deltasFa.push(`خراجگزار: ${targetFa}`, `+${tributeSilver} نقره`, '+25 شهرت', 'دیپلماسی +4');
+    } else {
+      title = `Tribute Refused at ${target.name}`;
+      titleFa = `رد تقاضای باج در «${targetFa}»`;
+      text = `The ruler of ${target.name} laughed at your envoy from the battlements, daring your warband to test their stone walls.`;
+      textFa = `حاکم «${targetFa}» از بالای بارو سفیر شما را به تمسخر گرفت و گفت دیوارها تسلیم رجزخوانی نمی‌شوند.`;
+      deltas.push('Tribute Demand Spurned');
+      deltasFa.push('رد درخواست خراج');
+    }
+  }
+
+  const siegeLogId = `log_siege_${target.id}_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
+  const nextState: FullGameState = {
+    ...state,
+    rngState: rng.getState(),
+    yearlyActivitiesUsed: { ...(state.yearlyActivitiesUsed ?? {}), raid: true },
+    conquestsWon: won && approach === 'assault' ? (state.conquestsWon ?? 0) + 1 : state.conquestsWon ?? 0,
+    character: char,
+    realm,
+    tributaries: currentTributaries,
+    settlementStatuses: currentStatuses,
+    discoveredSettlements: Array.from(discovered),
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: siegeLogId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: target.name,
+        category: 'War',
+        iconType: 'sword',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+        isDanger,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+
+  nextState.achievements = evaluateAchievements(nextState);
+  return nextState;
+}
+
+export function executeSettleAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  if (state.yearlyActivitiesUsed?.settle) return state;
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  if (!target) return state;
+  const cost = 30;
+  if (state.realm.silver < cost) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+
+  const char: CharacterState = {
+    ...state.character,
+    locationId: target.id,
+    stats: { ...state.character.stats },
+    skills: {
+      ...state.character.skills,
+      farming: clampSkill(state.character.skills.farming + 5),
+    },
+  };
+
+  const realm = {
+    ...state.realm,
+    silver: state.realm.silver - cost,
+    landFarms: state.realm.landFarms + 1,
+    foodStores: state.realm.foodStores + 18,
+    fame: state.realm.fame + (target.regionGroup === 'North Atlantic' ? 24 : 10),
+    holdings: state.realm.holdings.map((h) => ({ ...h, buildings: [...h.buildings] })),
+  };
+
+  const existing = realm.holdings.find((h) => h.settlementId === target.id);
+  if (existing) {
+    existing.farms += 1;
+  } else {
+    realm.holdings.push({
+      settlementId: target.id,
+      farms: 1,
+      buildings: [],
+      garrison: 3,
+      unrest: 0,
+      norsePopulationShare: 80,
+      tributeBurden: 'normal',
+    });
+  }
+
+  const currentStatuses = { ...(state.settlementStatuses ?? {}) };
+  if (!currentStatuses[target.id] || currentStatuses[target.id] === 'independent') {
+    currentStatuses[target.id] = 'conquered';
+  }
+
+  const discovered = new Set(state.discoveredSettlements);
+  discovered.add(target.id);
+
+  const title = `Founded Norse Settlement at ${target.name}`;
+  const titleFa = `احداث و آبادانی شهرک نورس در «${targetFa}»`;
+  const text = `Bringing seed grain, timber, and kinfolk to ${target.name}, you drove Norse land-stakes and established a productive family estate.`;
+  const textFa = `با بردن بذر، الوار و افراد خاندان به «${targetFa}»، سنگ‌های مرزی را نشاندید و شهرک جدید و باصفایی برای خاندان پایه‌گذاری کردید.`;
+  const deltas = ['-30 Silver', '+1 Farm', '+18 Food', 'Farming +5'];
+  const deltasFa = ['-30 نقره', '+1 مزرعه', '+18 آذوقه', 'کشاورزی +5'];
+
+  const settleLogId = `log_settle_${target.id}_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
+  const nextState: FullGameState = {
+    ...state,
+    rngState: rng.getState(),
+    yearlyActivitiesUsed: { ...(state.yearlyActivitiesUsed ?? {}), settle: true },
+    character: char,
+    realm,
+    settlementStatuses: currentStatuses,
+    discoveredSettlements: Array.from(discovered),
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: settleLogId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: target.name,
+        category: 'Farm Life',
+        iconType: 'crown',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+
+  nextState.achievements = evaluateAchievements(nextState);
+  return nextState;
+}
+
+export type DiplomacyApproach = 'trade_pact' | 'varangian_oath' | 'tribute_demand';
+
+export function executeDiplomacyAction(
+  state: FullGameState,
+  settlementId: string,
+  approach: DiplomacyApproach
+): FullGameState {
+  if (state.yearlyActivitiesUsed?.trade) return state;
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  if (!target) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+  const char: CharacterState = {
+    ...state.character,
+    stats: { ...state.character.stats },
+    skills: { ...state.character.skills },
+    traits: [...state.character.traits],
+  };
+  const realm = { ...state.realm };
+  const currentStatuses = { ...(state.settlementStatuses ?? {}) };
+  const currentTributaries = [...(state.tributaries ?? [])];
+
+  let title = '';
+  let titleFa = '';
+  let text = '';
+  let textFa = '';
+  const deltas: string[] = [];
+  const deltasFa: string[] = [];
+
+  if (approach === 'varangian_oath') {
+    const goldGift = 45;
+    realm.silver += goldGift;
+    realm.fame += 35;
+    char.stats.honor = clampStat(char.stats.honor + 15);
+    char.skills.combat = clampSkill(char.skills.combat + 5);
+    char.skills.diplomacy = clampSkill(char.skills.diplomacy + 3);
+    if (!char.traits.includes('varangian_guard')) {
+      char.traits.push('varangian_guard');
+      deltas.push('Trait: Varangian Guard');
+      deltasFa.push('ویژگی: محافظ امپراتور (وارنگیان)');
+    }
+
+    title = `Swore the Varangian Oath at ${target.name}!`;
+    titleFa = `سوگند وفاداری گارد وارنگیان در «${targetFa}»!`;
+    text = `Standing beneath the gold mosaics of the imperial palace at ${target.name}, you touched your two-handed axe to the sacred altar, entering the elite Varangian Guard and receiving ${goldGift} imperial solidi!`;
+    textFa = `زیر کاشی‌های زرین کاخ امپراتوری در «${targetFa}»، تبر دولبه‌ات را بر محراب مقدس گذاشتی و با ورود به گارد سلطنتی وارنگیان، ${goldGift} سکه طلای ناب دریافت کردی!`;
+    deltas.push(`+${goldGift} Silver`, '+35 Fame', 'Honor +15', 'Combat +5');
+    deltasFa.push(`+${goldGift} نقره`, '+35 شهرت', 'شرافت +15', 'نبرد +5');
+  } else if (approach === 'trade_pact') {
+    if (realm.silver < 10) return state;
+    realm.silver -= 10;
+    const profit = Math.round(18 + target.baseWealth * 3 + char.skills.trade * 0.4);
+    realm.silver += profit;
+    realm.tradeNetworks = Math.min(6, realm.tradeNetworks + 1);
+    char.skills.diplomacy = clampSkill(char.skills.diplomacy + 4);
+    char.skills.trade = clampSkill(char.skills.trade + 4);
+    realm.fame += 15;
+
+    title = `Commercial Treaty Sealed at ${target.name}`;
+    titleFa = `امضای پیمان تجاری و حقوق گمرکی در «${targetFa}»`;
+    text = `Exchanging gifts and silver seals with the merchants of ${target.name}, your dynasty established guaranteed toll rights and lucrative trade routes.`;
+    textFa = `با تبادل هدایا و مهرهای سیمین با بزرگان «${targetFa}»، خاندان شما حقوق ویژه بازرگانی و مسیر جدید تجاری تثبیت کرد.`;
+    deltas.push(`+${profit - 10} Net Silver`, 'Trade Route +1', 'Diplomacy +4', 'Trade +4');
+    deltasFa.push(`+${profit - 10} نقره خالص`, 'مسیر تجاری +1', 'دیپلماسی +4', 'تجارت +4');
+  } else {
+    // Tribute demand
+    const intimiRoll = char.skills.diplomacy + realm.hirdWarriors * 0.7 + rng.int(5, 25);
+    if (intimiRoll >= 35) {
+      const tributeSilver = target.baseWealth * 10 + rng.int(15, 35);
+      realm.silver += tributeSilver;
+      realm.fame += 20;
+      char.stats.honor = clampStat(char.stats.honor + 6);
+      if (!currentTributaries.includes(target.id)) currentTributaries.push(target.id);
+      currentStatuses[target.id] = 'tributary';
+
+      title = `Diplomatic Danegeld at ${target.name}`;
+      titleFa = `تسلیم باج صلح (دانگلد) در «${targetFa}»`;
+      text = `Negotiating from a position of naval strength, the elders of ${target.name} offered ${tributeSilver} silver to ensure mutual peace and tributary status.`;
+      textFa = `با مذاکره از موضع قدرت دریایی، بزرگان «${targetFa}» مبلغ ${tributeSilver} سکه نقره باج صلح پرداخت کردند.`;
+      deltas.push(`Tributary: ${target.name}`, `+${tributeSilver} Silver`, '+20 Fame');
+      deltasFa.push(`خراجگزار: ${targetFa}`, `+${tributeSilver} نقره`, '+20 شهرت');
+    } else {
+      title = `Diplomatic Envoy Rebuffed at ${target.name}`;
+      titleFa = `رد مذاکره دیپلماتیک در «${targetFa}»`;
+      text = `The magistrates of ${target.name} stood firm and refused any tributary overtures without blood being drawn.`;
+      textFa = `مقامات «${targetFa}» درخواست خراج را رد کردند و گفتند بدون شمشیر باجی پرداخت نخواهد شد.`;
+      deltas.push('Treaty Refused');
+      deltasFa.push('رد پیشنهاد صلح');
+    }
+  }
+
+  const diploLogId = `log_diplo_${target.id}_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
+  const nextState: FullGameState = {
+    ...state,
+    rngState: rng.getState(),
+    yearlyActivitiesUsed: { ...(state.yearlyActivitiesUsed ?? {}), trade: true },
+    character: char,
+    realm,
+    tributaries: currentTributaries,
+    settlementStatuses: currentStatuses,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: diploLogId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: target.name,
+        category: 'Politics & Kings',
+        iconType: 'crown',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+
+  nextState.achievements = evaluateAchievements(nextState);
+  return nextState;
+}
+
+export function executeLocalMarriageAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  const alreadyMarried = state.relationships.some((r) => r.role === 'Spouse' && r.alive);
+  if (alreadyMarried || state.character.age < 16) return state;
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  if (!target) return state;
+
+  const cost = 16;
+  if (state.realm.silver < cost) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+  const char = {
+    ...state.character,
+    stats: { ...state.character.stats },
+    skills: { ...state.character.skills },
+  };
+  const realm = { ...state.realm, silver: state.realm.silver - cost };
+  const relationships = state.relationships.map((r) => ({ ...r }));
+
+  const spSex = char.sex === Sex.Male ? Sex.Female : Sex.Male;
+  const pool =
+    spSex === Sex.Male
+      ? MALE_NAMES_BY_REGION[target.regionGroup] ?? MALE_NAMES_BY_REGION['Norway']
+      : FEMALE_NAMES_BY_REGION[target.regionGroup] ?? FEMALE_NAMES_BY_REGION['Norway'];
+  const given = rng.pick(pool);
+  const patPool = MALE_NAMES_BY_REGION[target.regionGroup] ?? MALE_NAMES_BY_REGION['Norway'];
+  const patGiven = rng.pick(patPool);
+  const spName = `${given} ${makePatronymic(patGiven, spSex)}`;
+  const spNameFa = formatPersonName(spName, 'fa');
+
+  const dowrySilver = rng.int(18, 32);
+  realm.silver += dowrySilver;
+  realm.fame += 20;
+  char.stats.happiness = clampStat(char.stats.happiness + 14);
+  char.stats.honor = clampStat(char.stats.honor + 8);
+  char.skills.diplomacy = clampSkill(char.skills.diplomacy + 4);
+
+  relationships.unshift({
+    id: `rel_local_marry_${target.id}_${state.year}_${rng.int(100, 999)}`,
+    name: spName,
+    sex: spSex,
+    role: 'Spouse',
+    age: Math.max(16, char.age + rng.int(-3, 3)),
+    alive: true,
+    affinity: rng.int(80, 95),
+    socialClass: char.socialClass,
+    locationId: target.id,
+    traits: [rng.pick(['charismatic', 'cunning', 'oath_keeper', 'law_speaker'])],
+  });
+
+  const title = `Noble Marriage Sealed at ${target.name}`;
+  const titleFa = `پیوند زناشویی با خاندان سرشناس در «${targetFa}»`;
+  const text = `Paying the honorable gift-feasts, you wed ${spName}, kin of the local ruling house at ${target.name}. They brought ${dowrySilver} silver dowry and strong cross-cultural friendship!`;
+  const textFa = `با برگزاری جشن باشکوه در «${targetFa}»، با «${spNameFa}» از خاندان سرشناس شهر پیمان زناشویی بستید و ${dowrySilver} نقره جهیزیه و پیوند محکم نصیبتان شد!`;
+  const deltas = [`Married ${spName}`, `+${dowrySilver - cost} Net Silver`, 'Happiness +14', 'Honor +8'];
+  const deltasFa = [`ازدواج با ${spNameFa}`, `+${dowrySilver - cost} نقره خالص`, 'شادی +14', 'شرافت +8'];
+
+  const marLogId = `log_mar_${target.id}_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
+  const nextState: FullGameState = {
+    ...state,
+    rngState: rng.getState(),
+    character: char,
+    realm,
+    relationships,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: marLogId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: target.name,
+        category: 'Family',
+        iconType: 'heart',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+
+  nextState.achievements = evaluateAchievements(nextState);
+  return nextState;
+}
+
 export function executeBuildHoldingAction(
   state: FullGameState,
   settlementId: string,
@@ -2563,28 +3526,40 @@ export function executeBuildHoldingAction(
 }
 
 export function getClaimableNextTitle(state: FullGameState): TitleRank | null {
-  const curIdx = TITLE_LADDER.indexOf(state.character.title);
-  if (curIdx < 0 || curIdx >= TITLE_LADDER.length - 1) return null;
-
   const r = state.realm;
-  if (state.character.title === TitleRank.Thrall) {
+  const c = state.character;
+  const title = c.title;
+
+  if (title === TitleRank.Thrall) {
     return null; // Must use buy_freedom or event
   }
-  if (state.character.title === TitleRank.Freeman) {
-    if (r.landFarms >= 1 && r.silver >= 30) return TitleRank.Bonde;
-  } else if (state.character.title === TitleRank.Bonde) {
-    if (r.landFarms >= 3 && r.hirdWarriors >= 15 && r.fame >= 90) return TitleRank.Hersir;
-  } else if (state.character.title === TitleRank.Hersir) {
-    if (r.landFarms >= 6 && r.hirdWarriors >= 45 && r.longships >= 2 && r.fame >= 240)
+  if (title === TitleRank.Freeman) {
+    if (r.landFarms >= 1 || r.hirdWarriors >= 4 || c.skills.combat >= 22 || r.silver >= 25) {
+      return TitleRank.Hirdman;
+    }
+  } else if (title === TitleRank.Hirdman || title === TitleRank.Bonde) {
+    if (c.skills.combat >= 32 && r.hirdWarriors >= 12 && r.fame >= 75 && c.stats.honor >= 35) {
+      return TitleRank.Huscarl;
+    }
+  } else if (title === TitleRank.Huscarl || title === TitleRank.Hersir) {
+    if ((r.longships >= 1 || r.knarrs >= 1) && r.hirdWarriors >= 22 && r.fame >= 150 && c.skills.seamanship >= 28) {
+      return TitleRank.Captain;
+    }
+  } else if (title === TitleRank.Captain) {
+    if (r.landFarms >= 4 && r.hirdWarriors >= 40 && (r.longships + r.knarrs) >= 2 && r.fame >= 300 && r.holdings.length >= 1) {
       return TitleRank.Jarl;
-  } else if (state.character.title === TitleRank.Jarl) {
-    if (r.landFarms >= 10 && r.hirdWarriors >= 100 && r.longships >= 4 && r.fame >= 500)
+    }
+  } else if (title === TitleRank.Jarl) {
+    const controlledHoldings = r.holdings.length + (state.tributaries?.length ?? 0);
+    if (r.landFarms >= 8 && r.hirdWarriors >= 85 && r.longships >= 3 && r.fame >= 550 && controlledHoldings >= 2) {
       return TitleRank.Konungr;
-  } else if (state.character.title === TitleRank.Konungr) {
+    }
+  } else if (title === TitleRank.Konungr) {
     const regionsHeld = new Set(
       r.holdings.map((h) => SETTLEMENTS_BY_ID[h.settlementId]?.regionGroup).filter(Boolean)
     );
-    if (regionsHeld.size >= 3 && r.hirdWarriors >= 180 && r.fame >= 850) {
+    const totalTributaries = state.tributaries?.length ?? 0;
+    if ((regionsHeld.size >= 3 || totalTributaries >= 3) && r.hirdWarriors >= 150 && r.longships >= 5 && r.fame >= 900) {
       return TitleRank.Overking;
     }
   }
@@ -2595,36 +3570,44 @@ export function getNextTitleRequirementText(title: TitleRank, lang: Language = '
   if (lang === 'fa') {
     switch (title) {
       case TitleRank.Thrall:
-        return 'برای آزادی: ۲۵ نقره جمع کنید و از بخش «اقدامات» آزادی خود را بخرید.';
+        return 'برای آزادی: ۲۵ نقره جمع کنید و از تب اقدامات، آزادی خود را بخرید.';
       case TitleRank.Freeman:
-        return 'مقام بعدی — زمین‌دار (بونده): داشتن حداقل ۱ مزرعه و ۳۰ سکه نقره.';
+        return 'مقام بعدی — جنگجو (هیردمن): ۱ مزرعه یا ۴ جنگجو یا مهارت نبرد ۲۲ و ۲۵ نقره.';
       case TitleRank.Bonde:
-        return 'مقام بعدی — سردار محلی (هرسیر): ۳ مزرعه، ۱۵ جنگجو و ۹۰ شهرت.';
+      case TitleRank.Hirdman:
+        return 'مقام بعدی — دلاور تالار (هوکارل): نبرد ۳۲، ۱۲ جنگجو، ۷۵ شهرت و ۳۵ شرافت.';
       case TitleRank.Hersir:
-        return 'مقام بعدی — فرمانروا (یارل): ۶ مزرعه، ۴۵ جنگجو، ۲ کشتی جنگی و ۲۴۰ شهرت.';
+      case TitleRank.Huscarl:
+        return 'مقام بعدی — ناخدا (کاپیتان کشتی): ۱ کشتی لانگ‌شیپ، ۲۲ جنگجو، دریانوردی ۲۸ و ۱۵۰ شهرت.';
+      case TitleRank.Captain:
+        return 'مقام بعدی — فرمانروا (یارل): ۴ مزرعه، ۴۰ جنگجو، ۲ کشتی، ۳۰۰ شهرت و تملک مقر.';
       case TitleRank.Jarl:
-        return 'مقام بعدی — پادشاه (کونونگر): ۱۰ مزرعه، ۱۰۰ جنگجو، ۴ کشتی جنگی و ۵۰۰ شهرت.';
+        return 'مقام بعدی — پادشاه (کونونگر): ۸ مزرعه، ۸۵ جنگجو، ۳ کشتی، ۵۵۰ شهرت و ۲ شهر زیر سلطه.';
       case TitleRank.Konungr:
-        return 'مقام بعدی — شاهنشاه دریای شمال: املاک در ۳ منطقه مختلف، ۱۸۰ جنگجو و ۸۵۰ شهرت.';
+        return 'مقام بعدی — شاهنشاه / شاه شاهان: تسلط بر ۳ منطقه، ۱۵۰ جنگجو، ۵ کشتی و ۹۰۰ شهرت.';
       case TitleRank.Overking:
-        return 'بالاترین مقام عصر وایکینگ‌ها در دست شماست — شاهنشاه دریاهای شمال!';
+        return 'بالاترین تاج و اقتدار در دستان شماست — شاهنشاه دریاهای شمال و اروپا!';
     }
   }
   switch (title) {
     case TitleRank.Thrall:
       return 'To become Free: Save 25 Silver and select "Buy Your Freedom" in Actions.';
     case TitleRank.Freeman:
-      return 'Next Rank — Landowner (Bonde): Own 1+ Farm and 30+ Silver.';
+      return 'Next Rank — Warrior (Hirdman): 1 Farm, 4+ Warriors, Combat 22+, or 25+ Silver.';
     case TitleRank.Bonde:
-      return 'Next Rank — War-Chieftain (Hersir): Own 3+ Farms, 15+ Warriors, and 90+ Fame.';
+    case TitleRank.Hirdman:
+      return 'Next Rank — Housecarl Champion (Húskarl): Combat 32+, 12+ Warriors, 75+ Fame, 35+ Honor.';
     case TitleRank.Hersir:
-      return 'Next Rank — Jarl (Earl): Own 6+ Farms, 45+ Warriors, 2+ War Longships, and 240+ Fame.';
+    case TitleRank.Huscarl:
+      return 'Next Rank — Ship Captain (Stýrimaðr): 1+ Longship, 22+ Warriors, Seamanship 28+, 150+ Fame.';
+    case TitleRank.Captain:
+      return 'Next Rank — Jarl (Earl/Duke): 4+ Farms, 40+ Warriors, 2+ Ships, 300+ Fame, 1+ Holding.';
     case TitleRank.Jarl:
-      return 'Next Rank — King (Konungr): Own 10+ Farms, 100+ Warriors, 4+ War Longships, and 500+ Fame.';
+      return 'Next Rank — King (Konungr): 8+ Farms, 85+ Warriors, 3+ Ships, 550+ Fame, 2+ Controlled Holdings.';
     case TitleRank.Konungr:
-      return 'Next Rank — High King of the North Sea: Hold lands in 3+ Regions, 180+ Warriors, and 850+ Fame.';
+      return 'Next Rank — High King / King of Kings: Hold lands in 3+ Regions, 150+ Warriors, 5+ Longships, 900+ Fame.';
     case TitleRank.Overking:
-      return 'Supreme Rank Achieved — High King across the Northern Seas!';
+      return 'Supreme Crown Achieved — High King across Medieval Europe and Northern Seas!';
   }
 }
 
@@ -3078,4 +4061,937 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
 
   resumed.achievements = evaluateAchievements(resumed);
   return resumed;
+}
+
+// ==========================================
+// HOLDING GOVERNANCE & REBELLION ACTIONS
+// ==========================================
+
+export function executeSendSettlersAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+  const cost = 28;
+  if (state.realm.silver < cost) return state;
+
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  const targetFa = SETTLEMENTS_FA[settlementId]?.name ?? target?.name ?? settlementId;
+  const rng = new SeededRNG(state.rngState);
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx
+      ? {
+          ...h,
+          farms: h.farms + 1,
+          norsePopulationShare: Math.min(100, (h.norsePopulationShare ?? 50) + 16),
+          unrest: Math.max(0, (h.unrest ?? 20) - 14),
+        }
+      : h
+  );
+
+  const realm = {
+    ...state.realm,
+    silver: state.realm.silver - cost,
+    landFarms: state.realm.landFarms + 1,
+    fame: state.realm.fame + 15,
+    stability: clampStat(state.realm.stability + 4),
+    holdings,
+  };
+
+  const title = `Norse Settlers Disembarked at ${target?.name ?? settlementId}`;
+  const titleFa = `اسکان مهاجران نورس در «${targetFa}»`;
+  const text = `A loaded knarr brought hardy Norse farming kin, sheep, and iron plows to ${target?.name ?? settlementId}. Norse culture took deeper root and local unrest subsided!`;
+  const textFa = `یک کشتی کنار پر از خانواده‌های مهاجر نورس، دام و گاوآهن‌های آهنی به «${targetFa}» رسید. فرهنگ نورس ریشه دواند و ناآرامی محلی ۱۴٪ فرونشست!`;
+  const deltas = [`-${cost} Silver`, '+1 Farm', '+16% Norse Pop', 'Unrest -14%', '+15 Fame'];
+  const deltasFa = [`-${cost} نقره`, '+1 مزرعه', '+16٪ جمعیت نورس', 'ناآرامی -14٪', '+15 شهرت'];
+
+  const logId = `log_settle_${settlementId}_${state.year}_${state.lifeLog.length}`;
+  return {
+    ...state,
+    rngState: rng.getState(),
+    realm,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: logId,
+        year: state.year,
+        season: state.season,
+        age: state.character.age,
+        locationName: target?.name ?? settlementId,
+        category: 'Politics & Kings',
+        iconType: 'coin',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+}
+
+export function executeStationGarrisonAction(
+  state: FullGameState,
+  settlementId: string,
+  delta: number
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+  const holding = state.realm.holdings[holdingIdx];
+
+  // Moving warriors from personal hird to holding garrison or vice versa
+  if (delta > 0 && state.realm.hirdWarriors < delta) return state;
+  if (delta < 0 && (holding.garrison ?? 0) < Math.abs(delta)) return state;
+
+  const newGarrison = Math.max(0, (holding.garrison ?? 0) + delta);
+  const newHird = Math.max(0, state.realm.hirdWarriors - delta);
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx
+      ? {
+          ...h,
+          garrison: newGarrison,
+          unrest: delta > 0 ? Math.max(0, (h.unrest ?? 20) - Math.round(delta * 0.8)) : h.unrest,
+        }
+      : h
+  );
+
+  return {
+    ...state,
+    realm: {
+      ...state.realm,
+      hirdWarriors: newHird,
+      holdings,
+    },
+  };
+}
+
+export function executeSetTributeBurdenAction(
+  state: FullGameState,
+  settlementId: string,
+  burden: TributeBurden
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx ? { ...h, tributeBurden: burden } : h
+  );
+
+  return {
+    ...state,
+    realm: {
+      ...state.realm,
+      holdings,
+    },
+  };
+}
+
+export function executeAppointJarlAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+  const cost = 20;
+  if (state.realm.silver < cost) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  const targetFa = SETTLEMENTS_FA[settlementId]?.name ?? target?.name ?? settlementId;
+  const pool = MALE_NAMES_BY_REGION['Norway'];
+  const jarlName = `${rng.pick(pool)} ${makePatronymic(rng.pick(pool), Sex.Male)}`;
+  const jarlNameFa = formatPersonName(jarlName, 'fa');
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx
+      ? {
+          ...h,
+          appointedJarl: jarlName,
+          unrest: Math.max(0, (h.unrest ?? 20) - 20),
+        }
+      : h
+  );
+
+  const realm = {
+    ...state.realm,
+    silver: state.realm.silver - cost,
+    fame: state.realm.fame + 25,
+    stability: clampStat(state.realm.stability + 6),
+    holdings,
+  };
+
+  const title = `Appointed Jarl of ${target?.name ?? settlementId}`;
+  const titleFa = `انتصاب یارل و حاکم در «${targetFa}»`;
+  const text = `Bestowing an arm-ring and swearing oaths in the longhouse, you appointed loyal warrior ${jarlName} as Jarl to rule ${target?.name ?? settlementId}. Unrest plummeted by 20%!`;
+  const textFa = `با اهدای بازوبند زرین و سوگند وفاداری، «${jarlNameFa}» را به عنوان یارل و والی «${targetFa}» برگزیدید. ناآرامی محلی ۲۰٪ کاهش یافت!`;
+  const deltas = [`-${cost} Silver`, `Jarl: ${jarlName}`, 'Unrest -20%', 'Stability +6'];
+  const deltasFa = [`-${cost} نقره`, `یارل: ${jarlNameFa}`, 'ناآرامی -20٪', 'ثبات +6'];
+
+  const logId = `log_jarl_${settlementId}_${state.year}_${state.lifeLog.length}`;
+  return {
+    ...state,
+    rngState: rng.getState(),
+    realm,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: logId,
+        year: state.year,
+        season: state.season,
+        age: state.character.age,
+        locationName: target?.name ?? settlementId,
+        category: 'Politics & Kings',
+        iconType: 'crown',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+}
+
+export function executeTakeHostagesAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+  const holding = state.realm.holdings[holdingIdx];
+  if ((holding.garrison ?? 0) < 6 && state.realm.hirdWarriors < 10) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  const targetFa = SETTLEMENTS_FA[settlementId]?.name ?? target?.name ?? settlementId;
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx
+      ? {
+          ...h,
+          hostagesCount: (h.hostagesCount ?? 0) + 1,
+          unrest: Math.max(0, (h.unrest ?? 20) - 15),
+        }
+      : h
+  );
+
+  const title = `Hostages Taken from ${target?.name ?? settlementId}`;
+  const titleFa = `گرفتن گروگان‌های اشرافی از «${targetFa}»`;
+  const text = `Displaying drawn swords and armored hirdmen, you demanded the eldest sons of local magistrates to reside as wards in your hall, curbing any rebellion.`;
+  const textFa = `با اتکا به اقتدار شمشیرها و سپاه، فرزندان اشراف و سران محلی «${targetFa}» را به عنوان گروگان به تالار خود آوردید تا دست از هرگونه شورش بردارند.`;
+  const deltas = ['+1 Noble Hostage', 'Unrest -15%', 'Honor +4'];
+  const deltasFa = ['+1 گروگان اشرافی', 'ناآرامی -15٪', 'شرافت +4'];
+
+  const logId = `log_hostage_${settlementId}_${state.year}_${state.lifeLog.length}`;
+  return {
+    ...state,
+    rngState: rng.getState(),
+    character: {
+      ...state.character,
+      stats: {
+        ...state.character.stats,
+        honor: clampStat(state.character.stats.honor + 4),
+      },
+    },
+    realm: {
+      ...state.realm,
+      holdings,
+    },
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: logId,
+        year: state.year,
+        season: state.season,
+        age: state.character.age,
+        locationName: target?.name ?? settlementId,
+        category: 'Politics & Kings',
+        iconType: 'crown',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+}
+
+export function executeToggleReligiousToleranceAction(
+  state: FullGameState,
+  settlementId: string
+): FullGameState {
+  const holdingIdx = state.realm.holdings.findIndex((h) => h.settlementId === settlementId);
+  if (holdingIdx < 0) return state;
+
+  const holdings = state.realm.holdings.map((h, i) =>
+    i === holdingIdx ? { ...h, religiousTolerance: !h.religiousTolerance } : h
+  );
+
+  return {
+    ...state,
+    realm: {
+      ...state.realm,
+      holdings,
+    },
+  };
+}
+
+// ==========================================
+// POLITICS & INTRIGUE PLOTS
+// ==========================================
+
+export function executePlotAction(
+  state: FullGameState,
+  plotType: PlotType,
+  targetSettlementId?: string,
+  targetPersonId?: string
+): FullGameState {
+  const rng = new SeededRNG(state.rngState);
+  const char = {
+    ...state.character,
+    stats: { ...state.character.stats },
+    skills: { ...state.character.skills },
+    traits: [...state.character.traits],
+  };
+  const realm = {
+    ...state.realm,
+    holdings: state.realm.holdings.map((h) => ({ ...h, buildings: [...h.buildings] })),
+  };
+  const relationships = state.relationships.map((r) => ({ ...r }));
+
+  let title = '';
+  let titleFa = '';
+  let text = '';
+  let textFa = '';
+  const deltas: string[] = [];
+  const deltasFa: string[] = [];
+  let isDanger = false;
+
+  if (plotType === 'assassination') {
+    const cost = 32;
+    if (realm.silver < cost) return state;
+    realm.silver -= cost;
+    const targetIdx = relationships.findIndex(
+      (r) => (r.role === 'Blood-Feud Enemy' || r.role === 'Rival') && r.alive
+    );
+    const foe = targetIdx >= 0 ? relationships[targetIdx] : null;
+    const foeName = foe ? foe.name : 'a powerful rival chieftain';
+    const foeNameFa = foe ? formatPersonName(foe.name, 'fa') : 'سردار رقیب';
+
+    const roll = char.stats.cunning * 0.7 + char.skills.combat * 0.3 + rng.int(-15, 25);
+    if (roll >= 48) {
+      if (foe) {
+        relationships[targetIdx] = {
+          ...foe,
+          alive: false,
+          deathYear: state.year,
+          causeOfDeath: 'Assassinated in dark tavern cellar',
+          causeOfDeathFa: 'ترور مخفیانه در دخمه شبانه',
+        };
+      }
+      realm.fame += 35;
+      realm.silver += 25;
+      char.skills.combat = clampSkill(char.skills.combat + 4);
+      title = `Blade in the Dark: ${foeName} Slain!`;
+      titleFa = `خنجر در تاریکی: ترور موفق «${foeNameFa}»!`;
+      text = `Your hired shadow-blade slipped into the hall undetected. ${foeName} choked on their own blood without sounding the alarm!`;
+      textFa = `آدم‌کش اجیرشده شبانه به خوابگاه رخنه کرد و خنجر را در سینه «${foeNameFa}» نشاند، بی‌آن‌که حتی نگهبانی فریاد بزند!`;
+      deltas.push(`-${cost} Silver`, `Slain: ${foeName}`, '+35 Fame', '+25 Loot');
+      deltasFa.push(`-${cost} نقره`, `هلاکت: ${foeNameFa}`, '+35 شهرت', '+25 غنیمت');
+    } else {
+      isDanger = true;
+      char.stats.honor = clampStat(char.stats.honor - 22);
+      title = `Assassination Discovered!`;
+      titleFa = `افشای توطئه ترور و رسوایی بزرگ!`;
+      text = `The assassin was caught alive! Under torture, they named your house. Outrage spread across the Thing council!`;
+      textFa = `آدم‌کش زنده دستگیر شد و زیر شکنجه نام خاندان شما را لو داد! رسوایی بزرگی در شورای ثینگ برپا گشت.`;
+      deltas.push(`-${cost} Silver`, 'Honor -22', 'Infamy Gained');
+      deltasFa.push(`-${cost} نقره`, 'شرافت -22', 'رسوایی سیاسی');
+    }
+  } else if (plotType === 'poisoning') {
+    const cost = 22;
+    if (realm.silver < cost) return state;
+    realm.silver -= cost;
+    const roll = char.stats.cunning + char.skills.seidr * 0.5 + rng.int(-10, 20);
+    if (roll >= 44) {
+      realm.fame += 20;
+      char.skills.seidr = clampSkill(char.skills.seidr + 4);
+      title = `Venom in the Mead Horn`;
+      titleFa = `جام زهر در بزم شبانه`;
+      text = `Distilling hemlock into the great drinking horn, your rival succumbed to a quiet "heart seizure" by morning.`;
+      textFa = `زهر شوکران در جام زرین ریخته شد؛ رقیب شما تا صبح بر اثر ایست ناگهانی قلب جان داد و رازی برملا نشد.`;
+      deltas.push(`-${cost} Silver`, '+20 Fame', 'Rival Removed');
+      deltasFa.push(`-${cost} نقره`, '+20 شهرت', 'حذف رقیب');
+    } else {
+      isDanger = true;
+      char.stats.honor = clampStat(char.stats.honor - 15);
+      title = `Poison Plot Thwarted`;
+      titleFa = `کشف سم در جام و خنثی شدن توطئه`;
+      text = `A watchful feast-skald smelled the hemlock on the rim! You barely hushed the rumors with silver bribes.`;
+      textFa = `شاعر تیزبین بوی گیاه سمی را از لبه جام حس کرد! با دستپاچگی و رشوه توانستید سرپوشی روی قضیه بگذارید.`;
+      deltas.push(`-${cost} Silver`, 'Honor -15');
+      deltasFa.push(`-${cost} نقره`, 'شرافت -15');
+    }
+  } else if (plotType === 'bribe_thing') {
+    const cost = 25;
+    if (realm.silver < cost) return state;
+    realm.silver -= cost;
+    char.isOutlawed = false;
+    char.traits = char.traits.filter((t) => t !== 'outlaw_mark');
+    char.skills.law = clampSkill(char.skills.law + 5);
+    realm.stability = clampStat(realm.stability + 10);
+    title = `Thing Assembly Law-Speaker Bribed`;
+    titleFa = `رشوه به سخنگوی قانون در شورای ثینگ`;
+    text = `Weighing 25 silver rings into the law-speaker's tunic beneath the Law-Rock, the council declared all judgments in your dynasty’s favor!`;
+    textFa = `با لغزاندن ۲۵ حلقه نقره در ردای سخنگوی قانون کنار صخره مقدس، شورا احکام و دعاوی را به نفع دودمان شما مختومه کرد!`;
+    deltas.push(`-${cost} Silver`, 'Stability +10', 'Law +5', 'Outlawry Cleared');
+    deltasFa.push(`-${cost} نقره`, 'ثبات +10', 'قانون‌دانی +5', 'رفع تبعید');
+  } else if (plotType === 'mass_reprisal') {
+    if (realm.hirdWarriors < 15) return state;
+    const targetH = targetSettlementId
+      ? realm.holdings.find((h) => h.settlementId === targetSettlementId)
+      : realm.holdings[0];
+    if (!targetH) return state;
+
+    targetH.unrest = 0;
+    targetH.hostagesCount = (targetH.hostagesCount ?? 0) + 2;
+    char.stats.honor = clampStat(char.stats.honor - 18);
+    realm.fame += 30;
+    realm.stability = clampStat(realm.stability + 8);
+    if (!char.traits.includes('cruel')) char.traits.push('cruel');
+
+    const sName = SETTLEMENTS_BY_ID[targetH.settlementId]?.name ?? targetH.settlementId;
+    const sNameFa = SETTLEMENTS_FA[targetH.settlementId]?.name ?? sName;
+
+    title = `Iron Reprisal at ${sName}`;
+    titleFa = `کشتار و سرکوب قاطع در «${sNameFa}»`;
+    text = `In the grim tradition of the 1002 St Brice's Day, you struck before the rebels could arm! Conspirators were swept away; unrest in ${sName} dropped to 0%!`;
+    textFa = `همانند واقعه تاریخی سنت برایس در سال ۱۰۰۲، پیش‌دستی کرده و سران توطئه را در دم از میان برداشتید! ناآرامی در «${sNameFa}» به صفر رسید.`;
+    deltas.push('Unrest: 0%', 'Honor -18', '+2 Hostages', 'Trait: Cruel');
+    deltasFa.push('ناآرامی: ۰٪', 'شرافت -18', '+2 گروگان', 'ویژگی: بی‌رحم');
+  }
+
+  const logId = `log_plot_${plotType}_${state.year}_${state.lifeLog.length}`;
+  return {
+    ...state,
+    rngState: rng.getState(),
+    character: char,
+    realm,
+    relationships,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: logId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: SETTLEMENTS_BY_ID[char.locationId]?.name ?? char.locationId,
+        category: 'Politics & Kings',
+        iconType: 'crown',
+        title,
+        titleFa,
+        text,
+        textFa,
+        deltas,
+        deltasFa,
+        isDanger,
+      },
+    ],
+    lastOutcomeBanner: {
+      title,
+      titleFa,
+      text,
+      textFa,
+      deltaSummary: deltas,
+      deltaSummaryFa: deltasFa,
+    },
+  };
+}
+
+// ==========================================
+// TACTICAL BATTLE RESOLUTION ENGINE
+// ==========================================
+
+export function initiateBattle(
+  state: FullGameState,
+  settlementId: string,
+  intent: BattleIntent = 'raid'
+): FullGameState {
+  const target = SETTLEMENTS_BY_ID[settlementId];
+  if (!target) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+  const enemyWarriors = Math.round(target.baseDefense * 4 + rng.int(8, 20));
+  const playerWarriors = state.realm.hirdWarriors;
+  const playerShips = state.realm.longships + state.realm.knarrs;
+
+  const terrain: 'coastal' | 'river' | 'forest' | 'open_plains' | 'fortified_walls' =
+    target.isRiverPort
+      ? 'river'
+      : target.baseDefense >= 8
+        ? 'fortified_walls'
+        : rng.pick(['coastal', 'open_plains', 'forest'] as const);
+
+  const battle: BattleState = {
+    id: `battle_${settlementId}_${state.year}_${Date.now()}`,
+    settlementId,
+    intent,
+    targetName: target.name,
+    targetNameFa: targetFa,
+    enemyWarriors,
+    playerWarriors,
+    playerShips,
+    terrain,
+    season: state.season,
+    round: 1,
+    playerMorale: 85 + Math.round(state.character.stats.honor * 0.15),
+    enemyMorale: 75 + target.baseDefense * 3,
+    log: [`Battle lines formed before the walls of ${target.name}. Choose your opening tactic!`],
+    logFa: [`آرایش نبرد در برابر باروهای «${targetFa}» شکل گرفت. تاکتیک فرماندهی خود را برگزینید!`],
+    resolved: false,
+  };
+
+  return {
+    ...state,
+    rngState: rng.getState(),
+    activeBattle: battle,
+  };
+}
+
+export function resolveBattleTactic(
+  state: FullGameState,
+  tactic: BattleTactic
+): FullGameState {
+  const battle = state.activeBattle;
+  if (!battle || battle.resolved) return state;
+
+  const rng = new SeededRNG(state.rngState);
+  const char = { ...state.character, stats: { ...state.character.stats }, skills: { ...state.character.skills } };
+  const realm = {
+    ...state.realm,
+    holdings: state.realm.holdings.map((h) => ({ ...h, buildings: [...h.buildings] })),
+  };
+  const target = SETTLEMENTS_BY_ID[battle.settlementId];
+  const targetFa = battle.targetNameFa;
+
+  let playerLosses = 0;
+  let enemyLosses = 0;
+  let tacticDescEn = '';
+  let tacticDescFa = '';
+
+  if (tactic === 'shield_wall') {
+    // Skjaldborg - solid defensive grind
+    playerLosses = rng.int(0, Math.max(1, Math.floor(battle.enemyWarriors * 0.08)));
+    enemyLosses = Math.round(char.skills.combat * 0.3 + rng.int(6, 14));
+    battle.enemyMorale -= 28;
+    tacticDescEn = `Locking rim-to-rim shields in an unbreakable Skjaldborg, your front line held against arrows while grinding the defenders down!`;
+    tacticDescFa = `با بستن دیوار سپرهای نفوذناپذیر (اسکیالدبورگ)، باران تیرها دفع شد و صفوف دشمن زیر فشار کوبنده نیزه‌ها عقب نشست!`;
+  } else if (tactic === 'svinfylking') {
+    // Boar's Snout wedge charge
+    playerLosses = rng.int(2, Math.max(2, Math.floor(battle.enemyWarriors * 0.14)));
+    enemyLosses = Math.round(char.skills.combat * 0.5 + char.stats.strength * 0.3 + rng.int(10, 22));
+    battle.enemyMorale -= 40;
+    tacticDescEn = `Spearheading the wedge in a furious Boar's Snout charge, your champions smashed through the enemy center!`;
+    tacticDescFa = `با یورش گوه‌شکل پوزه گراز (سوئین‌فیلکینگ)، دلاوران صفوف میانی دشمن را شکافتند و خطوط مدافعان را متلاشی کردند!`;
+  } else if (tactic === 'ambush') {
+    // Cunning ambush
+    if (char.stats.cunning >= 42 || rng.chance(0.6)) {
+      playerLosses = rng.int(0, 1);
+      enemyLosses = Math.round(char.stats.cunning * 0.4 + rng.int(12, 20));
+      battle.enemyMorale -= 45;
+      tacticDescEn = `Emerging through river mist and pine woods, your warriors surprised the enemy from the rear with deadly fury!`;
+      tacticDescFa = `از میان مه غلیظ و جنگل‌های کاج ناگهان از پشت سر بر سر مدافعان تاختید و وحشت را بر دلشان انداختید!`;
+    } else {
+      playerLosses = rng.int(2, 5);
+      enemyLosses = rng.int(4, 9);
+      battle.playerMorale -= 15;
+      tacticDescEn = `The enemy scouts spotted the flanking column, engaging in a bloody skirmish in the brush!`;
+      tacticDescFa = `دیده‌بانان دشمن متوجه پیشروی مخفیانه شدند و درگیری شدیدی در بیشه‌زار درگرفت!`;
+    }
+  } else if (tactic === 'flank_assault') {
+    // Longship outflanking
+    playerLosses = rng.int(1, 3);
+    enemyLosses = Math.round(char.skills.seamanship * 0.4 + rng.int(8, 16));
+    battle.enemyMorale -= 32;
+    tacticDescEn = `Beaching swift longships behind the defensive palisade, your oarsmen enveloped the garrison's exposed flank!`;
+    tacticDescFa = `با به‌گل‌نشاندن سریع کشتی‌ها پشت باروی چوبی، پاروزنان جناح بی‌دفاع پادگان را دور زدند!`;
+  } else if (tactic === 'feigned_retreat') {
+    // Fake panic to lure defenders
+    if (char.stats.cunning >= 38) {
+      playerLosses = rng.int(0, 2);
+      enemyLosses = Math.round(char.stats.cunning * 0.45 + rng.int(14, 25));
+      battle.enemyMorale -= 50;
+      tacticDescEn = `Feigning panic down the muddy slope, you drew the defenders out into the open before turning to encircle them!`;
+      tacticDescFa = `با عقب‌نشینی ساختگی مدافعان از دژ بیرون کشیده شدند و در دشت هموار به محاصره کامل درآمدند!`;
+    } else {
+      playerLosses = rng.int(2, 6);
+      enemyLosses = rng.int(5, 10);
+      battle.playerMorale -= 20;
+      tacticDescEn = `The retreat turned chaotic under heavy crossbow fire before order could be restored!`;
+      tacticDescFa = `عقب‌نشینی زیر باران تیر به بی‌نظمی کشیده شد تا این‌که با دشواری صفوف دوباره بسته شد!`;
+    }
+  } else if (tactic === 'berserk_charge') {
+    // Furious terror assault
+    playerLosses = rng.int(3, 7);
+    enemyLosses = Math.round(char.skills.combat * 0.6 + rng.int(16, 30));
+    battle.enemyMorale -= 60;
+    battle.playerMorale += 10;
+    tacticDescEn = `Biting shield rims and howling the names of Odin and Thor, your berserkers threw terror into the enemy ranks!`;
+    tacticDescFa = `با دندان گرفتن لبه سپرها و نعره‌های مستانه خدایان کهن، برزرکرهای خشمگین وحشت مرگبار بر دل دشمن انداختند!`;
+  } else if (tactic === 'orderly_retreat') {
+    // Sound horns and pull back
+    battle.resolved = true;
+    battle.won = false;
+    battle.log.push(`Sounded the war-horns and rowed clear of the harbor, preserving your ships and warband.`);
+    battle.logFa.push(`با به‌صدا درآوردن شیپورهای عقب‌نشینی به کشتی‌ها بازگشتید و جان جنگجویان را نجات دادید.`);
+    return {
+      ...state,
+      activeBattle: null,
+      lastOutcomeBanner: {
+        title: `Retreat from ${battle.targetName}`,
+        titleFa: `عقب‌نشینی از ${targetFa}`,
+        text: `You sounded the horns and disengaged back to the longships, preserving your hird.`,
+        textFa: `با درایت شیپور بازگشت را زدید و نیروها را سالم به کشتی‌ها بازگرداندید.`,
+        deltaSummary: ['Preserved Warband'],
+        deltaSummaryFa: ['حفظ جنگجویان'],
+      },
+    };
+  }
+
+  battle.playerWarriors = Math.max(0, battle.playerWarriors - playerLosses);
+  battle.enemyWarriors = Math.max(0, battle.enemyWarriors - enemyLosses);
+  realm.hirdWarriors = Math.max(0, realm.hirdWarriors - playerLosses);
+
+  battle.log.push(tacticDescEn);
+  battle.logFa.push(tacticDescFa);
+
+  // Victory or Defeat determination
+  if (battle.enemyWarriors <= 0 || battle.enemyMorale <= 15) {
+    battle.resolved = true;
+    battle.won = true;
+    const isMonastery = target?.settlementType === 'monastery';
+    const lootSilver = isMonastery
+      ? Math.round((target?.baseWealth ?? 5) * 16 + rng.int(40, 90))
+      : Math.round((target?.baseWealth ?? 5) * 12 + rng.int(25, 60));
+    const lootFame = Math.round(25 + (target?.baseDefense ?? 5) * 5);
+    realm.silver += lootSilver;
+    realm.fame += lootFame;
+    char.stats.honor = clampStat(char.stats.honor + 10);
+    char.skills.combat = clampSkill(char.skills.combat + 5);
+
+    const currentStatuses = { ...(state.settlementStatuses ?? {}) };
+
+    if (battle.intent === 'conquer') {
+      currentStatuses[battle.settlementId] = 'conquered';
+      const existingHolding = realm.holdings.find((h) => h.settlementId === battle.settlementId);
+      if (existingHolding) {
+        existingHolding.farms += 2;
+        existingHolding.garrison += 6;
+      } else {
+        realm.holdings.push({
+          settlementId: battle.settlementId,
+          farms: 2,
+          buildings: [],
+          garrison: 8,
+          unrest: 30,
+          norsePopulationShare: 25,
+          tributeBurden: 'normal',
+          hostagesCount: 1,
+          religiousTolerance: true,
+        });
+      }
+      realm.landFarms += 2;
+    } else if (battle.intent === 'settle') {
+      currentStatuses[battle.settlementId] = 'conquered';
+      realm.holdings.push({
+        settlementId: battle.settlementId,
+        farms: 2,
+        buildings: [],
+        garrison: 5,
+        unrest: 10,
+        norsePopulationShare: 75,
+        tributeBurden: 'light',
+        hostagesCount: 0,
+        religiousTolerance: true,
+      });
+      realm.landFarms += 2;
+    }
+
+    const bannerTitle = `Glorious Victory at ${battle.targetName}!`;
+    const bannerTitleFa = `پیروزی باشکوه و درخشان در «${targetFa}»!`;
+    const bannerText = `The defenders broke and surrendered the citadel! You won ${lootSilver} silver, ${lootFame} fame, and military dominance.`;
+    const bannerTextFa = `مدافعان شکست را پذیرفتند و تسلیم شدند! ${lootSilver} نقره غنیمت، +${lootFame} شهرت و تسلط کامل نصیب سپاه شما شد.`;
+
+    const logId = `log_bat_won_${battle.settlementId}_${state.year}_${state.lifeLog.length}`;
+    const nextState: FullGameState = {
+      ...state,
+      rngState: rng.getState(),
+      activeBattle: null,
+      conquestsWon: (state.conquestsWon ?? 0) + (battle.intent === 'conquer' ? 1 : 0),
+      totalRaidsWon: (state.totalRaidsWon ?? 0) + (battle.intent === 'raid' ? 1 : 0),
+      settlementStatuses: currentStatuses,
+      character: char,
+      realm,
+      lifeLog: [
+        ...state.lifeLog,
+        {
+          id: logId,
+          year: state.year,
+          season: state.season,
+          age: char.age,
+          locationName: battle.targetName,
+          category: 'War',
+          iconType: 'sword',
+          title: bannerTitle,
+          titleFa: bannerTitleFa,
+          text: bannerText,
+          textFa: bannerTextFa,
+          deltas: [`+${lootSilver} Silver`, `+${lootFame} Fame`, `-${playerLosses} Warriors`],
+          deltasFa: [`+${lootSilver} نقره`, `+${lootFame} شهرت`, `-${playerLosses} جنگجو`],
+        },
+      ],
+      lastOutcomeBanner: {
+        title: bannerTitle,
+        titleFa: bannerTitleFa,
+        text: bannerText,
+        textFa: bannerTextFa,
+        deltaSummary: [`+${lootSilver} Silver`, `+${lootFame} Fame`],
+        deltaSummaryFa: [`+${lootSilver} نقره`, `+${lootFame} شهرت`],
+      },
+    };
+    nextState.achievements = evaluateAchievements(nextState);
+    return nextState;
+  } else if (battle.playerWarriors <= 0 || battle.playerMorale <= 15) {
+    battle.resolved = true;
+    battle.won = false;
+    char.stats.health = clampStat(char.stats.health - 20);
+    realm.fame = Math.max(0, realm.fame - 25);
+
+    const bannerTitle = `Assault Repelled at ${battle.targetName}`;
+    const bannerTitleFa = `شکست یورش و عقب‌نشینی در «${targetFa}»`;
+    const bannerText = `Your battle line was shattered by heavy garrison archery and catapult stones. You pulled the wounded back to the ships.`;
+    const bannerTextFa = `صف نبرد زیر آتش سنگین کمانداران دژ از هم پاشید؛ ناچار شدید با زخمی‌ها به سوی کشتی‌ها عقب‌نشینی کنید.`;
+
+    const logId = `log_bat_lost_${battle.settlementId}_${state.year}_${state.lifeLog.length}`;
+    const nextState: FullGameState = {
+      ...state,
+      rngState: rng.getState(),
+      activeBattle: null,
+      character: char,
+      realm,
+      lifeLog: [
+        ...state.lifeLog,
+        {
+          id: logId,
+          year: state.year,
+          season: state.season,
+          age: char.age,
+          locationName: battle.targetName,
+          category: 'War',
+          iconType: 'skull',
+          title: bannerTitle,
+          titleFa: bannerTitleFa,
+          text: bannerText,
+          textFa: bannerTextFa,
+          deltas: [`-${playerLosses} Warriors`, 'Health -20', '-25 Fame'],
+          deltasFa: [`-${playerLosses} جنگجو`, 'سلامتی -20', '-25 شهرت'],
+          isDanger: true,
+        },
+      ],
+      lastOutcomeBanner: {
+        title: bannerTitle,
+        titleFa: bannerTitleFa,
+        text: bannerText,
+        textFa: bannerTextFa,
+        deltaSummary: [`-${playerLosses} Warriors`, 'Health -20'],
+        deltaSummaryFa: [`-${playerLosses} جنگجو`, 'سلامتی -20'],
+      },
+    };
+    if (char.stats.health <= 0) {
+      return triggerDeathState(
+        nextState,
+        `Fell in the breach while leading the storm of ${battle.targetName}.`,
+        `در شکاف دیوارهای «${targetFa}» در اوج نبرد تیرباران شدی و جان باختی.`
+      );
+    }
+    return nextState;
+  }
+
+  // Next round
+  battle.round += 1;
+  return {
+    ...state,
+    rngState: rng.getState(),
+    activeBattle: { ...battle },
+    character: char,
+    realm,
+  };
+}
+
+export function cancelBattle(state: FullGameState): FullGameState {
+  return {
+    ...state,
+    activeBattle: null,
+  };
+}
+
+// ==========================================
+// EMERGENT DYNAMIC SPECIAL TITLES
+// ==========================================
+
+export interface SpecialTitleClaim {
+  id: string;
+  name: string;
+  nameFa: string;
+  requirements: string;
+  requirementsFa: string;
+  canClaim: boolean;
+}
+
+export function checkSpecialTitles(state: FullGameState): SpecialTitleClaim[] {
+  const holdingsSet = new Set(state.realm.holdings.map((h) => h.settlementId));
+  const tribsSet = new Set(state.tributaries ?? []);
+  const hasSettlement = (id: string) => holdingsSet.has(id) || tribsSet.has(id);
+  const alreadyClaimed = new Set(state.specialTitles ?? []);
+
+  return [
+    {
+      id: 'jarl_of_orkney',
+      name: 'Jarl of Orkney',
+      nameFa: 'یارل اورکنی و جزایر غرب',
+      requirements: 'Hold Birsay or Kirkwall + 25+ Warriors',
+      requirementsFa: 'تسلط بر بیرسی یا کیرک‌وال + ۲۵ جنگجو',
+      canClaim: !alreadyClaimed.has('jarl_of_orkney') && (hasSettlement('birsay') || hasSettlement('kirkwall')) && state.realm.hirdWarriors >= 25,
+    },
+    {
+      id: 'danelaw_lord',
+      name: 'Lord of the Danelaw',
+      nameFa: 'فرمانروای قلمرو دانلا (انگلستان)',
+      requirements: 'Hold Jorvik or London + 45+ Warriors + 250+ Fame',
+      requirementsFa: 'تسلط بر یورک یا لندن + ۴۵ جنگجو + ۲۵۰ شهرت',
+      canClaim: !alreadyClaimed.has('danelaw_lord') && (hasSettlement('jorvik') || hasSettlement('london')) && state.realm.hirdWarriors >= 45 && state.realm.fame >= 250,
+    },
+    {
+      id: 'duke_of_normandy',
+      name: 'Duke of Normandy',
+      nameFa: 'دوک نورماندی و سرحدات فرانکستان',
+      requirements: 'Hold Rouen + 50+ Warriors + Christian or Syncretic',
+      requirementsFa: 'تسلط بر روآن + ۵۰ جنگجو + آیین مسیحی یا ترکیبی',
+      canClaim: !alreadyClaimed.has('duke_of_normandy') && hasSettlement('rouen') && state.realm.hirdWarriors >= 50 && state.character.religion !== Religion.NorsePagan,
+    },
+    {
+      id: 'varangian_commander',
+      name: 'Varangian Guard Commander',
+      nameFa: 'فرمانده گارد وارنگیان بیزانس',
+      requirements: 'Combat 45+ + Visited Miklagard + 300+ Fame',
+      requirementsFa: 'مهارت نبرد ۴۵ + سفر به میکلاگارد (کنستانتینوپل) + ۳۰۰ شهرت',
+      canClaim: !alreadyClaimed.has('varangian_commander') && state.character.skills.combat >= 45 && state.discoveredSettlements.includes('constantinople') && state.realm.fame >= 300,
+    },
+    {
+      id: 'prince_of_rus',
+      name: 'Grand Prince of the Rus',
+      nameFa: 'شاهزاده بزرگ روس کی‌یف',
+      requirements: 'Hold Kiev or Novgorod + 60+ Warriors + 2+ River Knarrs',
+      requirementsFa: 'تسلط بر کی‌یف یا نووگورود + ۶۰ جنگجو + ۲ کشتی کنار',
+      canClaim: !alreadyClaimed.has('prince_of_rus') && (hasSettlement('kiev') || hasSettlement('novgorod')) && state.realm.hirdWarriors >= 60 && state.realm.knarrs >= 2,
+    },
+    {
+      id: 'king_of_norway',
+      name: 'King of All Norway',
+      nameFa: 'پادشاه سراسر نروژ',
+      requirements: 'Hold 3 Norwegian Ports + 80+ Warriors + 500+ Fame',
+      requirementsFa: 'تسلط بر ۳ شهر نروژ (نیداروس، کاوپانگ...) + ۸۰ جنگجو + ۵۰۰ شهرت',
+      canClaim: !alreadyClaimed.has('king_of_norway') && ['nidaros', 'kaupang', 'bergen', 'stavanger'].filter(hasSettlement).length >= 2 && state.realm.hirdWarriors >= 80 && state.realm.fame >= 500,
+    },
+  ];
+}
+
+export function claimSpecialTitle(
+  state: FullGameState,
+  specialTitleId: string
+): FullGameState {
+  const specialTitles = [...(state.specialTitles ?? []), specialTitleId];
+  const titleInfo = checkSpecialTitles(state).find((t) => t.id === specialTitleId);
+  if (!titleInfo) return state;
+
+  const char = {
+    ...state.character,
+    stats: { ...state.character.stats, honor: clampStat(state.character.stats.honor + 18) },
+  };
+  const realm = {
+    ...state.realm,
+    fame: state.realm.fame + 80,
+    stability: clampStat(state.realm.stability + 12),
+  };
+
+  const titleEn = `Acclaimed: ${titleInfo.name}!`;
+  const titleFa = `دستیابی به عنوان تاریخی: «${titleInfo.nameFa}»!`;
+  const textEn = `Echoing through stone halls and across northern seas, heralds proclaimed ${char.givenName} as ${titleInfo.name}!`;
+  const textFa = `با پژواک در تالارهای سنگی و امواج دریا، جارچیان رسماً «${formatPersonName(char.givenName, 'fa')}» را به مقام تاریخی «${titleInfo.nameFa}» آراستند!`;
+
+  const logId = `log_spectitle_${specialTitleId}_${state.year}_${state.lifeLog.length}`;
+  return {
+    ...state,
+    specialTitles,
+    character: char,
+    realm,
+    lifeLog: [
+      ...state.lifeLog,
+      {
+        id: logId,
+        year: state.year,
+        season: state.season,
+        age: char.age,
+        locationName: SETTLEMENTS_BY_ID[char.locationId]?.name ?? char.locationId,
+        category: 'Politics & Kings',
+        iconType: 'crown',
+        title: titleEn,
+        titleFa,
+        text: textEn,
+        textFa,
+        deltas: [`Special Title: ${titleInfo.name}`, '+80 Fame', 'Honor +18', 'Stability +12'],
+        deltasFa: [`عنوان ویژه: ${titleInfo.nameFa}`, '+80 شهرت', 'شرافت +18', 'ثبات +12'],
+      },
+    ],
+    lastOutcomeBanner: {
+      title: titleEn,
+      titleFa,
+      text: textEn,
+      textFa,
+      deltaSummary: [`Special Title: ${titleInfo.name}`, '+80 Fame'],
+      deltaSummaryFa: [`عنوان ویژه: ${titleInfo.nameFa}`, '+80 شهرت'],
+    },
+  };
 }

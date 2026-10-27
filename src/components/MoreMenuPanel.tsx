@@ -6,7 +6,7 @@ import { SHORT_TITLE_LABELS } from '../i18n/ui';
 import { FullGameState, TabId } from '../types/game';
 import { NorseAccent, NorseCornerOrnament, RuneDivider } from './NorseMotifs';
 
-export type RealmSection = 'holdings' | 'fleet';
+export type RealmSection = 'holdings' | 'fleet' | 'intrigue';
 
 interface MoreMenuPanelProps {
   state: FullGameState;
@@ -74,6 +74,19 @@ export function MoreMenuPanel({
         'bg-gradient-to-br from-[#102033] via-[#131D2B] to-[#111926] border-[#38BDF8]/40 hover:border-[#38BDF8]',
       iconBoxClass: 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30',
       onClick: () => onNavigateTab(TabId.Realm, 'fleet'),
+    },
+    {
+      id: 'intrigue',
+      title: isFa ? 'دسیسه‌ها و تاج‌ها' : 'Intrigue & Crown',
+      summary: isFa
+        ? `${state.specialTitles?.length ?? 0} عنوان ویژه · توطئه‌ها و ترور`
+        : `${state.specialTitles?.length ?? 0} historical titles · Plots & poison`,
+      icon: <Crown className="w-6 h-6" />,
+      accent: 'amber',
+      surfaceClass:
+        'bg-gradient-to-br from-[#241520] via-[#131D2B] to-[#111926] border-[#E11D48]/40 hover:border-[#F43F5E]',
+      iconBoxClass: 'bg-[#F43F5E]/15 text-[#FB7185] ring-1 ring-[#F43F5E]/30',
+      onClick: () => onNavigateTab(TabId.Realm, 'intrigue'),
     },
     {
       id: 'legacy',

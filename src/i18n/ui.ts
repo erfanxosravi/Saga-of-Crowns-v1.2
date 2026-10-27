@@ -43,19 +43,25 @@ export const TITLE_LABELS: Record<Language, Record<TitleRank, string>> = {
     [TitleRank.Thrall]: 'Thrall (Bondservant)',
     [TitleRank.Freeman]: 'Freeman',
     [TitleRank.Bonde]: 'Landowner (Bonde)',
+    [TitleRank.Hirdman]: 'Sworn Warrior (Hirdman)',
     [TitleRank.Hersir]: 'War-Chieftain (Hersir)',
-    [TitleRank.Jarl]: 'Jarl (Earl)',
+    [TitleRank.Huscarl]: 'Housecarl Champion (Húskarl)',
+    [TitleRank.Captain]: 'Ship Captain (Stýrimaðr)',
+    [TitleRank.Jarl]: 'Jarl (Earl / Duke)',
     [TitleRank.Konungr]: 'King (Konungr)',
-    [TitleRank.Overking]: 'High King of the North Sea',
+    [TitleRank.Overking]: 'High King / King of Kings',
   },
   fa: {
     [TitleRank.Thrall]: 'بنده (ترال)',
     [TitleRank.Freeman]: 'مرد آزاد',
     [TitleRank.Bonde]: 'زمین‌دار (بونده)',
+    [TitleRank.Hirdman]: 'جنگجوی سوگندخورده (هیردمن)',
     [TitleRank.Hersir]: 'سردار محلی (هرسیر)',
+    [TitleRank.Huscarl]: 'دلاور تالار (هوکارل)',
+    [TitleRank.Captain]: 'ناخدا و سرکرده کشتی',
     [TitleRank.Jarl]: 'فرمانروا (یارل)',
     [TitleRank.Konungr]: 'پادشاه (کونونگر)',
-    [TitleRank.Overking]: 'شاهنشاه دریای شمال',
+    [TitleRank.Overking]: 'شاهنشاه / شاه شاهان',
   },
 };
 
@@ -64,7 +70,10 @@ export const SHORT_TITLE_LABELS: Record<Language, Record<TitleRank, string>> = {
     [TitleRank.Thrall]: 'Thrall',
     [TitleRank.Freeman]: 'Freeman',
     [TitleRank.Bonde]: 'Landowner',
+    [TitleRank.Hirdman]: 'Warrior',
     [TitleRank.Hersir]: 'Chieftain',
+    [TitleRank.Huscarl]: 'Huscarl',
+    [TitleRank.Captain]: 'Captain',
     [TitleRank.Jarl]: 'Jarl',
     [TitleRank.Konungr]: 'King',
     [TitleRank.Overking]: 'High King',
@@ -73,7 +82,10 @@ export const SHORT_TITLE_LABELS: Record<Language, Record<TitleRank, string>> = {
     [TitleRank.Thrall]: 'بنده',
     [TitleRank.Freeman]: 'آزادمرد',
     [TitleRank.Bonde]: 'زمین‌دار',
+    [TitleRank.Hirdman]: 'جنگجو',
     [TitleRank.Hersir]: 'سردار',
+    [TitleRank.Huscarl]: 'هوکارل',
+    [TitleRank.Captain]: 'ناخدا',
     [TitleRank.Jarl]: 'یارل',
     [TitleRank.Konungr]: 'پادشاه',
     [TitleRank.Overking]: 'شاهنشاه',
@@ -85,11 +97,15 @@ export const RELIGION_LABELS: Record<Language, Record<Religion, string>> = {
     [Religion.NorsePagan]: 'Old Norse Gods',
     [Religion.Syncretic]: 'Mixed Faith (Prime-Signed)',
     [Religion.Christian]: 'Christian',
+    [Religion.Islam]: 'Islam (Faith of Serkland)',
+    [Religion.SlavicPagan]: 'Slavic Gods (Perun & Rod)',
   },
   fa: {
-    [Religion.NorsePagan]: 'خدایان کهن اسکاندیناوی',
-    [Religion.Syncretic]: 'آیین ترکیبی (نشان صلیب و چکش ثور)',
+    [Religion.NorsePagan]: 'خدایان کهن شمال',
+    [Religion.Syncretic]: 'آیین ترکیبی (صلیب و چکش ثور)',
     [Religion.Christian]: 'مسیحی',
+    [Religion.Islam]: 'اسلام (آیین سرزمین‌های شرقی و خلافت)',
+    [Religion.SlavicPagan]: 'خدایان اسلاو (پرون و رود)',
   },
 };
 
@@ -138,7 +154,13 @@ export const REGION_LABELS: Record<Language, Record<RegionGroup, string>> = {
     'British Isles': 'Britain',
     Ireland: 'Ireland',
     Continent: 'Francia',
-    'North Atlantic': 'Iceland & West',
+    'North Atlantic': 'Iceland & Atlantic',
+    Baltic: 'Baltic & Wendland',
+    'Kievan Rus & Rivers': 'Kievan Rus & Rivers',
+    'Iberia & Al-Andalus': 'Iberia & Al-Andalus',
+    Mediterranean: 'Mediterranean',
+    'Miklagard & East': 'Miklagard (Byzantium)',
+    'Serkland & Caliphate': 'Serkland & Baghdad',
   },
   fa: {
     Norway: 'نروژ',
@@ -146,8 +168,52 @@ export const REGION_LABELS: Record<Language, Record<RegionGroup, string>> = {
     Sweden: 'سوئد',
     'British Isles': 'بریتانیا',
     Ireland: 'ایرلند',
-    Continent: 'فرانسه و اروپا',
-    'North Atlantic': 'ایسلند و غرب',
+    Continent: 'فرانسه و فرانکستان',
+    'North Atlantic': 'ایسلند و اقیانوس اطلس',
+    Baltic: 'دریای بالتیک و وِندلند',
+    'Kievan Rus & Rivers': 'روس کی‌یف و رودخانه‌ها',
+    'Iberia & Al-Andalus': 'شبه‌جزیره ایبریا و اندلس',
+    Mediterranean: 'دریای مدیترانه و روم',
+    'Miklagard & East': 'میکلاگارد (بیزانس)',
+    'Serkland & Caliphate': 'سرکلند و خلافت عباسی',
+  },
+};
+
+export const SETTLEMENT_TYPE_LABELS: Record<Language, Record<string, string>> = {
+  en: {
+    village: 'Coastal Village',
+    town: 'Market Town',
+    city: 'Walled Metropolis',
+    trading_post: 'Trade Emporium',
+    monastery: 'Monastery & Abbey',
+    fortress: 'Stronghold Fortress',
+    jarldom_seat: 'Seat of the Jarl',
+    capital: 'Imperial / Royal Capital',
+  },
+  fa: {
+    village: 'روستای ساحلی',
+    town: 'شهرک بازرگانی',
+    city: 'کلان‌شهر بارودار',
+    trading_post: 'مرکز دادوستد تجاری',
+    monastery: 'صومعه و کلیسای زرین',
+    fortress: 'دژ و قلعه نظامی',
+    jarldom_seat: 'مقر فرمانروایی یارل',
+    capital: 'پایتخت شاهی / امپراتوری',
+  },
+};
+
+export const SETTLEMENT_STATUS_LABELS: Record<Language, Record<string, string>> = {
+  en: {
+    independent: 'Sovereign',
+    tributary: 'Tributary (Danegeld)',
+    conquered: 'Norse Conquered',
+    rebellious: 'Rebellious Unrest',
+  },
+  fa: {
+    independent: 'مستقل و حاکم',
+    tributary: 'باج‌گزار (دانگلد)',
+    conquered: 'فتح‌شده توسط وایکینگ‌ها',
+    rebellious: 'شورشی و ناآرام',
   },
 };
 
@@ -286,6 +352,16 @@ export const EPITHET_FA: Record<string, string> = {
   'Skull-Splitter': 'شکافنده خودها',
 };
 
+export const APP_TITLE: Record<Language, string> = {
+  en: 'Saga of Crowns',
+  fa: 'حماسه‌ی تاج‌ها',
+};
+
+export const APP_SUBTITLE: Record<Language, string> = {
+  en: 'A Saga of Blood, Faith & Power',
+  fa: 'حماسه‌ای از خون، ایمان و اقتدار',
+};
+
 export const QUICK_GUIDE: Record<
   Language,
   {
@@ -298,68 +374,69 @@ export const QUICK_GUIDE: Record<
   }
 > = {
   en: {
-    title: 'How Viking BitLife Works',
-    subtitle: 'Fast choices, wild fates, and multi-generation sagas (793–1066 AD).',
+    title: 'Saga of Crowns — Guide to Power',
+    subtitle: 'Rise from thrall to high king across blood, faith, and strategy (793–1066 AD).',
     steps: [
       {
-        heading: '1. Tap "Next Year" (or Spacebar)',
-        body: 'Live year by year! Each year brings 1–2 short, punchy events with clear risk and cost labels before you pick.',
+        heading: '1. Advance the Chronicle (Next Year)',
+        body: 'Progress year by year through historical eras. Face high-stakes dilemmas, royal politics, omens, and seasonal challenges.',
       },
       {
-        heading: '2. Optional Yearly Activities',
-        body: 'Want extra silver, combat skill, or a coastal raid? Open Activities — each quick action can be used once per year.',
+        heading: '2. Rise Through the 8 Ranks of Power',
+        body: 'Climb from Thrall / Freeman to Warrior, Huscarl, Captain, Jarl, King, and High King. Each tier unlocks larger warbands, conquest rights, and realm decisions.',
       },
       {
-        heading: '3. Watch Your 4 Stats & Portrait',
-        body: 'Health, Honor, Strength, and Happiness react to every choice, while scars, age, and crowns show right on your Viking portrait.',
+        heading: '3. Conquest, Raids & Realm Governance',
+        body: 'Raid wealthy monasteries, besiege fortified cities, and colonize islands. Balance holding unrest with garrisons, Norse settlers, hostages, and religious tolerance.',
       },
       {
-        heading: '4. Die Gloriously — Continue in 1 Click',
-        body: 'Interact with family in Kin. When you die, save your Life Report Card and continue as your heir in a single tap! Heavy realm/fleet tools live in More.',
+        heading: '4. Dark Plots & Multi-Generational Dynasty',
+        body: 'Orchestrate assassinations, poison rivals, bribe the Thing assembly, or forge political marriages. When death strikes, continue your bloodline as your chosen heir.',
       },
     ],
-    glossaryTitle: 'Key Viking Age Terms',
+    glossaryTitle: 'Key Historical Terms & Systems',
     terms: [
-      { term: 'The Thing', meaning: 'Assembly of free people where laws are spoken and feuds are judged.' },
-      { term: 'Holmgang', meaning: 'Legal 1-on-1 duel fought on a staked hide or island to settle disputes.' },
-      { term: 'Wergild', meaning: 'Blood-price paid in silver to end a deadly family feud peacefully.' },
-      { term: 'Hird', meaning: 'Your sworn warband of loyal household warriors.' },
-      { term: 'Longship vs. Knarr', meaning: 'Longships are fast warships for raids; Knarrs are deep ocean cargo ships that cut storm risk.' },
-      { term: 'Wyrd', meaning: 'Norse fate and personal luck woven by the Norns — saves your skin in close calls.' },
+      { term: 'Rise to Power', meaning: '8 distinct ranks from bondservant to King of Kings; cowardice, defeat, or low honor can strip you of rank.' },
+      { term: 'Holding Unrest & Rebellions', meaning: 'Heavy tribute and low garrisons stoke rebellion; neglected realms will rise in armed revolt.' },
+      { term: 'Tactical Shield Wall', meaning: 'Lead shield walls, boar wedges, berserk charges, and feigned retreats in battle.' },
+      { term: 'The Thing', meaning: 'Assembly of free men where laws are declared, feuds settled, and bribes can sway justice.' },
+      { term: 'Holmgang & Blood Feuds', meaning: 'Formal duels of honor on a hide; unresolved slights trigger multi-year feuds.' },
+      { term: 'Wyrd & Divine Favor', meaning: 'The weave of fate—determines survival in lethal encounters and shields against assassination.' },
     ],
-    closeLabel: 'Back to Life',
+    closeLabel: 'Return to Chronicle',
   },
   fa: {
-    title: 'راهنمای سریع زندگی وایکینگی',
-    subtitle: 'انتخاب‌های سریع، سرنوشت‌های عجیب‌وغریب و میراث نسل‌به‌نسل (۷۹۳ تا ۱۰۶۶ میلادی).',
+    title: 'حماسه‌ی تاج‌ها — راهنمای اقتدار',
+    subtitle: 'صعود از بندگی تا شاهنشاهی در کشاکش خون، ایمان و سیاست (۷۹۳ تا ۱۰۶۶ میلادی).',
     steps: [
       {
-        heading: '۱. دکمه بزرگ «سال بعد» رو بزن!',
-        body: 'زندگی سال‌به‌سال جلو می‌ره! هر سال فقط ۱ تا ۲ اتفاق کوتاه و باحال برات پیش میاد و قبل از انتخاب، ریسک و هزینه‌ش رو می‌بینی.',
+        heading: '۱. پیشبرد وقایع‌نامه (سال بعد)',
+        body: 'سال‌به‌سال در گذر تاریخ گام بردارید. تصمیم‌های سرنوشت‌ساز، نبردهای دریایی، سیاست‌های درباری و فال‌های کهن را تجربه کنید.',
       },
       {
-        heading: '۲. فعالیت‌های سبک سالانه',
-        body: 'اگه دلت نقره بیشتر، تمرین شمشیرزنی یا غارت خواست، سر بزن به «فعالیت‌ها»؛ هر کدوم سالی یک‌بار قابل انجامه.',
+        heading: '۲. نردبان ۸ پله‌ای قدرت و القاب',
+        body: 'از بنده و مرد آزاد تا جنگجو، هوکارل، ناخدا، یارل، پادشاه و شاهنشاه صعود کنید. هر رتبه اختیارات، سپاهیان و قلمروهای بزرگ‌تری می‌گشاید.',
       },
       {
-        heading: '۳. حواست به ۴ نوار اصلی باشه',
-        body: 'سلامتی، شرافت، قدرت و شادی با تصمیم‌هات بالا و پایین می‌رن و زخم‌ها و گذر عمر مستقیم روی چهره شخصیتت دیده می‌شن.',
+        heading: '۳. فتوحات، غارت و مهار شورش‌ها',
+        body: 'دیرهای ثروتمند را غارت کنید یا شهرهای مستحکم را به تصرف درآورید. ناآرامی قلمروها را با پادگان‌ها، کوچ‌نشینان نورس، گروگان‌ها و مدارا آرام کنید.',
       },
       {
-        heading: '۴. مرگ آخر خط نیست — ادامه با یک کلیک!',
-        body: 'تو تب «خاندان» با خانواده‌ت تعامل کن. وقتی مردی، کارنامه زندگیت رو ذخیره کن و با یک کلیک با وارثت ادامه بده! بخش‌های سنگین‌تر هم تو منوی «بیشتر» هستن.',
+        heading: '۴. دسیسه‌های درباری و میراث دودمان',
+        body: 'رقبا را با زهر و ترور از سر راه بردارید، شوراها را بخرید، یا با ازدواج‌های سیاسی پیمان ببندید. با مرگ شخصیت، بلافاصله در نقش وارث ادامه دهید.',
       },
     ],
-    glossaryTitle: 'چند اصطلاح باحال عصر وایکینگ‌ها',
+    glossaryTitle: 'اصطلاحات و سازوکارهای کلیدی',
     terms: [
-      { term: 'ثینگ (Thing)', meaning: 'شورای مردان آزاد که توش بدون نیاز به شاه، دعواها و قوانین رو قضاوت می‌کردن.' },
-      { term: 'هولم‌گانگ (Holmgang)', meaning: 'دوئل رسمی و تن‌به‌تن وسط یه زمین مشخص که تا خون اول یا مرگ ادامه داشت.' },
-      { term: 'ورگیلد (Wergild)', meaning: 'خون‌بهای نقره برای تموم کردن آبرومندانه دشمنی‌های خونی.' },
-      { term: 'هیرد (Hird)', meaning: 'جنگجوهای قسم‌خورده و بامرام تالارت که تو غارت و جنگ هواتو دارن.' },
-      { term: 'لانگ‌شیپ و کِنار', meaning: 'لانگ‌شیپ کشتی جنگی سریع برای غارته؛ کِنار کشتی پهن تجاریه که تو طوفان غرق نمی‌شه.' },
-      { term: 'ویرد (Wyrd)', meaning: 'بخت و اقبال نورس؛ هرچی بالاتر باشه، دمِ مرگ بیشتر قسر درمی‌ری!' },
+      { term: 'نردبان رتبه‌ها', meaning: '۸ رتبه از بندگی تا شاهنشاهی؛ بی‌آبرویی، شکست سخت یا سرکشی می‌تواند رتبه شما را ساقط کند.' },
+      { term: 'ناآرامی و شورش قلمرو', meaning: 'خراج سنگین و پادگان ضعیف موجب شورش مسلحانه و از دست رفتن شهرها و استان‌ها می‌شود.' },
+      { term: 'تاکتیک‌های نبرد', meaning: 'دیوار سپرها، پوزه گراز، کمین‌گاه، رخنه از جناحین و حمله دیوانه‌وار برسرکرها را فرماندهی کنید.' },
+      { term: 'ثینگ (مجلس قانون)', meaning: 'مجمع مردان آزاد برای دادخواهی؛ رشوه‌ها و نفوذ کلام می‌توانند حکم تبعید یا برائت رقم بزنند.' },
+      { term: 'هولم‌گانگ و کینه‌های خونی', meaning: 'دوئل رسمی تن‌به‌تن برای اعاده حیثیت؛ توهین‌های بی‌جواب به جنگ خونین میان خاندان‌ها می‌انجامد.' },
+      { term: 'ویرد (Wyrd)', meaning: 'بافت بخت و تقدیر کهن؛ شما را از لبه تیغ مرگ و دسیسه‌های ترور نجات می‌دهد.' },
     ],
-    closeLabel: 'بزن بریم تو بازی',
+    closeLabel: 'بازگشت به بازی',
   },
 };
+
 

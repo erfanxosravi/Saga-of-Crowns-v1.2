@@ -2,17 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Anchor,
+  Building2,
   Castle,
+  Church,
   CloudRain,
+  Coins,
   Compass,
+  Crown,
   Eye,
+  Flame,
+  Handshake,
+  Heart,
+  Landmark,
   Minus,
   Plus,
   RotateCcw,
+  ScrollText,
+  Shield,
+  Ship,
   Snowflake,
+  Sparkles,
   Sun,
   Swords,
+  Users,
   Wind,
+  X,
 } from 'lucide-react';
 import {
   calculateVoyageMetrics,
@@ -29,10 +43,28 @@ import {
   SETTLEMENTS,
   SETTLEMENTS_BY_ID,
 } from '../data/geography';
-import { hasBoathouse, RaidTactic } from '../engine/gameEngine';
+import {
+  DiplomacyApproach,
+  hasBoathouse,
+  RaidTactic,
+  SiegeApproach,
+} from '../engine/gameEngine';
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
-import { REGION_LABELS, SEASON_LABELS } from '../i18n/ui';
-import { FullGameState, RegionGroup, Season, Settlement } from '../types/game';
+import {
+  REGION_LABELS,
+  RELIGION_LABELS,
+  SEASON_LABELS,
+  SETTLEMENT_STATUS_LABELS,
+  SETTLEMENT_TYPE_LABELS,
+} from '../i18n/ui';
+import {
+  FullGameState,
+  RegionGroup,
+  Season,
+  Settlement,
+  SettlementStatus,
+  SettlementType,
+} from '../types/game';
 import { NorseBottomSheet, RuneDivider } from './NorseMotifs';
 
 interface VikingMapProps {
@@ -41,6 +73,10 @@ interface VikingMapProps {
   onRaidPort?: (settlementId: string, tactic: RaidTactic) => void;
   onConquerCity?: (settlementId: string) => void;
   onTradeHere?: () => void;
+  onBesiege?: (settlementId: string, approach: SiegeApproach) => void;
+  onSettle?: (settlementId: string) => void;
+  onDiplomacy?: (settlementId: string, approach: DiplomacyApproach) => void;
+  onMarryLocal?: (settlementId: string) => void;
 }
 
 const ZONE_LABELS_FA: Record<string, string> = {
@@ -50,36 +86,159 @@ const ZONE_LABELS_FA: Record<string, string> = {
   iceland_commonwealth: 'شورای آزاد ایسلند',
 };
 
-const REGION_CHIPS: ('ALL' | RegionGroup)[] = [
-  'ALL',
-  'Norway',
-  'Denmark',
-  'Sweden',
-  'British Isles',
-  'Ireland',
-  'Continent',
-  'North Atlantic',
-];
-
-/**
- * Pure presentation label placement offsets so neighboring port labels stay legible
- * without modifying underlying settlement geographic coordinates.
- */
 const LABEL_ANCHOR_HINTS: Record<
   string,
   { anchor?: 'start' | 'end' | 'middle'; dx?: number; dy?: number }
 > = {
-  ribe: { anchor: 'end', dx: -8, dy: 2 },
-  jelling: { anchor: 'end', dx: -8, dy: -4 },
-  hedeby: { anchor: 'start', dx: 8, dy: 10 },
-  roskilde: { anchor: 'start', dx: 8, dy: 3 },
-  uppsala: { anchor: 'start', dx: 8, dy: -6 },
-  birka: { anchor: 'start', dx: 8, dy: 9 },
-  kaupang: { anchor: 'end', dx: -8, dy: 3 },
-  dublin: { anchor: 'end', dx: -8, dy: -3 },
-  wexford: { anchor: 'end', dx: -8, dy: 9 },
-  limerick: { anchor: 'end', dx: -8, dy: 3 },
+  ribe: { anchor: 'end', dx: -9, dy: 2 },
+  jelling: { anchor: 'end', dx: -9, dy: -4 },
+  hedeby: { anchor: 'start', dx: 9, dy: 10 },
+  roskilde: { anchor: 'start', dx: 9, dy: 3 },
+  uppsala: { anchor: 'start', dx: 9, dy: -6 },
+  birka: { anchor: 'start', dx: 9, dy: 9 },
+  kaupang: { anchor: 'end', dx: -9, dy: 3 },
+  dublin: { anchor: 'end', dx: -9, dy: -3 },
+  wexford: { anchor: 'end', dx: -9, dy: 9 },
+  limerick: { anchor: 'end', dx: -9, dy: 3 },
+  constantinople: { anchor: 'start', dx: 10, dy: -2 },
+  baghdad: { anchor: 'start', dx: 10, dy: 2 },
+  kiev: { anchor: 'start', dx: 9, dy: 2 },
+  cordoba: { anchor: 'end', dx: -9, dy: 2 },
+  seville: { anchor: 'end', dx: -9, dy: 4 },
+  rome: { anchor: 'start', dx: 9, dy: 2 },
 };
+
+/**
+ * High-legibility vector glyph representing settlement classification.
+ */
+function SettlementGlyph({
+  type,
+  factionColor,
+  status,
+  isCurrent,
+  playerOwns,
+  isKnown,
+  zoom,
+}: {
+  type: SettlementType;
+  factionColor: string;
+  status: SettlementStatus;
+  isCurrent: boolean;
+  playerOwns: boolean;
+  isKnown: boolean;
+  zoom: number;
+}) {
+  const scale = 1 / Math.sqrt(zoom);
+  const color = isCurrent
+    ? '#F59E0B'
+    : playerOwns
+      ? '#10B981'
+      : isKnown
+        ? factionColor
+        : '#64748B';
+
+  return (
+    <g transform={`scale(${scale})`}>
+      {/* Outer Halo on Current Location */}
+      {isCurrent && (
+        <circle
+          cx="0"
+          cy="0"
+          r="14"
+          fill="rgba(245, 158, 11, 0.22)"
+          stroke="#F59E0B"
+          strokeWidth="1.6"
+        />
+      )}
+
+      {/* Main Faction Badge Base */}
+      <circle
+        cx="0"
+        cy="0"
+        r="8.5"
+        fill="#070D15"
+        fillOpacity="0.92"
+        stroke={color}
+        strokeWidth={isCurrent ? '2.4' : playerOwns ? '2' : '1.7'}
+      />
+
+      {/* Monastery (Church Spire + Cross) - Rich Holy Raid Target */}
+      {type === 'monastery' && (
+        <g stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M -3 3.5 L -3 0.5 L 0 -3.5 L 3 0.5 L 3 3.5 Z" fill={color} fillOpacity="0.4" />
+          <line x1="0" y1="-3.5" x2="0" y2="-7" />
+          <line x1="-1.8" y1="-5.2" x2="1.8" y2="-5.2" />
+        </g>
+      )}
+
+      {/* Capital (Imperial Crown / Citadel Peaks) */}
+      {type === 'capital' && (
+        <g stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.45" strokeLinejoin="round">
+          <path d="M -4.5 3.5 L -4.5 -1.5 L -2 0.5 L 0 -3.5 L 2 0.5 L 4.5 -1.5 L 4.5 3.5 Z" />
+        </g>
+      )}
+
+      {/* City (Walled Gatehouse with Crenellations) */}
+      {type === 'city' && (
+        <g stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.4" strokeLinejoin="round">
+          <path d="M -4.5 3.5 L -4.5 -2.5 L -2.5 -2.5 L -2.5 -0.5 L 0 -2.5 L 2.5 -0.5 L 2.5 -2.5 L 4.5 -2.5 L 4.5 3.5 Z" />
+          <line x1="-1" y1="3.5" x2="-1" y2="1" strokeWidth="1" />
+          <line x1="1" y1="3.5" x2="1" y2="1" strokeWidth="1" />
+        </g>
+      )}
+
+      {/* Fortress (Round Crenellated Citadel Tower) */}
+      {type === 'fortress' && (
+        <g stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.4" strokeLinejoin="round">
+          <path d="M -4 3.5 L -4 -2.5 L -2.5 -2.5 L -2.5 -1 L 0 -2.5 L 2.5 -1 L 2.5 -2.5 L 4 -2.5 L 4 3.5 Z" />
+        </g>
+      )}
+
+      {/* Trading Post (Merchant Knarr Prow & Mast) */}
+      {type === 'trading_post' && (
+        <g stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M -4.5 1 C -3.5 3.8 3.5 3.8 4.5 1 L 3.5 -1 L -3.5 -1 Z" fill={color} fillOpacity="0.4" />
+          <line x1="0" y1="-1" x2="0" y2="-4.5" />
+          <line x1="-1.8" y1="-2.8" x2="1.8" y2="-2.8" />
+        </g>
+      )}
+
+      {/* Jarldom Seat (Chieftain Longhouse with Dragon-Prows) */}
+      {type === 'jarldom_seat' && (
+        <g stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M -4.5 3.5 L -4.5 0 L 0 -3.5 L 4.5 0 L 4.5 3.5 Z" fill={color} fillOpacity="0.4" />
+          <line x1="-1" y1="-3.5" x2="-3" y2="-5.5" />
+          <line x1="1" y1="-3.5" x2="3" y2="-5.5" />
+        </g>
+      )}
+
+      {/* Town (Twin Gabled Timber Halls) */}
+      {type === 'town' && (
+        <g stroke={color} strokeWidth="1.1" fill={color} fillOpacity="0.4" strokeLinejoin="round">
+          <path d="M -4.5 3.5 L -4.5 -0.5 L -2.2 -2.8 L 0 -0.5 L 2.2 -2.8 L 4.5 -0.5 L 4.5 3.5 Z" />
+        </g>
+      )}
+
+      {/* Village (Single Thatched Homestead) */}
+      {type === 'village' && (
+        <g stroke={color} strokeWidth="1.1" fill={color} fillOpacity="0.4" strokeLinejoin="round">
+          <path d="M -3.5 3.5 L -3.5 0 L 0 -3 L 3.5 0 L 3.5 3.5 Z" />
+        </g>
+      )}
+
+      {/* Status indicator pip at top-right (tributary, conquered, rebellious) */}
+      {status === 'tributary' && (
+        <circle cx="5.5" cy="-5.5" r="2.8" fill="#FBBF24" stroke="#050A11" strokeWidth="0.9" />
+      )}
+      {status === 'conquered' && (
+        <circle cx="5.5" cy="-5.5" r="2.8" fill="#EF4444" stroke="#050A11" strokeWidth="0.9" />
+      )}
+      {status === 'rebellious' && (
+        <circle cx="5.5" cy="-5.5" r="2.8" fill="#FF6A00" stroke="#050A11" strokeWidth="0.9" />
+      )}
+    </g>
+  );
+}
 
 export function VikingMap({
   state,
@@ -87,6 +246,10 @@ export function VikingMap({
   onRaidPort,
   onConquerCity,
   onTradeHere,
+  onBesiege,
+  onSettle,
+  onDiplomacy,
+  onMarryLocal,
 }: VikingMapProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
@@ -95,23 +258,22 @@ export function VikingMap({
 
   const [selectedId, setSelectedId] = useState<string>(state.character.locationId);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
-  const [regionFilter, setRegionFilter] = useState<'ALL' | RegionGroup>('ALL');
+  const [activeSheetTab, setActiveSheetTab] = useState<'overview' | 'actions' | 'raid' | 'siege' | 'diplomacy'>('overview');
   const [showUnexplored, setShowUnexplored] = useState<boolean>(false);
-  const [showRaidTactics, setShowRaidTactics] = useState<boolean>(false);
   const [mapTactic, setMapTactic] = useState<RaidTactic>('shield_wall');
+  const [siegeApproach, setSiegeApproach] = useState<SiegeApproach>('assault');
+  const [diploApproach, setDiploApproach] = useState<DiplomacyApproach>('trade_pact');
 
-  // Container size for 1:1 undistorted full-height SVG aspect ratio
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [canvasAspect, setCanvasAspect] = useState<number>(1.25);
 
-  // Start slightly zoomed around current location on compact viewports so labels are crisp immediately
   const initialProj = projectLatLon(currentLoc.lat, currentLoc.lon);
   const [zoom, setZoom] = useState<number>(() =>
-    typeof window !== 'undefined' && window.innerWidth < 640 ? 1.45 : 1.15
+    typeof window !== 'undefined' && window.innerWidth < 640 ? 1.4 : 1.15
   );
   const [center, setCenter] = useState<{ x: number; y: number }>(() => ({
-    x: Math.max(260, Math.min(820, initialProj.x)),
-    y: Math.max(150, Math.min(390, initialProj.y)),
+    x: Math.max(260, Math.min(1050, initialProj.x)),
+    y: Math.max(120, Math.min(480, initialProj.y)),
   }));
 
   useEffect(() => {
@@ -151,56 +313,33 @@ export function VikingMap({
     const viewW = MAP_BOUNDS.width / z;
     const minX = Math.min(MAP_BOUNDS.width / 2, viewW * 0.35);
     const maxX = Math.max(MAP_BOUNDS.width / 2, MAP_BOUNDS.width - viewW * 0.35);
-    const minY = 60;
-    const maxY = MAP_BOUNDS.height - 60;
+    const minY = 50;
+    const maxY = MAP_BOUNDS.height - 50;
     return {
       x: Math.max(minX, Math.min(maxX, cx)),
       y: Math.max(minY, Math.min(maxY, cy)),
     };
   };
 
-  const applyZoom = (nextZoomRaw: number) => {
-    const nextZ = Math.max(1, Math.min(3.6, Number(nextZoomRaw.toFixed(2))));
-    setZoom(nextZ);
-    setCenter((prev) => clampCenter(prev.x, prev.y, nextZ));
-  };
+  const applyZoom = (nextZ: number, pivotX?: number, pivotY?: number) => {
+    const clampedZ = Math.max(0.75, Math.min(4.5, Number(nextZ.toFixed(2))));
+    if (clampedZ === zoom) return;
 
-  const resetZoomPan = () => {
-    setRegionFilter('ALL');
-    setZoom(1);
-    setCenter({ x: MAP_BOUNDS.width * 0.56, y: MAP_BOUNDS.height * 0.5 });
-  };
-
-  const focusCurrentPort = () => {
-    const p = projectLatLon(currentLoc.lat, currentLoc.lon);
-    const targetZ = Math.max(zoom, 1.85);
-    setZoom(targetZ);
-    setCenter(clampCenter(p.x, p.y, targetZ));
-    setSelectedId(currentLoc.id);
-    setShowRaidTactics(false);
-    setIsSheetOpen(true);
-  };
-
-  const handleSelectRegion = (reg: 'ALL' | RegionGroup) => {
-    setRegionFilter(reg);
-    if (reg === 'ALL') {
-      setZoom(1);
-      setCenter({ x: MAP_BOUNDS.width * 0.56, y: MAP_BOUNDS.height * 0.5 });
-      return;
+    if (pivotX !== undefined && pivotY !== undefined) {
+      const factor = 1 - zoom / clampedZ;
+      const nextCx = center.x + (pivotX - center.x) * factor;
+      const nextCy = center.y + (pivotY - center.y) * factor;
+      setCenter(clampCenter(nextCx, nextCy, clampedZ));
+    } else {
+      setCenter(clampCenter(center.x, center.y, clampedZ));
     }
-    const matching = SETTLEMENTS.filter((s) => s.regionGroup === reg);
-    if (matching.length === 0) return;
-    const pts = matching.map((s) => projectLatLon(s.lat, s.lon));
-    const minX = Math.min(...pts.map((p) => p.x));
-    const maxX = Math.max(...pts.map((p) => p.x));
-    const minY = Math.min(...pts.map((p) => p.y));
-    const maxY = Math.max(...pts.map((p) => p.y));
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    const spanX = Math.max(95, maxX - minX + 90);
-    const computedZ = Math.max(1.35, Math.min(3.0, Number((MAP_BOUNDS.width / spanX).toFixed(2))));
-    setZoom(computedZ);
-    setCenter(clampCenter(cx, cy, computedZ));
+    setZoom(clampedZ);
+  };
+
+  const handleResetView = () => {
+    const p = projectLatLon(currentLoc.lat, currentLoc.lon);
+    setZoom(1.35);
+    setCenter(clampCenter(p.x, p.y, 1.35));
   };
 
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -259,28 +398,25 @@ export function VikingMap({
     pinchDistRef.current = null;
   };
 
-  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.28 : -0.28;
-    applyZoom(zoom + delta);
-  };
+  const viewWidth = MAP_BOUNDS.width / zoom;
+  const viewHeight = (MAP_BOUNDS.width * canvasAspect) / zoom;
+  const viewBoxStr = `${center.x - viewWidth / 2} ${center.y - viewHeight / 2} ${viewWidth} ${viewHeight}`;
 
   const inspected: Settlement = SETTLEMENTS_BY_ID[selectedId] ?? currentLoc;
   const inspectedFa = SETTLEMENTS_FA[inspected.id];
+  const inspectedDisplayName = isFa ? inspectedFa?.name ?? inspected.name : inspected.name;
+  const inspectedNorseName = isFa
+    ? inspectedFa?.norseName ?? inspected.norseName
+    : inspected.norseName;
+
   const controller = getControllerInYear(inspected, state.year);
   const borders = getHistoricalBordersForYear(state.year);
   const weather = getSeasonalWeatherProfile(state.season, lang);
 
-  const used = state.yearlyActivitiesUsed ?? {};
-  const hasShips = state.realm.longships + state.realm.knarrs > 0;
-  const hasKnarr = state.realm.knarrs > 0;
-  const isDiscovered = state.discoveredSettlements.includes(inspected.id) || showUnexplored;
-  const isHeldByPlayer = state.realm.holdings.some(
-    (h) => h.settlementId === inspected.id && h.farms > 0
-  );
-  const isFortifiedEnemyCity = inspected.baseDefense >= 7 && !isHeldByPlayer;
   const effectiveSeamanship =
     state.character.skills.seamanship + (hasBoathouse(state) ? 3 : 0);
+  const hasKnarr = state.realm.knarrs > 0;
+  const hasShips = state.realm.longships > 0 || hasKnarr;
 
   const voyage = calculateVoyageMetrics(
     currentLoc,
@@ -291,196 +427,127 @@ export function VikingMap({
     hasKnarr
   );
 
-  const inspectedDisplayName = isFa ? inspectedFa?.name ?? inspected.name : inspected.name;
-  const inspectedNorseName = isFa
-    ? inspectedFa?.norseName ?? inspected.norseName
-    : inspected.norseName;
+  const isDiscovered =
+    state.discoveredSettlements.includes(inspected.id) || showUnexplored;
+  const isHeldByPlayer = state.realm.holdings.some(
+    (h) => h.settlementId === inspected.id && h.farms > 0
+  );
+  const isFortifiedEnemyCity = inspected.baseDefense >= 7 && !isHeldByPlayer;
+
+  const currentStatus: SettlementStatus =
+    state.settlementStatuses?.[inspected.id] ?? inspected.defaultStatus ?? 'independent';
+  const isTributary =
+    currentStatus === 'tributary' || (state.tributaries ?? []).includes(inspected.id);
+
+  const used = state.yearlyActivitiesUsed ?? {};
   const currentLocName = isFa
-    ? (SETTLEMENTS_FA[currentLoc.id]?.name ?? currentLoc.name).split(' (')[0]
-    : currentLoc.name.split(' (')[0];
+    ? SETTLEMENTS_FA[currentLoc.id]?.name ?? currentLoc.name
+    : currentLoc.name;
 
-  const viewW = MAP_BOUNDS.width / zoom;
-  const viewH = Math.max(260, viewW * canvasAspect);
-  const vbX = center.x - viewW / 2;
-  const vbY = center.y - viewH / 2;
+  // Demographics calculation
+  const norsePop = inspected.norsePopulation ?? 150;
+  const nativePop = inspected.nativePopulation ?? 850;
+  const totalPop = norsePop + nativePop;
+  const norsePct = Math.round((norsePop / totalPop) * 100);
 
-  const renderSeasonIcon = (s: Season, cls = 'w-4 h-4 shrink-0') => {
-    switch (s) {
-      case Season.Winter:
-        return <Snowflake className={`${cls} text-[#38BDF8]`} />;
-      case Season.Autumn:
-        return <CloudRain className={`${cls} text-[#94A3B8]`} />;
-      case Season.Spring:
-        return <Wind className={`${cls} text-teal-300`} />;
-      case Season.Summer:
-        return <Sun className={`${cls} text-[#F59E0B]`} />;
-    }
-  };
-
-  const raidTacticOptions: { value: RaidTactic; label: string; desc: string; tag: string }[] = [
-    {
-      value: 'shield_wall',
-      label: isFa ? 'دیوار سپرها' : 'Shield Wall',
-      desc: isFa ? 'نبرد مستقیم و متعادل' : 'Balanced frontline clash',
-      tag: isFa ? 'متعادل' : 'Balanced',
-    },
+  const raidTacticOptions: {
+    value: RaidTactic;
+    label: string;
+    desc: string;
+    tag: string;
+  }[] = [
     {
       value: 'surprise',
-      label: isFa ? 'شبیخون سحرگاه' : 'Dawn Ambush',
-      desc: isFa ? 'یورش سریع با غنیمت بیشتر' : 'Cunning strike · higher loot',
-      tag: isFa ? 'ذکاوت' : 'Cunning',
+      label: isFa ? 'شبیخون سحرگاهی' : 'Dawn Surprise',
+      desc: isFa ? 'شبیخون غافلگیرانه در مه، تکیه بر زیرکی' : 'Stealth landing in coastal mist, relying on Cunning',
+      tag: isFa ? 'زیرکی' : 'Cunning',
+    },
+    {
+      value: 'shield_wall',
+      label: isFa ? 'دیوار سپرها' : 'Shield-Wall',
+      desc: isFa ? 'نبرد منظم و سنگین، محافظت در برابر تلفات' : 'Disciplined clash of wood and iron, best defense',
+      tag: isFa ? 'قدرت' : 'Strength',
     },
     {
       value: 'ransom',
-      label: isFa ? 'گرفتن باج نقره' : 'Demand Tribute',
-      desc: isFa ? 'محاصره با تلفات کمتر' : 'Intimidate for silver · safer',
-      tag: isFa ? 'کم‌خطر' : 'Safer',
+      label: isFa ? 'محاصره و باج‌خواهی' : 'Hostage Ransom',
+      desc: isFa ? 'گرفتن اسیران اشرافی برای نقره بیشتر بدون تلفات' : 'Capture nobles and demand high silver tribute',
+      tag: isFa ? 'دیپلماسی' : 'Diplomacy',
     },
     {
       value: 'feigned_retreat',
-      label: isFa ? 'فرار ساختگی' : 'Feigned Flight',
-      desc: isFa ? 'کشاندن مدافعان به تله' : 'Tactical ambush maneuver',
-      tag: isFa ? 'تاکتیکی' : 'Tactical',
+      label: isFa ? 'عقب‌نشینی ساختگی' : 'Feigned Retreat',
+      desc: isFa ? 'فریب مدافعان به دشت باز با تغییر تاکتیک ناگهانی' : 'Lure garrison into an open beach ambush',
+      tag: isFa ? 'تاکتیک' : 'Tactic',
     },
   ];
 
   return (
-    <div className="h-full min-h-[380px] flex flex-col bg-[#070E17] text-start overflow-hidden">
-      {/* Top Region Filter Chips Row */}
-      <div className="shrink-0 px-3 py-2 bg-[#0D1624] border-b border-[#1E2D40] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-        {REGION_CHIPS.map((reg) => {
-          const active = regionFilter === reg;
-          const label =
-            reg === 'ALL'
-              ? isFa
-                ? 'همه دریاها'
-                : 'All Seas'
-              : REGION_LABELS[lang][reg];
-          return (
-            <button
-              key={reg}
-              type="button"
-              onClick={() => handleSelectRegion(reg)}
-              className={`min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition-colors cursor-pointer ${
-                active
-                  ? 'bg-[#F59E0B] text-[#0B1118]'
-                  : 'bg-[#131D2B] hover:bg-[#1A293D] border border-[#24364D] text-[#CBD5E1]'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Main Full-Height Interactive Sea Chart Stage */}
+    <div className="relative w-full h-full flex flex-col bg-[#070D15] overflow-hidden select-none">
+      {/* ================================================================= */}
+      {/* INTERACTIVE FULL-HEIGHT VECTOR MAP SVG STAGE                      */}
+      {/* ================================================================= */}
       <div
         ref={containerRef}
-        dir="ltr"
-        className="relative flex-1 min-h-[260px] w-full bg-[#070E17] overflow-hidden touch-none"
+        className="relative flex-1 min-h-0 w-full overflow-hidden bg-[#0A121D] cursor-grab active:cursor-grabbing"
       >
-        {/* Top-Left Compact Season & Sea Weather Overlay */}
-        <div
-          dir={isFa ? 'rtl' : 'ltr'}
-          className="absolute top-2.5 left-2.5 z-20 max-w-[calc(100%-70px)] px-3 py-2 rounded-xl bg-[#0B131F]/90 backdrop-blur-xs border border-[#24364D] flex items-center gap-2 pointer-events-none"
-        >
-          {renderSeasonIcon(state.season)}
-          <div className="text-xs leading-snug">
-            <span className="font-semibold text-[#F1F5F9]">
-              {SEASON_LABELS[lang][state.season]}
-            </span>
-            <span className="text-[#94A3B8]"> · </span>
-            <span className="font-mono tabular-nums text-[#38BDF8]">{weather.seaEffectShort}</span>
-          </div>
-        </div>
-
-        {/* Neat Vertical Map Controls Stack (Top-Right, all 44x44 touch targets) */}
-        <div className="absolute top-2.5 right-2.5 z-20 flex flex-col gap-1.5">
+        {/* Floating Map Controls Dock (Zoom, Reset, World Fog) */}
+        <div className="absolute top-3 end-3 z-30 flex items-center gap-1.5 bg-[#0C1521]/90 backdrop-blur-md border border-[#233246] rounded-xl p-1 shadow-lg">
           <button
             type="button"
-            onClick={() => applyZoom(zoom + 0.45)}
-            aria-label={isFa ? 'بزرگ‌نمایی نقشه' : 'Zoom In'}
-            title={isFa ? 'بزرگ‌نمایی نقشه' : 'Zoom In'}
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[#0F1722]/92 border border-[#283B52] hover:border-[#38BDF8] text-[#F1F5F9] flex items-center justify-center shadow-md cursor-pointer transition-colors"
+            onClick={() => applyZoom(zoom + 0.35)}
+            aria-label={isFa ? 'بزرگ‌نمایی' : 'Zoom In'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#F1F5F9] hover:bg-[#1E2D40] transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
           </button>
-
           <button
             type="button"
-            onClick={() => applyZoom(zoom - 0.45)}
-            aria-label={isFa ? 'کوچک‌نمایی نقشه' : 'Zoom Out'}
-            title={isFa ? 'کوچک‌نمایی نقشه' : 'Zoom Out'}
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[#0F1722]/92 border border-[#283B52] hover:border-[#38BDF8] text-[#F1F5F9] flex items-center justify-center shadow-md cursor-pointer transition-colors"
+            onClick={() => applyZoom(zoom - 0.35)}
+            aria-label={isFa ? 'کوچک‌نمایی' : 'Zoom Out'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#F1F5F9] hover:bg-[#1E2D40] transition-colors cursor-pointer"
           >
             <Minus className="w-4 h-4" />
           </button>
-
           <button
             type="button"
-            onClick={focusCurrentPort}
-            aria-label={isFa ? 'رفتن به موقعیت فعلی' : 'Center on Current Port'}
-            title={isFa ? 'رفتن به بندر فعلی شما' : 'Center on Current Port'}
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[#0F1722]/92 border border-[#F59E0B]/60 hover:border-[#F59E0B] text-[#F59E0B] flex items-center justify-center shadow-md cursor-pointer transition-colors"
+            onClick={handleResetView}
+            title={isFa ? 'بازنشانی نقشه به موقعیت فعلی' : 'Reset to current location'}
+            aria-label={isFa ? 'بازنشانی موقعیت' : 'Reset view'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#F59E0B] hover:bg-[#1E2D40] transition-colors cursor-pointer"
           >
-            <Anchor className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
-
+          <div className="w-px h-5 bg-[#233246]" />
           <button
             type="button"
             onClick={() => setShowUnexplored((v) => !v)}
-            aria-label={
-              showUnexplored
-                ? isFa
-                  ? 'پوشاندن ناشناخته‌ها'
-                  : 'Hide Unexplored Ports'
-                : isFa
-                  ? 'نمایش کل بنادر'
-                  : 'Reveal All Ports'
-            }
+            aria-pressed={showUnexplored}
             title={
               showUnexplored
                 ? isFa
-                  ? 'پوشاندن بنادر ناشناخته'
-                  : 'Hide Unexplored Ports'
+                  ? 'پنهان‌سازی بنادر کشف‌نشده'
+                  : 'Hide unexplored ports'
                 : isFa
-                  ? 'نمایش تمام بنادر روی نقشه'
-                  : 'Reveal All Ports'
+                  ? 'نمایش تمام بنادر جهان'
+                  : 'Show all world ports'
             }
-            className={`min-w-[44px] min-h-[44px] rounded-xl border flex items-center justify-center shadow-md cursor-pointer transition-colors ${
+            className={`h-8 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
               showUnexplored
-                ? 'bg-[#172B42] border-[#38BDF8] text-[#38BDF8]'
-                : 'bg-[#0F1722]/92 border-[#283B52] hover:border-[#38BDF8] text-[#CBD5E1]'
+                ? 'bg-[#0284C7]/25 text-[#38BDF8]'
+                : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#1E2D40]'
             }`}
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[11px] font-medium">
+              {showUnexplored ? (isFa ? 'همه بنادر' : 'All') : (isFa ? 'مه دریا' : 'Fog')}
+            </span>
           </button>
-
-          {(zoom > 1.05 || regionFilter !== 'ALL') && (
-            <button
-              type="button"
-              onClick={resetZoomPan}
-              aria-label={isFa ? 'بازنشانی نمای نقشه' : 'Reset Map View'}
-              title={isFa ? 'بازنشانی نمای نقشه' : 'Reset Map View'}
-              className="min-w-[44px] min-h-[44px] rounded-xl bg-[#0F1722]/92 border border-[#283B52] hover:border-[#F59E0B] text-[#CBD5E1] hover:text-[#F59E0B] flex items-center justify-center shadow-md cursor-pointer transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          )}
         </div>
-
-        {/* Zoom / Tap Hint */}
-        <div
-          dir={isFa ? 'rtl' : 'ltr'}
-          className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none text-xs font-mono text-[#CBD5E1] bg-[#0B131F]/85 border border-[#1E2D40] px-2.5 py-1 rounded-lg"
-        >
-          {isFa
-            ? `${zoom.toFixed(1)}x · روی هر بندر بزنید`
-            : `${zoom.toFixed(1)}x · Tap any port`}
-        </div>
-
         <svg
-          viewBox={`${vbX} ${vbY} ${viewW} ${viewH}`}
+          viewBox={viewBoxStr}
+          preserveAspectRatio="xMidYMid slice"
+          className="w-full h-full block touch-none"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -488,54 +555,73 @@ export function VikingMap({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onWheel={handleWheel}
-          className="w-full h-full block select-none cursor-grab active:cursor-grabbing"
-          role="img"
-          aria-label="Viking Age Sea Chart"
         >
-          {/* Extended Ocean Graticule */}
-          {[-45, -30, -15, 0, 15].map((lon) => {
-            const { x } = projectLatLon(55, lon);
+          <defs>
+            <pattern id="seaGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0E1B2D" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+
+          {/* Ocean Background */}
+          <rect
+            x={-600}
+            y={-600}
+            width={MAP_BOUNDS.width + 1200}
+            height={MAP_BOUNDS.height + 1200}
+            fill="#09131F"
+          />
+          <rect
+            x={-600}
+            y={-600}
+            width={MAP_BOUNDS.width + 1200}
+            height={MAP_BOUNDS.height + 1200}
+            fill="url(#seaGrid)"
+            opacity="0.65"
+          />
+
+          {/* Graticule Lines */}
+          {[-45, -30, -15, 0, 15, 30, 45].map((lon) => {
+            const { x } = projectLatLon(0, lon);
             return (
               <line
                 key={`lon_${lon}`}
                 x1={x}
-                y1={-450}
+                y1={-500}
                 x2={x}
-                y2={MAP_BOUNDS.height + 450}
-                stroke="#0E1B2D"
+                y2={MAP_BOUNDS.height + 500}
+                stroke="#0E1E32"
                 strokeWidth={1 / zoom}
               />
             );
           })}
-          {[48, 52, 56, 60, 64].map((lat) => {
+          {[36, 44, 52, 60, 66].map((lat) => {
             const { y } = projectLatLon(lat, 0);
             return (
               <line
                 key={`lat_${lat}`}
-                x1={-400}
+                x1={-600}
                 y1={y}
-                x2={MAP_BOUNDS.width + 400}
+                x2={MAP_BOUNDS.width + 600}
                 y2={y}
-                stroke="#0E1B2D"
+                stroke="#0E1E32"
                 strokeWidth={1 / zoom}
               />
             );
           })}
 
-          {/* Landmasses */}
+          {/* Landmass Polygons */}
           {LANDMASS_POLYGONS.map((poly) => (
             <polygon
               key={poly.id}
               points={pointsToSvgPolygon(poly.coords)}
-              fill="#162333"
-              stroke="#334B68"
-              strokeWidth={1.35 / Math.sqrt(zoom)}
+              fill="#152435"
+              stroke="#2E4663"
+              strokeWidth={1.3 / Math.sqrt(zoom)}
             />
           ))}
 
-          {/* Small Island Markers */}
-          {['kirkwall', 'shetland', 'faroes', 'isle_of_man', 'iona'].map((islId) => {
+          {/* Island Polygons / Ellipses */}
+          {['kirkwall', 'shetland', 'faroes', 'isle_of_man', 'iona', 'visby'].map((islId) => {
             const s = SETTLEMENTS_BY_ID[islId];
             if (!s) return null;
             const { x, y } = projectLatLon(s.lat, s.lon);
@@ -546,27 +632,27 @@ export function VikingMap({
                 cy={y}
                 rx={6.5}
                 ry={4.5}
-                fill="#1C2C40"
-                stroke="#3A5575"
+                fill="#1C2F45"
+                stroke="#3B577A"
                 strokeWidth={1 / Math.sqrt(zoom)}
               />
             );
           })}
 
-          {/* Navigable Rivers */}
+          {/* Navigable River Systems */}
           {NAVIGABLE_RIVERS.map((riv) => (
             <path
               key={riv.name}
               d={pointsToSvgPath(riv.coords)}
               fill="none"
               stroke="#2563EB"
-              strokeOpacity="0.55"
-              strokeWidth={2 / Math.sqrt(zoom)}
+              strokeOpacity="0.65"
+              strokeWidth={2.4 / Math.sqrt(zoom)}
               strokeLinecap="round"
             />
           ))}
 
-          {/* Historical Political Zones (with crisp halo labels) */}
+          {/* Historical Political Zones */}
           {borders.map((zone) => {
             const zCenter = projectLatLon(zone.coords[0][0], zone.coords[0][1]);
             return (
@@ -575,7 +661,7 @@ export function VikingMap({
                   points={pointsToSvgPolygon(zone.coords)}
                   fill={zone.fill}
                   stroke={zone.stroke}
-                  strokeWidth={1.3 / Math.sqrt(zoom)}
+                  strokeWidth={1.2 / Math.sqrt(zoom)}
                   strokeDasharray="4 3"
                 />
                 <text
@@ -589,7 +675,7 @@ export function VikingMap({
                   className="[paint-order:stroke_fill]"
                   fontSize={12 / Math.sqrt(zoom)}
                   fontWeight="700"
-                  opacity="0.92"
+                  opacity="0.9"
                 >
                   {isFa ? ZONE_LABELS_FA[zone.id] ?? zone.label : zone.label}
                 </text>
@@ -597,7 +683,7 @@ export function VikingMap({
             );
           })}
 
-          {/* Sea Routes */}
+          {/* Sea Routes Network */}
           {SEA_ROUTES.map(([aId, bId]) => {
             const a = SETTLEMENTS_BY_ID[aId];
             const b = SETTLEMENTS_BY_ID[bId];
@@ -636,7 +722,7 @@ export function VikingMap({
             );
           })}
 
-          {/* Active Route Preview Line */}
+          {/* Active Course Line to Selected Port */}
           {inspected.id !== currentLoc.id && (
             <line
               x1={projectLatLon(currentLoc.lat, currentLoc.lon).x}
@@ -650,25 +736,23 @@ export function VikingMap({
                     ? '#F59E0B'
                     : '#38BDF8'
               }
-              strokeWidth={2.2 / Math.sqrt(zoom)}
+              strokeWidth={2.4 / Math.sqrt(zoom)}
               strokeDasharray="5 3"
             />
           )}
 
-          {/* Settlements & High-Legibility Halo Labels */}
+          {/* World Settlements with Distinct Vector Glyphs & Status Badges */}
           {SETTLEMENTS.map((s) => {
             const { x, y } = projectLatLon(s.lat, s.lon);
             const isCurrent = s.id === currentLoc.id;
             const isSelected = s.id === inspected.id && isSheetOpen;
             const known =
-              state.discoveredSettlements.includes(s.id) ||
-              showUnexplored ||
-              regionFilter === s.regionGroup;
+              state.discoveredSettlements.includes(s.id) || showUnexplored;
             const playerOwns = state.realm.holdings.some(
               (h) => h.settlementId === s.id && h.farms > 0
             );
-            const isFortified = s.baseDefense >= 7 && !playerOwns;
-            const matchesRegion = regionFilter === 'ALL' || s.regionGroup === regionFilter;
+            const status: SettlementStatus =
+              state.settlementStatuses?.[s.id] ?? s.defaultStatus ?? 'independent';
 
             const mapPortLabel = isFa
               ? (SETTLEMENTS_FA[s.id]?.name ?? s.name).split(' (')[0]
@@ -676,85 +760,54 @@ export function VikingMap({
 
             const hint = LABEL_ANCHOR_HINTS[s.id];
             const anchor = hint?.anchor ?? 'start';
-            const dx = (hint?.dx ?? 8) / Math.sqrt(zoom);
+            const dx = (hint?.dx ?? 10) / Math.sqrt(zoom);
             const dy = (hint?.dy ?? 4) / Math.sqrt(zoom);
 
             return (
               <g
                 key={s.id}
-                opacity={matchesRegion || isCurrent ? 1 : 0.32}
+                transform={`translate(${x}, ${y})`}
+                opacity={1}
                 onClick={() => {
                   if (!dragRef.current.moved) {
                     setSelectedId(s.id);
-                    setShowRaidTactics(false);
+                    setActiveSheetTab('overview');
                     setIsSheetOpen(true);
                   }
                 }}
                 className="cursor-pointer"
               >
-                {/* Generous Touch Target Circle */}
-                <circle cx={x} cy={y} r={18 / Math.sqrt(zoom)} fill="transparent" />
+                {/* Generous Invisible Touch Target */}
+                <circle cx="0" cy="0" r={22 / Math.sqrt(zoom)} fill="transparent" />
 
-                {/* Current Location Outer Halo */}
-                {isCurrent && (
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={11.5 / Math.sqrt(zoom)}
-                    fill="rgba(245, 158, 11, 0.25)"
-                    stroke="#F59E0B"
-                    strokeWidth={1.6 / Math.sqrt(zoom)}
-                  />
-                )}
-
-                {/* Fortified Stronghold Ring */}
-                {known && isFortified && !isCurrent && (
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={7.5 / Math.sqrt(zoom)}
-                    fill="none"
-                    stroke="#EF4444"
-                    strokeOpacity="0.85"
-                    strokeWidth={1.35 / Math.sqrt(zoom)}
-                  />
-                )}
-
-                {/* Selected Port Ring */}
+                {/* Selected Port Ring Highlight */}
                 {isSelected && !isCurrent && (
                   <circle
-                    cx={x}
-                    cy={y}
-                    r={10 / Math.sqrt(zoom)}
-                    fill="rgba(56, 189, 248, 0.18)"
+                    cx="0"
+                    cy="0"
+                    r={13.5 / Math.sqrt(zoom)}
+                    fill="rgba(56, 189, 248, 0.22)"
                     stroke="#38BDF8"
-                    strokeWidth={1.6 / Math.sqrt(zoom)}
+                    strokeWidth={1.8 / Math.sqrt(zoom)}
                   />
                 )}
 
-                {/* Core Port Dot */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={(isCurrent ? 5.6 : playerOwns ? 5 : 4.2) / Math.sqrt(zoom)}
-                  fill={
-                    isCurrent
-                      ? '#F59E0B'
-                      : playerOwns
-                        ? '#34D399'
-                        : known
-                          ? '#F8FAFC'
-                          : '#64748B'
-                  }
-                  stroke="#050A11"
-                  strokeWidth={1.4 / Math.sqrt(zoom)}
+                {/* Distinct Vector Glyph by Settlement Type */}
+                <SettlementGlyph
+                  type={s.settlementType ?? 'town'}
+                  factionColor={s.factionColor ?? '#F59E0B'}
+                  status={status}
+                  isCurrent={isCurrent}
+                  playerOwns={playerOwns}
+                  isKnown={known}
+                  zoom={zoom}
                 />
 
-                {/* High-Contrast Outlined Port Name Label */}
+                {/* High-Legibility Outlined Settlement Label */}
                 {(known || isSelected || isCurrent) && (
                   <text
-                    x={x + dx}
-                    y={y + dy}
+                    x={dx}
+                    y={dy}
                     textAnchor={anchor}
                     fill={
                       isCurrent
@@ -766,12 +819,12 @@ export function VikingMap({
                             : '#F8FAFC'
                     }
                     stroke="#050A11"
-                    strokeWidth={4.2 / Math.sqrt(zoom)}
+                    strokeWidth={4.4 / Math.sqrt(zoom)}
                     strokeLinejoin="round"
                     strokeLinecap="round"
                     paintOrder="stroke fill"
                     className="[paint-order:stroke_fill]"
-                    fontSize={(isCurrent || isSelected ? 14.5 : 12.5) / Math.sqrt(zoom)}
+                    fontSize={(isCurrent || isSelected ? 14 : 12) / Math.sqrt(zoom)}
                     fontWeight={isCurrent || isSelected ? '700' : '600'}
                   >
                     {mapPortLabel}
@@ -783,52 +836,62 @@ export function VikingMap({
         </svg>
       </div>
 
-      {/* Bottom Legend + Quick Current Port Sheet Trigger */}
-      <div className="shrink-0 px-3 py-2 bg-[#0D1624] border-t border-[#1E2D40] flex flex-wrap items-center justify-between gap-2">
-        {/* Map Legend */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#CBD5E1]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shrink-0" />
-            <span>{isFa ? 'موقعیت شما' : 'You'}</span>
+      {/* ================================================================= */}
+      {/* BOTTOM FLOATING MAP LEGEND & QUICK SHEET TRIGGER                  */}
+      {/* ================================================================= */}
+      <div className="relative z-30 shrink-0 px-3 py-2 bg-[#0C1521]/95 border-t border-[#1E2D40] backdrop-blur-xs flex items-center justify-between gap-3 text-xs text-[#94A3B8]">
+        {/* Settlement Type & Status Legend */}
+        <div className="flex flex-wrap items-center gap-3 overflow-x-auto no-scrollbar py-0.5">
+          <span className="inline-flex items-center gap-1.5 text-[#F1F5F9]">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+            <span>{isFa ? 'موقعیت شما' : 'Your Fleet'}</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#34D399] shrink-0" />
-            <span>{isFa ? 'ملک شما' : 'Estate'}</span>
+            <Church className="w-3.5 h-3.5 text-[#FBBF24]" />
+            <span>{isFa ? 'صومعه (غارت پرارزش)' : 'Monastery (Rich)'}</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#F8FAFC] shrink-0" />
-            <span>{isFa ? 'بندر' : 'Port'}</span>
+            <Castle className="w-3.5 h-3.5 text-[#EF4444]" />
+            <span>{isFa ? 'دژ / شهر بزرگ' : 'Fortress / City'}</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border-2 border-[#EF4444] shrink-0" />
-            <span>{isFa ? 'دژ مستحکم' : 'Fortified'}</span>
+            <Ship className="w-3.5 h-3.5 text-[#38BDF8]" />
+            <span>{isFa ? 'مرکز تجاری' : 'Trading Post'}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5 text-[#A855F7]" />
+            <span>{isFa ? 'پایتخت' : 'Capital'}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Coins className="w-3.5 h-3.5 text-[#FBBF24]" />
+            <span>{isFa ? 'خراجگزار' : 'Tributary'}</span>
           </span>
         </div>
 
-        {/* Open Port Sheet Button */}
+        {/* Selected Port Bottom Sheet Open Button */}
         <button
           type="button"
           onClick={() => {
-            setShowRaidTactics(false);
+            setActiveSheetTab('overview');
             setIsSheetOpen(true);
           }}
           className="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-[#131D2B] hover:bg-[#1B2A3E] border border-[#283B52] text-xs font-bold text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
         >
           <Compass className="w-4 h-4 text-[#F59E0B] shrink-0" />
           <span>
-            {isFa ? `اطلاعات ${currentLocName}` : `Port: ${currentLocName}`}
+            {isFa ? `اطلاعات ${inspectedDisplayName}` : `Port: ${inspectedDisplayName}`}
           </span>
         </button>
       </div>
 
       {/* ================================================================= */}
-      {/* SLIDE-UP LOCATION DETAIL BOTTOM SHEET                             */}
+      {/* SLIDE-UP SETTLEMENT DETAIL & ACTIONS BOTTOM SHEET                 */}
       {/* ================================================================= */}
       <NorseBottomSheet
         isOpen={isSheetOpen}
         onClose={() => {
           setIsSheetOpen(false);
-          setShowRaidTactics(false);
+          setActiveSheetTab('overview');
         }}
         accent={
           inspected.id === currentLoc.id
@@ -860,7 +923,11 @@ export function VikingMap({
                   : 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
             }`}
           >
-            {isFortifiedEnemyCity ? (
+            {inspected.settlementType === 'monastery' ? (
+              <Church className="w-6 h-6 text-[#FBBF24]" />
+            ) : inspected.settlementType === 'capital' ? (
+              <Crown className="w-6 h-6 text-[#A855F7]" />
+            ) : isFortifiedEnemyCity ? (
               <Castle className="w-6 h-6" />
             ) : (
               <Anchor className="w-6 h-6" />
@@ -868,81 +935,244 @@ export function VikingMap({
           </div>
         }
       >
-        {/* Port Metrics Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          <div className="p-3 rounded-xl bg-[#131D2B] border border-[#233246]">
-            <div className="text-xs text-[#94A3B8]">
-              {isFa ? 'ثروت بازار' : 'Market Wealth'}
-            </div>
-            <div className="text-sm font-mono font-bold tabular-nums text-[#FBBF24] mt-0.5">
-              {isDiscovered ? `${inspected.baseWealth} / 10` : '? / 10'}
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-[#131D2B] border border-[#233246]">
-            <div className="text-xs text-[#94A3B8]">
-              {isFa ? 'استحکامات دفاعی' : 'Port Defense'}
-            </div>
-            <div
-              className={`text-sm font-mono font-bold tabular-nums mt-0.5 ${
-                inspected.baseDefense >= 7 ? 'text-[#F87171]' : 'text-[#CBD5E1]'
-              }`}
-            >
-              {isDiscovered ? `${inspected.baseDefense} / 10` : '? / 10'}
-            </div>
-          </div>
-
-          <div className="col-span-2 sm:col-span-1 p-3 rounded-xl bg-[#131D2B] border border-[#233246]">
-            <div className="text-xs text-[#94A3B8]">
-              {inspected.id === currentLoc.id
-                ? isFa
-                  ? 'وضعیت بندر'
-                  : 'Port Status'
-                : isFa
-                  ? `مسیر دریایی (~${voyage.sailingDays} روز)`
-                  : `Voyage (~${voyage.sailingDays}d · ${voyage.nauticalMiles} nm)`}
-            </div>
-            <div className="text-sm font-mono font-bold tabular-nums mt-0.5">
-              {inspected.id === currentLoc.id ? (
-                <span className="text-[#F59E0B]">
-                  {isHeldByPlayer
-                    ? isFa
-                      ? 'ملک شما · لنگرگاه'
-                      : 'Your Estate · Moored'
-                    : isFa
-                      ? 'لنگرگاه فعلی شما'
-                      : 'Moored Here'}
-                </span>
-              ) : (
-                <span
-                  className={`inline-flex items-center gap-1 ${
-                    voyage.dangerPct >= 35
-                      ? 'text-[#F87171]'
-                      : voyage.dangerPct >= 18
-                        ? 'text-[#F59E0B]'
-                        : 'text-[#34D399]'
-                  }`}
-                >
-                  {voyage.dangerPct >= 30 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
-                  {isFa ? `خطر دریا ${voyage.dangerPct}%` : `Sea Risk ${voyage.dangerPct}%`}
-                </span>
-              )}
-            </div>
-          </div>
+        {/* Navigation Tabs inside Bottom Sheet */}
+        <div className="flex items-center gap-1 border-b border-[#1E2D40] pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveSheetTab('overview')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+              activeSheetTab === 'overview'
+                ? 'bg-[#1E2D40] text-[#F1F5F9]'
+                : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+            }`}
+          >
+            {isFa ? 'مشخصات و آمار' : 'Overview & Lore'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSheetTab('actions')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+              activeSheetTab === 'actions'
+                ? 'bg-[#1E2D40] text-[#F1F5F9]'
+                : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+            }`}
+          >
+            {isFa ? 'اقدامات موجود (۶ گانه)' : 'Actions (6)'}
+          </button>
         </div>
 
-        {/* Historical Lore */}
-        {isDiscovered && (
-          <p className="text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
-            {isFa ? inspectedFa?.summary ?? inspected.historicalSummary : inspected.historicalSummary}
-          </p>
+        {/* TAB 1: OVERVIEW & DEMOGRAPHICS */}
+        {activeSheetTab === 'overview' && (
+          <div className="space-y-3.5">
+            {/* Status & Ruler Badge */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#111A26] border border-[#203043] text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#CBD5E1]">
+                  {isFa ? 'حاکم محلی:' : 'Local Ruler:'}
+                </span>
+                <span className="text-[#38BDF8] font-semibold">{controller.ruler}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-[#1B293A] text-xs font-medium text-[#F1F5F9]">
+                  {SETTLEMENT_TYPE_LABELS[lang][inspected.settlementType ?? 'town']}
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold ${
+                    currentStatus === 'tributary'
+                      ? 'bg-[#FBBF24]/20 text-[#FBBF24] border border-[#FBBF24]/40'
+                      : currentStatus === 'conquered'
+                        ? 'bg-[#EF4444]/20 text-[#F87171] border border-[#EF4444]/40'
+                        : currentStatus === 'rebellious'
+                          ? 'bg-[#FF6A00]/20 text-[#FFA94D] border border-[#FF6A00]/40'
+                          : 'bg-[#1B293A] text-[#94A3B8]'
+                  }`}
+                >
+                  {SETTLEMENT_STATUS_LABELS[lang][currentStatus]}
+                </span>
+              </div>
+            </div>
+
+            {/* Demographics Bar (Norse vs Native Population) */}
+            <div className="p-3 rounded-xl bg-[#111A26] border border-[#203043] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="inline-flex items-center gap-1.5 text-[#CBD5E1] font-semibold">
+                  <Users className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>{isFa ? 'ترکیب جمعیتی' : 'Demographics'}</span>
+                </span>
+                <span className="text-[#94A3B8] font-mono">
+                  {isFa
+                    ? `نورس ${norsePct}% · بومی ${100 - norsePct}%`
+                    : `Norse ${norsePct}% · Native ${100 - norsePct}%`}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full h-2.5 rounded-full bg-[#1E2D40] overflow-hidden flex">
+                <div
+                  style={{ width: `${norsePct}%` }}
+                  className="bg-[#F59E0B] h-full transition-all"
+                  title={`Norse: ${norsePop.toLocaleString()}`}
+                />
+                <div
+                  style={{ width: `${100 - norsePct}%` }}
+                  className="bg-[#38BDF8]/60 h-full transition-all"
+                  title={`Native: ${nativePop.toLocaleString()}`}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#94A3B8]">
+                <span>
+                  {isFa
+                    ? `فرهنگ: ${inspected.primaryCultureFa ?? inspected.primaryCulture ?? 'نورس'}`
+                    : `Culture: ${inspected.primaryCulture ?? 'Norse'}`}
+                </span>
+                <span>
+                  {isFa
+                    ? `آیین: ${RELIGION_LABELS.fa[controller.religion] ?? controller.religion}`
+                    : `Faith: ${RELIGION_LABELS.en[controller.religion] ?? controller.religion}`}
+                </span>
+              </div>
+            </div>
+
+            {/* Port Metrics Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#233246]">
+                <div className="text-[11px] text-[#94A3B8]">
+                  {isFa ? 'ثروت بازار' : 'Market Wealth'}
+                </div>
+                <div className="text-sm font-mono font-bold text-[#FBBF24] mt-0.5">
+                  {isDiscovered ? `${inspected.baseWealth} / 10` : '? / 10'}
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#233246]">
+                <div className="text-[11px] text-[#94A3B8]">
+                  {isFa ? 'استحکامات' : 'Defense'}
+                </div>
+                <div
+                  className={`text-sm font-mono font-bold mt-0.5 ${
+                    inspected.baseDefense >= 7 ? 'text-[#F87171]' : 'text-[#CBD5E1]'
+                  }`}
+                >
+                  {isDiscovered ? `${inspected.baseDefense} / 10` : '? / 10'}
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#233246]">
+                <div className="text-[11px] text-[#94A3B8]">
+                  {isFa ? 'فاصله دریایی' : 'Distance'}
+                </div>
+                <div className="text-sm font-mono font-bold text-[#38BDF8] mt-0.5">
+                  {inspected.id === currentLoc.id
+                    ? isFa
+                      ? 'لنگرگاه شما'
+                      : 'At Port'
+                    : `${voyage.nauticalMiles} nm`}
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#233246]">
+                <div className="text-[11px] text-[#94A3B8]">
+                  {isFa ? 'آذوقه سفر' : 'Provisions'}
+                </div>
+                <div className="text-sm font-mono font-bold text-[#F59E0B] mt-0.5">
+                  {inspected.id === currentLoc.id
+                    ? '—'
+                    : `${voyage.provisionSilverCost ?? 0} Silver`}
+                </div>
+              </div>
+            </div>
+
+            {/* Monastery Rich Loot Callout */}
+            {inspected.settlementType === 'monastery' && (
+              <div className="p-3 rounded-xl bg-[#3B290C]/60 border border-[#F59E0B]/50 flex items-start gap-2.5 text-xs text-[#FDE68A]">
+                <Sparkles className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-[#FBBF24]">
+                    {isFa ? 'هدف غارت ثروتمند (صومعه مقدس)' : 'Rich Holy Raid Target (Monastery)'}
+                  </div>
+                  <div className="text-[11px] text-[#FDE68A]/80 mt-0.5 leading-relaxed">
+                    {isFa
+                      ? 'حاوی جام‌های نقره، کتاب‌های مقدس زرین و صندوق‌های نذورات با دفاع نظامی ضعیف!'
+                      : 'Holds gold chalices, silver reliquaries, and jeweled codices with minimal armed resistance!'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Danger Breakdown (Storms, Pirates, Hostile Fleets) */}
+            {inspected.id !== currentLoc.id && (
+              <div className="p-2.5 rounded-xl bg-[#101924] border border-[#1E2D40] space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-[#CBD5E1] font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    <span>{isFa ? 'تفکیک خطرات سفر دریایی' : 'Voyage Danger Breakdown'}</span>
+                  </span>
+                  <span className="font-mono text-xs text-[#F87171]">
+                    {isFa
+                      ? `کل ریسک: ${voyage.dangerPct}%`
+                      : `Total: ${voyage.dangerPct}%`}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[11px] text-[#94A3B8]">
+                  <div className="flex items-center gap-1">
+                    <CloudRain className="w-3 h-3 text-[#38BDF8]" />
+                    <span>{isFa ? 'طوفان:' : 'Storms:'} {voyage.dangerBreakdown?.stormRiskPct ?? 0}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Swords className="w-3 h-3 text-[#EF4444]" />
+                    <span>{isFa ? 'دزدان:' : 'Pirates:'} {voyage.dangerBreakdown?.pirateRiskPct ?? 0}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Castle className="w-3 h-3 text-[#A855F7]" />
+                    <span>{isFa ? 'ناوگان دشمن:' : 'Navies:'} {voyage.dangerBreakdown?.hostileFleetRiskPct ?? 0}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Historical Summary Lore */}
+            {isDiscovered && (
+              <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed bg-[#0E1622] p-3 rounded-xl border border-[#1C2939]">
+                {isFa ? inspectedFa?.summary ?? inspected.historicalSummary : inspected.historicalSummary}
+              </p>
+            )}
+          </div>
         )}
 
-        <RuneDivider accent="ice" />
+        {/* TAB 2: THE 6 CONTEXTUAL ACTIONS */}
+        {(activeSheetTab === 'actions' || activeSheetTab === 'raid' || activeSheetTab === 'siege' || activeSheetTab === 'diplomacy') && (
+          <div className="space-y-3">
+            {/* Action 1: Sail Here */}
+            {inspected.id !== currentLoc.id && onSailTo && (
+              <button
+                type="button"
+                disabled={!hasShips || Boolean(used.travel)}
+                onClick={() => {
+                  onSailTo(inspected.id);
+                  setIsSheetOpen(false);
+                }}
+                className="w-full min-h-[46px] px-4 py-2 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Ship className="w-4 h-4" />
+                  <span>
+                    {used.travel
+                      ? isFa
+                        ? 'امسال سفر رفته‌اید ✓'
+                        : 'Sailed This Year ✓'
+                      : isFa
+                        ? `سفر دریایی به ${inspectedDisplayName}`
+                        : `Sail to ${inspectedDisplayName}`}
+                  </span>
+                </span>
+                <span className="text-[11px] opacity-85 font-mono">
+                  {`~${voyage.sailingDays}d · ${voyage.provisionSilverCost ?? 0} Silver`}
+                </span>
+              </button>
+            )}
 
-        {/* Contextual Actions */}
-        {inspected.id === currentLoc.id ? (
-          <div className="space-y-2.5">
+            {/* Action 2: Trade */}
             {onTradeHere && (
               <button
                 type="button"
@@ -951,77 +1181,21 @@ export function VikingMap({
                   onTradeHere();
                   setIsSheetOpen(false);
                 }}
-                className="w-full min-h-[48px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs sm:text-sm font-extrabold cursor-pointer transition-colors"
+                className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1B2A3D] hover:bg-[#233750] border border-[#F59E0B]/50 disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#FBBF24] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
               >
-                {used.trade
-                  ? isFa
-                    ? 'امسال در این بازار معامله شد ✓'
-                    : 'Traded Here This Year ✓'
-                  : state.character.age < 15
-                    ? isFa
-                      ? 'تجارت نیازمند سن ۱۵+ است'
-                      : 'Trade Requires Age 15+'
-                    : isFa
-                      ? 'تجارت در بازار این بندر (+نقره)'
-                      : 'Trade in Port Market (+Silver)'}
-              </button>
-            )}
-
-            {isFortifiedEnemyCity && onConquerCity && (
-              <button
-                type="button"
-                disabled={
-                  Boolean(used.settle) ||
-                  state.realm.longships <= 0 ||
-                  state.realm.hirdWarriors < 12
-                }
-                onClick={() => {
-                  onConquerCity(inspected.id);
-                  setIsSheetOpen(false);
-                }}
-                className="w-full min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                <Castle className="w-4 h-4 shrink-0" />
-                <span>
-                  {used.settle
-                    ? isFa
-                      ? 'اقدام فتح/اسکان امسال انجام شد ✓'
-                      : 'Conquest Used This Year ✓'
-                    : isFa
-                      ? 'حمله برای فتح نظامی شهر (۱ کشتی و ۱۲+ جنگجو)'
-                      : 'Conquer Fortified City (1 Ship & 12+ Warriors)'}
+                <span className="inline-flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-[#F59E0B]" />
+                  <span>{isFa ? '۱. تجارت در بازار بندر' : '1. Trade in Port Market'}</span>
+                </span>
+                <span className="text-[11px] text-[#94A3B8]">
+                  {isFa ? '+نقره و مهارت تجارت' : '+Silver & Trade Skill'}
                 </span>
               </button>
             )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {onSailTo && (
-                <button
-                  type="button"
-                  disabled={!hasShips || Boolean(used.travel)}
-                  onClick={() => {
-                    onSailTo(inspected.id);
-                    setIsSheetOpen(false);
-                  }}
-                  className="min-h-[48px] px-4 py-2 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white text-xs sm:text-sm font-extrabold cursor-pointer transition-colors"
-                >
-                  {used.travel
-                    ? isFa
-                      ? 'امسال سفر رفته‌اید ✓'
-                      : 'Sailed This Year ✓'
-                    : hasShips
-                      ? isFa
-                        ? `سفر دریایی به اینجا (~${voyage.sailingDays} روز)`
-                        : `Sail Here (~${voyage.sailingDays} days)`
-                      : isFa
-                        ? 'نیازمند ساخت کشتی'
-                        : 'Requires a Ship'}
-                </button>
-              )}
 
-              {onRaidPort && (
+            {/* Action 3: Raid Port / Monastery */}
+            {onRaidPort && (
+              <div className="space-y-2">
                 <button
                   type="button"
                   disabled={
@@ -1030,94 +1204,285 @@ export function VikingMap({
                     state.realm.hirdWarriors <= 0 ||
                     Boolean(used.raid)
                   }
-                  onClick={() => setShowRaidTactics((v) => !v)}
-                  className="min-h-[48px] px-4 py-2 rounded-xl border border-[#EF4444] bg-[#241016] hover:bg-[#DC2626] disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#FFE4E6] text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  onClick={() => setActiveSheetTab(activeSheetTab === 'raid' ? 'actions' : 'raid')}
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#241016] hover:bg-[#34141E] border border-[#EF4444] disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#FFE4E6] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
                 >
-                  <Swords className="w-4 h-4 shrink-0" />
-                  <span>
-                    {used.raid
-                      ? isFa
-                        ? 'امسال غارت رفتید ✓'
-                        : 'Raided This Year ✓'
-                      : isFa
-                        ? 'غارت این بندر'
-                        : 'Raid Port'}
+                  <span className="inline-flex items-center gap-2">
+                    <Swords className="w-4 h-4 text-[#EF4444]" />
+                    <span>
+                      {inspected.settlementType === 'monastery'
+                        ? isFa
+                          ? '۲. غارت صومعه و خزانه‌های زرین'
+                          : '2. Raid Holy Monastery (Rich Loot)'
+                        : isFa
+                          ? '۲. یورش و غارت بندر'
+                          : '2. Raid Settlement'}
+                    </span>
+                  </span>
+                  <span className="text-[11px] text-[#FCA5A5]">
+                    {used.raid ? (isFa ? 'انجام شد ✓' : 'Used ✓') : isFa ? 'انتخاب تاکتیک ▾' : 'Select Tactic ▾'}
                   </span>
                 </button>
-              )}
-            </div>
 
-            {isFortifiedEnemyCity && onConquerCity && (
+                {activeSheetTab === 'raid' && !used.raid && (
+                  <div className="p-3 rounded-xl bg-[#180C11] border border-[#EF4444]/60 space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {raidTacticOptions.map((tac) => (
+                        <button
+                          key={tac.value}
+                          type="button"
+                          onClick={() => setMapTactic(tac.value)}
+                          className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                            mapTactic === tac.value
+                              ? 'bg-[#31121A] border-[#EF4444] text-[#F1F5F9]'
+                              : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span>{tac.label}</span>
+                            <span className="text-[10px] text-[#FCA5A5]">{tac.tag}</span>
+                          </div>
+                          <div className="text-[11px] text-[#94A3B8] mt-0.5">{tac.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onRaidPort(inspected.id, mapTactic);
+                        setIsSheetOpen(false);
+                      }}
+                      className="w-full min-h-[44px] bg-[#DC2626] hover:bg-[#EF4444] text-white font-extrabold text-xs rounded-xl cursor-pointer transition-colors"
+                    >
+                      {isFa
+                        ? `حمله به ${inspectedDisplayName}!`
+                        : `Launch Raid on ${inspectedDisplayName}!`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action 4: Besiege (Assault / Blockade / Danegeld Tribute) */}
+            {onBesiege && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={
+                    Boolean(used.raid) ||
+                    state.realm.longships < 1 && state.realm.hirdWarriors < 6
+                  }
+                  onClick={() => setActiveSheetTab(activeSheetTab === 'siege' ? 'actions' : 'siege')}
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1E1424] hover:bg-[#2B1B34] border border-[#A855F7]/60 disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#F3E8FF] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Castle className="w-4 h-4 text-[#C084FC]" />
+                    <span>{isFa ? '۳. محاصره یا باج‌خواهی (دژ و شهر)' : '3. Besiege / Demand Danegeld'}</span>
+                  </span>
+                  <span className="text-[11px] text-[#D8B4FE]">
+                    {used.raid ? (isFa ? 'انجام شد ✓' : 'Used ✓') : isFa ? 'روش محاصره ▾' : 'Approach ▾'}
+                  </span>
+                </button>
+
+                {activeSheetTab === 'siege' && !used.raid && (
+                  <div className="p-3 rounded-xl bg-[#140D1A] border border-[#A855F7]/50 space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSiegeApproach('assault')}
+                        className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                          siegeApproach === 'assault'
+                            ? 'bg-[#331C44] border-[#C084FC] text-white'
+                            : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                        }`}
+                      >
+                        <div className="text-xs font-bold">{isFa ? 'یورش مستقیم' : 'Storm Walls'}</div>
+                        <div className="text-[10px] text-[#94A3B8] mt-0.5">{isFa ? 'نبرد خونین و فتح کامل' : 'High Glory & Conquest'}</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSiegeApproach('blockade')}
+                        className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                          siegeApproach === 'blockade'
+                            ? 'bg-[#331C44] border-[#C084FC] text-white'
+                            : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                        }`}
+                      >
+                        <div className="text-xs font-bold">{isFa ? 'محاصره دریایی' : 'Naval Blockade'}</div>
+                        <div className="text-[10px] text-[#94A3B8] mt-0.5">{isFa ? 'قطع آذوقه و تسلیم شهر' : 'Starve into Tribute'}</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSiegeApproach('demand_tribute')}
+                        className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                          siegeApproach === 'demand_tribute'
+                            ? 'bg-[#331C44] border-[#C084FC] text-white'
+                            : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                        }`}
+                      >
+                        <div className="text-xs font-bold">{isFa ? 'باج صلح (دانگلد)' : 'Danegeld'}</div>
+                        <div className="text-[10px] text-[#94A3B8] mt-0.5">{isFa ? 'اخاذی نقره با ارعاب' : 'Intimidation & Tribute'}</div>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onBesiege(inspected.id, siegeApproach);
+                        setIsSheetOpen(false);
+                      }}
+                      className="w-full min-h-[44px] bg-[#9333EA] hover:bg-[#A855F7] text-white font-extrabold text-xs rounded-xl cursor-pointer transition-colors"
+                    >
+                      {isFa
+                        ? `اجرای عملیات در ${inspectedDisplayName}`
+                        : `Execute Operation at ${inspectedDisplayName}`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action 5: Settle Norse Colony */}
+            {onSettle && (
               <button
                 type="button"
-                disabled={
-                  Boolean(used.settle) ||
-                  state.realm.longships <= 0 ||
-                  state.realm.hirdWarriors < 12
-                }
+                disabled={Boolean(used.settle) || state.realm.silver < 30}
                 onClick={() => {
-                  onConquerCity(inspected.id);
+                  onSettle(inspected.id);
                   setIsSheetOpen(false);
                 }}
-                className="w-full min-h-[46px] px-4 py-2 rounded-xl bg-[#1F1218] border border-[#EF4444]/65 hover:bg-[#DC2626] disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#F1F5F9] text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#0F241C] hover:bg-[#153428] border border-[#10B981]/60 disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#D1FAE5] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
               >
-                <Castle className="w-4 h-4 text-[#F87171] shrink-0" />
-                <span className="whitespace-normal break-words leading-snug">
+                <span className="inline-flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-[#10B981]" />
+                  <span>{isFa ? '۴. آبادانی و اسکان نورس در اینجا' : '4. Settle Norse Colony'}</span>
+                </span>
+                <span className="text-[11px] text-[#6EE7B7]">
                   {used.settle
                     ? isFa
-                      ? 'فتح امسال انجام شد ✓'
-                      : 'Conquest Used This Year ✓'
+                      ? 'امسال انجام شد ✓'
+                      : 'Settled This Year ✓'
                     : isFa
-                      ? `فتح دژ ${inspectedDisplayName} (۱ کشتی جنگی و ۱۲+ جنگجو)`
-                      : `Conquer ${inspectedDisplayName} (1 Longship & 12+ Warriors)`}
+                      ? 'هزینه ۳۰ نقره · +۱ مزرعه'
+                      : 'Cost 30 Silver · +1 Farm'}
                 </span>
               </button>
             )}
 
-            {/* Visible Raid Tactic Cards when Raid Port is tapped */}
-            {showRaidTactics && onRaidPort && !used.raid && (
-              <div className="p-3.5 rounded-2xl bg-[#1A0D12] border border-[#EF4444]/60 space-y-3">
-                <div className="text-xs font-bold text-[#FECACA]">
-                  {isFa ? 'انتخاب تاکتیک حمله:' : 'Select Raid Battle Tactic:'}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {raidTacticOptions.map((tac) => {
-                    const sel = mapTactic === tac.value;
-                    return (
-                      <button
-                        key={tac.value}
-                        type="button"
-                        onClick={() => setMapTactic(tac.value)}
-                        className={`min-h-[56px] p-2.5 rounded-xl border text-start cursor-pointer transition-colors ${
-                          sel
-                            ? 'bg-[#31121A] border-[#EF4444] text-[#F1F5F9]'
-                            : 'bg-[#0F1722] border-[#24364D] text-[#CBD5E1]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 text-xs font-bold">
-                          <span>{tac.label}</span>
-                          <span className="font-mono text-[#FCA5A5]">{tac.tag}</span>
-                        </div>
-                        <div className="text-xs text-[#94A3B8] mt-0.5">{tac.desc}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
+            {/* Action 6: Diplomacy & Varangian Oath */}
+            {onDiplomacy && (
+              <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    onRaidPort(inspected.id, mapTactic);
-                    setShowRaidTactics(false);
-                    setIsSheetOpen(false);
-                  }}
-                  className="w-full min-h-[46px] bg-[#DC2626] hover:bg-[#EF4444] text-white font-extrabold text-xs sm:text-sm rounded-xl cursor-pointer transition-colors"
+                  disabled={Boolean(used.trade)}
+                  onClick={() => setActiveSheetTab(activeSheetTab === 'diplomacy' ? 'actions' : 'diplomacy')}
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#14232B] hover:bg-[#1C323D] border border-[#06B6D4]/60 disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#CFFAFE] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
                 >
-                  {isFa
-                    ? `آغاز یورش به ${inspectedDisplayName}!`
-                    : `Launch Raid on ${inspectedDisplayName}!`}
+                  <span className="inline-flex items-center gap-2">
+                    <Handshake className="w-4 h-4 text-[#06B6D4]" />
+                    <span>{isFa ? '۵. مذاکره دیپلماتیک / گارد سلطنتی' : '5. Diplomacy / Royal Service'}</span>
+                  </span>
+                  <span className="text-[11px] text-[#67E8F9]">
+                    {used.trade ? (isFa ? 'انجام شد ✓' : 'Used ✓') : isFa ? 'گزینه‌ها ▾' : 'Options ▾'}
+                  </span>
                 </button>
+
+                {activeSheetTab === 'diplomacy' && !used.trade && (
+                  <div className="p-3 rounded-xl bg-[#0B151C] border border-[#06B6D4]/50 space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDiploApproach('trade_pact')}
+                        className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                          diploApproach === 'trade_pact'
+                            ? 'bg-[#183542] border-[#22D3EE] text-white'
+                            : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                        }`}
+                      >
+                        <div className="text-xs font-bold">{isFa ? 'پیمان تجاری' : 'Commercial Treaty'}</div>
+                        <div className="text-[10px] text-[#94A3B8] mt-0.5">{isFa ? 'حقوق بازرگانی و درآمد نقره' : 'Trade Route & Silver'}</div>
+                      </button>
+
+                      {(inspected.id === 'constantinople' || inspected.id === 'kiev' || inspected.id === 'novgorod') ? (
+                        <button
+                          type="button"
+                          onClick={() => setDiploApproach('varangian_oath')}
+                          className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                            diploApproach === 'varangian_oath'
+                              ? 'bg-[#2E1842] border-[#E879F9] text-white'
+                              : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-xs font-bold text-[#E879F9]">{isFa ? 'سوگند گارد وارنگیان' : 'Varangian Guard Oath'}</div>
+                          <div className="text-[10px] text-[#F0ABFC] mt-0.5">{isFa ? '+۴۵ طلای امپراتور، ابریشم و شهرت' : '+45 Imperial Gold & Trait'}</div>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDiploApproach('tribute_demand')}
+                          className={`p-2 rounded-lg border text-start cursor-pointer transition-colors ${
+                            diploApproach === 'tribute_demand'
+                              ? 'bg-[#183542] border-[#22D3EE] text-white'
+                              : 'bg-[#0E1520] border-[#22354A] text-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{isFa ? 'تقاضای خراج صلح' : 'Demand Peace Tribute'}</div>
+                          <div className="text-[10px] text-[#94A3B8] mt-0.5">{isFa ? 'توافق برای خراج سالانه' : 'Swear tributary oath'}</div>
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDiplomacy(inspected.id, diploApproach);
+                        setIsSheetOpen(false);
+                      }}
+                      className="w-full min-h-[44px] bg-[#0891B2] hover:bg-[#06B6D4] text-white font-extrabold text-xs rounded-xl cursor-pointer transition-colors"
+                    >
+                      {isFa ? 'ارسال سفیر به دربار' : 'Dispatch Envoy to Court'}
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Action 7: Marry into Local Family */}
+            {onMarryLocal && (
+              <button
+                type="button"
+                disabled={
+                  state.relationships.some((r) => r.role === 'Spouse' && r.alive) ||
+                  state.character.age < 16 ||
+                  state.realm.silver < 16
+                }
+                onClick={() => {
+                  onMarryLocal(inspected.id);
+                  setIsSheetOpen(false);
+                }}
+                className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#28141F] hover:bg-[#381B2C] border border-[#EC4899]/60 disabled:border-[#233246] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#FCE7F3] text-xs font-bold inline-flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-[#EC4899]" />
+                  <span>
+                    {isFa
+                      ? `۶. ازدواج با خاندان سرشناس ${inspectedDisplayName}`
+                      : `6. Marry into Local Family at ${inspectedDisplayName}`}
+                  </span>
+                </span>
+                <span className="text-[11px] text-[#F472B6]">
+                  {state.relationships.some((r) => r.role === 'Spouse' && r.alive)
+                    ? isFa
+                      ? 'همسر دارید'
+                      : 'Already Married'
+                    : isFa
+                      ? '+جهیزیه نقره و اتحاد'
+                      : '+Dowry & Alliance'}
+                </span>
+              </button>
             )}
           </div>
         )}

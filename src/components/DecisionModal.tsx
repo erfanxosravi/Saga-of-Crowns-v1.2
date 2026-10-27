@@ -175,12 +175,12 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-2.5 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="decision-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[calc(100dvh-1.25rem)] sm:max-h-[min(88dvh,740px)] flex flex-col bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] overflow-hidden">
+      <div className="w-full max-w-xl max-h-[min(88dvh,680px)] flex flex-col bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] overflow-hidden">
         <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 text-center space-y-1.5 border-b border-[#1E2D40] bg-[#121C2B]/85">
           <div className="inline-flex items-center justify-center gap-1.5 text-xs text-[#38BDF8] font-medium">
             <EventCategoryIcon

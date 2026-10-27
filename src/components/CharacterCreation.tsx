@@ -4,13 +4,19 @@ import {
   Compass,
   Crown,
   Dices,
+  Flame,
   FolderOpen,
+  Hammer,
   HelpCircle,
   MapPin,
   Play,
   RotateCcw,
+  Shield,
+  Ship,
   SlidersHorizontal,
   Sparkles,
+  Swords,
+  Users,
 } from 'lucide-react';
 import { SETTLEMENTS } from '../data/geography';
 import {
@@ -50,6 +56,8 @@ import {
   Religion,
   Sex,
   SocialClass,
+  StartingHomeland,
+  StartingOccupation,
 } from '../types/game';
 import longshipHeroUrl from '../assets/images/viking_longship_ember_dusk_1793047790383.jpg';
 import { NordicAccordion, NordicSelect } from './NordicControls';
@@ -64,23 +72,242 @@ interface CharacterCreationProps {
   onOpenLoadModal: () => void;
 }
 
-const REGION_IDS: RegionGroup[] = [
-  'Norway',
-  'Denmark',
-  'Sweden',
-  'British Isles',
-  'Ireland',
-  'Continent',
-  'North Atlantic',
+interface HomelandDef {
+  id: StartingHomeland;
+  regionGroup: RegionGroup;
+  defaultBirthplace: string;
+  nameEn: string;
+  nameFa: string;
+  introEn: string;
+  introFa: string;
+  perkEn: string;
+  perkFa: string;
+}
+
+const HOMELANDS: HomelandDef[] = [
+  {
+    id: 'norway',
+    regionGroup: 'Norway',
+    defaultBirthplace: 'nidaros',
+    nameEn: 'Norway (Fjords of the North)',
+    nameFa: 'نروژ (آبدره‌ها و پادشاهان دریا)',
+    introEn: 'Glacial fjords, iron-cold gales, and ancestral longship shipwrights.',
+    introFa: 'سرزمین آبدره‌های سنگی، کولاک‌های استخوان‌سوز و کشتی‌سازان کهن.',
+    perkEn: '+10 Seamanship · +8 Honor · 1 War Longship',
+    perkFa: '+10 دریانوردی · +8 شرافت · ۱ کشتی جنگی',
+  },
+  {
+    id: 'denmark',
+    regionGroup: 'Denmark',
+    defaultBirthplace: 'hedeby',
+    nameEn: 'Denmark (Hedeby & Ring-Forts)',
+    nameFa: 'دانمارک (باروهای ترلبورگ و بازار هدبی)',
+    introEn: 'Rich trading emporia, Danish royal earthworks, and proximity to Frankish silver.',
+    introFa: 'امپراتوری بازرگانی هدبی، دژهای سلطنتی ترلبورگ و دسترسی به بازارهای اروپا.',
+    perkEn: '+8 Trade · +40 Silver · 1 War Longship',
+    perkFa: '+8 تجارت · +40 نقره · ۱ کشتی جنگی',
+  },
+  {
+    id: 'sweden',
+    regionGroup: 'Sweden',
+    defaultBirthplace: 'birka',
+    nameEn: 'Sweden (Birka & Eastern Shores)',
+    nameFa: 'سوئد و اسویالاند (مرکز بیرکا و دروازه شرق)',
+    introEn: 'The fortified island of Birka, Baltic amber, and the gateway to eastern river routes.',
+    introFa: 'جزیره مستحکم بیرکا، کرانه‌های کهربا و دروازه رودخانه‌های بزرگ شرق.',
+    perkEn: '+6 Combat · +6 Trade · +30 Silver · +1 Trade Route',
+    perkFa: '+6 نبرد · +6 تجارت · +30 نقره · +1 مسیر تجاری',
+  },
+  {
+    id: 'iceland',
+    regionGroup: 'North Atlantic',
+    defaultBirthplace: 'thingvellir',
+    nameEn: 'Iceland (The Free Republic & Althing)',
+    nameFa: 'ایسلند (جمهوری آزادگان و شورای آلتینگ)',
+    introEn: 'Volcanic wilderness founded by chieftains who defied kings; governed by the law-rock.',
+    introFa: 'سرزمین آتش و یخ؛ پناهگاه آزادگانی که با سوگند قانون و بدون باج شاهان حکومت می‌کنند.',
+    perkEn: '+14 Law · +12 Wyrd Fate Luck · Free of Royal Taxes',
+    perkFa: '+14 قانون‌دانی · +12 بخت ویرد · معاف از باج سلطنتی',
+  },
+  {
+    id: 'orkney',
+    regionGroup: 'British Isles',
+    defaultBirthplace: 'birsay',
+    nameEn: 'Orkney & Hebrides (Western Isles)',
+    nameFa: 'اورکنی و جزایر غرب (یارل‌نشین اقیانوس)',
+    introEn: 'Storm-tossed Atlantic isles, corsair harbors, and constant clashes with Scottish clans.',
+    introFa: 'جزایر بادگیر اقیانوس اطلس، پایگاه دزدان دریایی و سلحشوران دریا.',
+    perkEn: '+8 Combat · +8 Seamanship · 1 Raider Ship',
+    perkFa: '+8 نبرد · +8 دریانوردی · ۱ کشتی تندرو',
+  },
+  {
+    id: 'normandy',
+    regionGroup: 'Continent',
+    defaultBirthplace: 'rouen',
+    nameEn: 'Normandy & Frankia (Duchy of Northmen)',
+    nameFa: 'نورماندی و فرانکستان (دوک‌نشین شمالی‌ها)',
+    introEn: 'River blockades along the Seine, cavalry battles, and Frankish feudal intrigue.',
+    introFa: 'کرانه‌های رود سن، نبرد سواره‌نظام و دیپلماسی پیچیده با دربار فرانسه.',
+    perkEn: '+12 Diplomacy · +45 Silver · Continental Contacts',
+    perkFa: '+12 دیپلماسی · +45 نقره · پیوندهای درباری',
+  },
+  {
+    id: 'rus',
+    regionGroup: 'Kievan Rus & Rivers',
+    defaultBirthplace: 'novgorod',
+    nameEn: 'Kievan Rus (Great River Highway)',
+    nameFa: 'روس کی‌یف (شاهراه بزرگ رودها تا بیزانس)',
+    introEn: 'Hauling longships overland between the Dnieper and Volga to trade furs for Byzantine gold.',
+    introFa: 'غلتاندن کشتی‌ها روی زمین بین رودهای دنیپر و ولگا برای رسیدن به قسطنطنیه.',
+    perkEn: '+12 Trade · +6 Combat · 1 River Knarr',
+    perkFa: '+12 تجارت · +6 نبرد · ۱ کشتی کنار',
+  },
+  {
+    id: 'england',
+    regionGroup: 'British Isles',
+    defaultBirthplace: 'jorvik',
+    nameEn: 'England & Danelaw (Rich Saxon Shires)',
+    nameFa: 'انگلستان و دانلا (قلمرو ثروتمند ساکسون‌ها)',
+    introEn: 'Gleaming coastal abbeys, rich barley fields, and clash of Saxon and Norse steel.',
+    introFa: 'صومعه‌های پر از طلا، دشت‌های زرخیز و برخورد پولاد وایکینگ و آنگلوساکسون.',
+    perkEn: '+12 Farming · +35 Silver · 2 Family Farms',
+    perkFa: '+12 کشاورزی · +35 نقره · ۲ مزرعه خانوادگی',
+  },
+  {
+    id: 'ireland',
+    regionGroup: 'Ireland',
+    defaultBirthplace: 'dublin',
+    nameEn: 'Kingdom of Dublin (Norse-Gael Havens)',
+    nameFa: 'پادشاهی دوبلین (حاکمان نورس-گیلیک)',
+    introEn: 'Fortified coastal longphorts, cattle-raiding warfare, and mixed ostmen dynasties.',
+    introFa: 'دژهای ساحلی لانگ‌فورت، غارت دام و خاندان‌های پیوندخورده با اشراف ایرلند.',
+    perkEn: '+8 Seamanship · +8 Combat · +25 Silver',
+    perkFa: '+8 دریانوردی · +8 نبرد · +25 نقره',
+  },
 ];
 
-const CLASS_IDS: SocialClass[] = [
-  SocialClass.Thrall,
-  SocialClass.Karl,
-  SocialClass.Bonde,
-  SocialClass.HersirKin,
-  SocialClass.JarlKin,
-  SocialClass.Royal,
+interface OccupationDef {
+  id: StartingOccupation;
+  socialClass: SocialClass;
+  nameEn: string;
+  nameFa: string;
+  descEn: string;
+  descFa: string;
+  perkEn: string;
+  perkFa: string;
+}
+
+const OCCUPATIONS: OccupationDef[] = [
+  {
+    id: 'thrall',
+    socialClass: SocialClass.Thrall,
+    nameEn: 'Thrall (Unfree Bondservant)',
+    nameFa: 'بنده و برده (ترال)',
+    descEn: 'Bound to another household. No legal wergild; must earn or seize freedom first.',
+    descFa: 'بدون حق حمل سلاح در خدمت ارباب؛ هدف اول نجات خود و بازخرید آزادی است.',
+    perkEn: '+8 Health · +8 Strength · Freedom Quest',
+    perkFa: '+8 سلامتی · +8 قدرت · مأموریت کسب آزادی',
+  },
+  {
+    id: 'fisherman',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Fisherman (Net & Skiff)',
+    nameFa: 'ماهیگیر سواحل',
+    descEn: 'Surviving stormy fjords with cod-lines and harbor nets, hardened against the cold.',
+    descFa: 'مرد امواج و تورهای ساحلی؛ سازگار با آب‌وهوای سخت و مه زمستانی.',
+    perkEn: '+14 Seamanship · +25 Food Stores',
+    perkFa: '+14 دریانوردی · +25 آذوقه ذخیره',
+  },
+  {
+    id: 'farmer',
+    socialClass: SocialClass.Bonde,
+    nameEn: 'Farmer (Odal Landholder)',
+    nameFa: 'دهقان و زمین‌دار (بونده)',
+    descEn: 'Freeborn landowner cultivating ancestral soil, cattle pastures, and barley barns.',
+    descFa: 'صاحب مزارع آباواجدادی، گله‌های گاو و انبار غلات با صدای معتبر در شورا.',
+    perkEn: '+16 Farming · +2 Farms · +25 Silver',
+    perkFa: '+16 کشاورزی · +2 مزرعه · +25 نقره',
+  },
+  {
+    id: 'blacksmith',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Master Blacksmith',
+    nameFa: 'آهنگر و اسلحه‌ساز',
+    descEn: 'Forging iron axes, pattern-welded swords, and ship rivets over charcoal fires.',
+    descFa: 'کوبنده تبرهای جنگی و تیغه‌های پولادین بر سندان با قدرت بازوی استثنایی.',
+    perkEn: '+18 Craft · +8 Strength · +35 Silver',
+    perkFa: '+18 صنعتگری · +8 قدرت · +35 نقره',
+  },
+  {
+    id: 'merchant',
+    socialClass: SocialClass.Bonde,
+    nameEn: 'Scale-Bearing Merchant',
+    nameFa: 'بازرگان و ترازو‌دار',
+    descEn: 'Weighing silver dirhams and trading northern furs from Baltic ports to Byzantium.',
+    descFa: 'سنجش نقره با ترازوی برنزی، تجارت خز سمور و مروارید در بازارهای بزرگ.',
+    perkEn: '+18 Trade · +6 Cunning · +65 Silver · 1 Knarr',
+    perkFa: '+18 تجارت · +6 زیرکی · +65 نقره · ۱ کشتی تجاری',
+  },
+  {
+    id: 'skald',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Skald (Saga Poet)',
+    nameFa: 'شاعر و راوی چکامه‌ها (اسکالد)',
+    descEn: 'Carving oral verses of blood, gods, and glory that kings pay silver to hear.',
+    descFa: 'سراینده اشعار حماسی و حفظ‌کننده تبارنامه‌ها؛ زبانش برنده‌تر از شمشیر است.',
+    perkEn: '+20 Skaldcraft · +10 Charisma · +35 Fame',
+    perkFa: '+20 سخنوری · +10 جذابیت · +35 شهرت',
+  },
+  {
+    id: 'warrior',
+    socialClass: SocialClass.HersirKin,
+    nameEn: 'Sworn Warrior (Hirdman)',
+    nameFa: 'جنگجوی سوگندخورده (هیردمن)',
+    descEn: 'Chainmail-clad household guard, sworn by blood-oath to shield their chieftain.',
+    descFa: 'سپردار زره‌پوش و جنگاور سوگندخورده در تالار سرداران.',
+    perkEn: '+18 Combat · +8 Strength · +6 Warriors · +20 Silver',
+    perkFa: '+18 نبرد · +8 قدرت · +6 جنگجو · +20 نقره',
+  },
+  {
+    id: 'sailor',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Longship Navigator',
+    nameFa: 'ناوبر و دیده‌بان دریا',
+    descEn: 'Steering through North Atlantic squalls using calcite sunstones and bird-flight.',
+    descFa: 'هدایت کشتی از میان امواج اقیانوس با سنگ خورشیدی و پرواز پرندگان دریایی.',
+    perkEn: '+18 Seamanship · +6 Combat · Gale Resilience',
+    perkFa: '+18 دریانوردی · +6 نبرد · مقاومت در برابر طوفان',
+  },
+  {
+    id: 'hunter',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Wilderness Hunter',
+    nameFa: 'شکارچی و ردیاب بیشه‌ها',
+    descEn: 'Tracking reindeer and polar bears in snowy forests, master of bows and stealth.',
+    descFa: 'ردیابی خرس و گوزن در جنگل‌های برفی با تیروکمان و شبیخون‌های بی‌صدا.',
+    perkEn: '+14 Cunning · +8 Combat · Winter Survival',
+    perkFa: '+14 زیرکی · +8 نبرد · بقا در سرمای سخت',
+  },
+  {
+    id: 'seeress',
+    socialClass: SocialClass.Karl,
+    nameEn: 'Völva / Seeress & Healer',
+    nameFa: 'پیشگو و طبیب گیاهی (وولوا)',
+    descEn: 'Chanting seidr songs, reading runes of fate, and brewing forest medicines.',
+    descFa: 'آشنا با جادوی کهن سیدر، فال رون‌ها و مرحم‌های گیاهی شفابخش.',
+    perkEn: '+22 Seidr · +16 Wyrd · +10 Faith',
+    perkFa: '+22 آیین سیدر · +16 سرنوشت · +10 ایمان',
+  },
+  {
+    id: 'noble',
+    socialClass: SocialClass.JarlKin,
+    nameEn: 'Noble Chieftain Born',
+    nameFa: 'نجیب‌زاده و شاه‌تبار',
+    descEn: 'Born into ancient dynasties; every throne is within claim, and every rival plots against you.',
+    descFa: 'زاده خاندان‌های فرمانروا؛ وارث تالار، کشتی‌ها و حسادت دربارهای رقیب.',
+    perkEn: '+12 Charisma · +10 Diplomacy · +120 Silver · 16 Hirdmen · 1 Longship',
+    perkFa: '+12 جذابیت · +10 دیپلماسی · +120 نقره · ۱۶ جنگجو · ۱ لانگ‌شیپ',
+  },
 ];
 
 const HAIR_COLORS: CharacterAppearance['hairColor'][] = ['blonde', 'red', 'brown', 'black'];
@@ -92,30 +319,30 @@ const ERA_INFO: Record<
   1: {
     year: 793,
     shortEn: '793 · First Raids',
-    shortFa: '۷۹۳ · آغاز غارت‌ها',
-    descEn: 'Early coastal raids on Lindisfarne, Iona, Dublin & Frankish rivers.',
-    descFa: 'اولین یورش‌های دریایی به صومعه لیندیسفارن، ایرلند و رودهای فرانسه.',
+    shortFa: '۷۹۳ · آغاز یورش‌ها',
+    descEn: 'Early raids on Lindisfarne & Iona; dragon-ships first strike European shores.',
+    descFa: 'اولین یورش‌های دریایی به صومعه لیندیسفارن، ایرلند و رودهای اروپا.',
   },
   2: {
     year: 865,
-    shortEn: '865 · Great Army',
-    shortFa: '۸۶۵ · ارتش بزرگ',
-    descEn: 'Conquest of York & Danelaw, Harald Fairhair in Norway & settling Iceland.',
+    shortEn: '865 · Great Heathen Army',
+    shortFa: '۸۶۵ · ارتش بزرگ بت‌پرستان',
+    descEn: 'Ragnar’s sons invade Anglo-Saxon kingdoms, Harald Fairhair unifies Norway & Iceland is settled.',
     descFa: 'لشکرکشی پسران راگنار به انگلستان، اتحاد نروژ و کوچ بزرگ به ایسلند.',
   },
   3: {
     year: 960,
-    shortEn: '960 · Kings & West',
-    shortFa: '۹۶۰ · شاهان و غرب',
-    descEn: 'Great Scandinavian kingdoms, conversion debates, Greenland & Vinland.',
-    descFa: 'پادشاهی‌های شمال، کشمکش خدایان کهن با مسیحیت، کشف گرینلند و وینلند.',
+    shortEn: '960 · Kings & Greenland',
+    shortFa: '۹۶۰ · پادشاهان و کشف غرب',
+    descEn: 'Harald Bluetooth unites Denmark; Christian conversions & voyages to Greenland & Vinland.',
+    descFa: 'هارالد دندان‌آبی دانمارک را متحد می‌کند؛ ورود مسیحیت و کشف گرینلند و وینلند.',
   },
   4: {
     year: 1016,
-    shortEn: '1016 · Sea Empire',
-    shortFa: '۱۰۱۶ · امپراتوری دریا',
-    descEn: 'Cnut’s North Sea Empire down to Harald Hardrada & Stamford Bridge (1066).',
-    descFa: 'امپراتوری کانوت کبیر تا نبرد پایانی عصر وایکینگ‌ها در سال ۱۰۶۶ میلادی.',
+    shortEn: '1016 · North Sea Empire',
+    shortFa: '۱۰۱۶ · امپراتوری دریای شمال',
+    descEn: 'Cnut the Great rules England, Denmark & Norway down to Stamford Bridge (1066).',
+    descFa: 'امپراتوری کانوت کبیر تا نبرد استمفورد بریج و فرجام عصر کهن در سال ۱۰۶۶ میلادی.',
   },
 };
 
@@ -136,13 +363,15 @@ export function CharacterCreation({
 
   const [selectedEra, setSelectedEra] = useState<1 | 2 | 3 | 4>(2);
   const [year, setYear] = useState<number>(865);
-  const [regionGroup, setRegionGroup] = useState<RegionGroup>('Norway');
+
+  const [homelandId, setHomelandId] = useState<StartingHomeland>('norway');
   const [birthplaceId, setBirthplaceId] = useState<string>('nidaros');
+  const [occupationId, setOccupationId] = useState<StartingOccupation>('farmer');
+  const [religion, setReligion] = useState<Religion>(Religion.NorsePagan);
+
   const [sex, setSex] = useState<Sex>(Sex.Male);
   const [givenName, setGivenName] = useState<string>('Sigurd');
   const [patronymic, setPatronymic] = useState<string>('Hakonsson');
-  const [socialClass, setSocialClass] = useState<SocialClass>(SocialClass.Bonde);
-  const [religion, setReligion] = useState<Religion>(Religion.NorsePagan);
   const [startAge, setStartAge] = useState<number>(16);
   const [selectedTraits, setSelectedTraits] = useState<string[]>(['brave', 'seafarer']);
   const [winGoalId, setWinGoalId] = useState<string>('freeform_dynasty');
@@ -154,12 +383,13 @@ export function CharacterCreation({
     beardStyle: 2,
   });
 
-  const settlementsInRegion = SETTLEMENTS.filter((s) => s.regionGroup === regionGroup);
-  const classCfg = SOCIAL_CLASS_CONFIG[socialClass];
+  const selectedHomeland = HOMELANDS.find((h) => h.id === homelandId) ?? HOMELANDS[0];
+  const selectedOcc = OCCUPATIONS.find((o) => o.id === occupationId) ?? OCCUPATIONS[2];
+  const settlementsInRegion = SETTLEMENTS.filter((s) => s.regionGroup === selectedHomeland.regionGroup);
 
   const rollName = (reg: RegionGroup, nextSex: Sex) => {
-    const gPool = nextSex === Sex.Male ? MALE_NAMES_BY_REGION[reg] : FEMALE_NAMES_BY_REGION[reg];
-    const fPool = MALE_NAMES_BY_REGION[reg];
+    const gPool = nextSex === Sex.Male ? MALE_NAMES_BY_REGION[reg] ?? MALE_NAMES_BY_REGION['Norway'] : FEMALE_NAMES_BY_REGION[reg] ?? FEMALE_NAMES_BY_REGION['Norway'];
+    const fPool = MALE_NAMES_BY_REGION[reg] ?? MALE_NAMES_BY_REGION['Norway'];
     const g = gPool[Math.floor(Math.random() * gPool.length)];
     const f = fPool[Math.floor(Math.random() * fPool.length)];
     setGivenName(g);
@@ -175,32 +405,29 @@ export function CharacterCreation({
     });
   };
 
-  const handleRegionPick = (reg: RegionGroup) => {
-    setRegionGroup(reg);
-    const matching = SETTLEMENTS.filter((s) => s.regionGroup === reg);
-    if (matching.length > 0) setBirthplaceId(matching[0].id);
-    rollName(reg, sex);
+  const handleHomelandChange = (hId: StartingHomeland) => {
+    setHomelandId(hId);
+    const def = HOMELANDS.find((h) => h.id === hId) ?? HOMELANDS[0];
+    setBirthplaceId(def.defaultBirthplace);
+    rollName(def.regionGroup, sex);
   };
 
   const handleRandomizeEverything = () => {
-    const randomReg = REGION_IDS[Math.floor(Math.random() * REGION_IDS.length)];
+    const randomHome = HOMELANDS[Math.floor(Math.random() * HOMELANDS.length)];
+    const randomOcc = OCCUPATIONS[Math.floor(Math.random() * OCCUPATIONS.length)];
     const randomSex = Math.random() < 0.5 ? Sex.Male : Sex.Female;
-    const randomClass = CLASS_IDS[Math.floor(Math.random() * CLASS_IDS.length)];
     const randomEra = HISTORICAL_ERAS[Math.floor(Math.random() * HISTORICAL_ERAS.length)];
-    const matchingPorts = SETTLEMENTS.filter((s) => s.regionGroup === randomReg);
-    const port = matchingPorts[Math.floor(Math.random() * matchingPorts.length)] ?? SETTLEMENTS[0];
-
     const shuffledTraits = [...SELECTABLE_TRAITS].sort(() => Math.random() - 0.5);
 
-    setRegionGroup(randomReg);
-    setBirthplaceId(port.id);
+    setHomelandId(randomHome.id);
+    setBirthplaceId(randomHome.defaultBirthplace);
+    setOccupationId(randomOcc.id);
     setSex(randomSex);
-    setSocialClass(randomClass);
     setSelectedEra(randomEra.id);
     setYear(randomEra.defaultYear);
     setSelectedTraits([shuffledTraits[0].id, shuffledTraits[1].id]);
     cycleAppearance();
-    rollName(randomReg, randomSex);
+    rollName(randomHome.regionGroup, randomSex);
   };
 
   const handleToggleTrait = (traitId: string) => {
@@ -225,12 +452,14 @@ export function CharacterCreation({
       year: Math.max(793, Math.min(1066, year)),
       startAge,
       birthplaceId,
-      socialClass,
+      socialClass: selectedOcc.socialClass,
       religion,
       traits: selectedTraits,
       winGoalId,
       seedString: seedString.trim() || generateReadableSeed(),
       appearance,
+      startingHomeland: homelandId,
+      startingOccupation: occupationId,
     });
   };
 
@@ -247,10 +476,7 @@ export function CharacterCreation({
       traits: pm.traits,
       winGoalId: pm.winGoalId,
       seedString: generateReadableSeed(),
-      bonusSilver: pm.bonusSilver,
-      bonusShips: pm.bonusShips,
-      bonusWarriors: pm.bonusWarriors,
-      startingFlags: pm.startingFlags,
+      appearance: pm.appearance,
     });
   };
 
@@ -260,7 +486,7 @@ export function CharacterCreation({
       className="relative z-10 h-dvh w-full overflow-y-auto overflow-x-hidden bg-[#0B1118] text-[#F1F5F9]"
     >
       {!bgFailed && (
-        <div className="pointer-events-none fixed inset-x-0 top-0 h-72 opacity-25 overflow-hidden">
+        <div className="pointer-events-none fixed inset-x-0 top-0 h-80 opacity-25 overflow-hidden">
           <img
             src={longshipHeroUrl}
             alt="Viking longship at dusk"
@@ -274,7 +500,16 @@ export function CharacterCreation({
 
       <div className="relative z-10 min-h-full w-full max-w-xl sm:max-w-2xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8 flex flex-col justify-start sm:justify-center gap-4">
         {/* Top Utility Strip */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={onOpenLoadModal}
+            className="min-h-[44px] px-3.5 rounded-xl bg-[#131D2B]/95 border border-[#233246] hover:border-[#F59E0B] text-xs font-medium text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+          >
+            <FolderOpen className="w-4 h-4 text-[#F59E0B]" />
+            <span>{isFa ? 'مدیریت ذخیره‌ها' : 'Save Files'}</span>
+          </button>
+
           <button
             type="button"
             onClick={onOpenGuide}
@@ -285,16 +520,23 @@ export function CharacterCreation({
           </button>
         </div>
 
-        {/* Game Logo Title */}
-        <div className="text-center space-y-1 pt-1">
-          <div className="text-xs font-mono tracking-widest text-[#38BDF8]">᛫ ELDSAGA ᛫</div>
-          <h1 className="font-saga text-4xl sm:text-5xl font-bold text-[#F1F5F9]">
-            {isFa ? 'زندگی وایکینگی' : 'Saga of Embers'}
+        {/* Rebranded Game Title */}
+        <div className="text-center space-y-1.5 pt-1">
+          <div className="text-xs font-mono tracking-widest text-[#38BDF8] flex items-center justify-center gap-2">
+            <span>᛫</span>
+            <span>{isFa ? 'حماسه‌ی تاج‌ها' : 'SAGA OF CROWNS'}</span>
+            <span>᛫</span>
+          </div>
+          <h1 className="font-saga text-4xl sm:text-5xl font-extrabold text-[#F1F5F9] tracking-tight">
+            {isFa ? 'حماسه‌ی تاج‌ها' : 'Saga of Crowns'}
           </h1>
-          <p className="text-xs text-[#94A3B8]">
+          <p className="text-xs sm:text-sm text-[#F59E0B] font-semibold tracking-wide">
+            {isFa ? 'حماسه‌ای از خون، ایمان و اقتدار' : 'A Saga of Blood, Faith & Power'}
+          </p>
+          <p className="text-[11px] text-[#94A3B8]">
             {isFa
-              ? 'زندگی کن، غارت برو، بمیر و با وارثت ادامه بده! · ۷۹۳ تا ۱۰۶۶ میلادی'
-              : 'Live fast, raid hard, die gloriously & rule through your heirs · 793–1066 AD'}
+              ? 'شخصیت خود را بساز، در اروپا و اقیانوس بجنگ، حکومت کن و میراث دودمانت را بساز · ۷۹۳ تا ۱۰۶۶ میلادی'
+              : 'Forge your ruler, conquer kingdoms across medieval Europe & pass your legacy to heirs · 793–1066 AD'}
           </p>
         </div>
 
@@ -317,7 +559,7 @@ export function CharacterCreation({
               />
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-[#F59E0B] font-semibold">
-                  {isFa ? 'ادامه بازی قبلی' : 'Continue Current Life'}
+                  {isFa ? 'ادامه بازی ذخیره‌شده' : 'Continue Current Life'}
                 </div>
                 <div className="font-saga text-base sm:text-lg font-bold text-[#F1F5F9] line-clamp-2 break-words leading-snug">
                   {formatPersonName(
@@ -344,7 +586,7 @@ export function CharacterCreation({
                 : 'text-[#94A3B8] hover:text-[#F1F5F9]'
             }`}
           >
-            {isFa ? 'ساخت شخصیت جدید' : 'Custom Viking'}
+            {isFa ? 'شخصیت اختصاصی' : 'Custom Origin'}
           </button>
           <button
             type="button"
@@ -418,7 +660,7 @@ export function CharacterCreation({
                   age={startAge}
                   sex={sex}
                   traits={selectedTraits}
-                  title={classCfg.startingTitle}
+                  title={selectedOcc.socialClass === SocialClass.Thrall ? undefined : undefined}
                   appearance={appearance}
                   seedId="creator_preview"
                   size={68}
@@ -439,7 +681,7 @@ export function CharacterCreation({
                     className="text-[#F59E0B] hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    {isFa ? 'تصادفی کامل' : 'Randomize'}
+                    {isFa ? 'انتخاب تصادفی' : 'Randomize'}
                   </button>
                 </div>
                 <div className="flex gap-1.5">
@@ -453,8 +695,8 @@ export function CharacterCreation({
                   />
                   <button
                     type="button"
-                    onClick={() => rollName(regionGroup, sex)}
-                    title={isFa ? 'نام تصادفی وایکینگی' : 'Roll Norse Name'}
+                    onClick={() => rollName(selectedHomeland.regionGroup, sex)}
+                    title={isFa ? 'تولید نام تصادفی' : 'Roll Norse Name'}
                     className="min-w-[42px] min-h-[42px] flex items-center justify-center bg-[#0B1118] border border-[#283B52] hover:border-[#38BDF8] rounded-lg text-[#38BDF8] cursor-pointer shrink-0"
                   >
                     <Dices className="w-4 h-4" />
@@ -466,7 +708,7 @@ export function CharacterCreation({
                         type="button"
                         onClick={() => {
                           setSex(s);
-                          rollName(regionGroup, s);
+                          rollName(selectedHomeland.regionGroup, s);
                         }}
                         className={`px-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                           sex === s ? 'bg-[#38BDF8] text-[#0B1118] font-bold' : 'text-[#94A3B8]'
@@ -480,8 +722,90 @@ export function CharacterCreation({
               </div>
             </div>
 
-            {/* Sleek Dropdown Selectors (Era, Homeland & Port, Social Class) */}
+            {/* Core Saga Choices */}
             <div className="space-y-3">
+              {/* 1. Starting Homeland & Culture */}
+              <NordicSelect
+                label={isFa ? 'سرزمین زادگاه و فرهنگ شروع' : 'Starting Homeland & Culture'}
+                value={homelandId}
+                icon={<Compass className="w-4 h-4 text-[#38BDF8]" />}
+                onChange={(val) => handleHomelandChange(val as StartingHomeland)}
+                options={HOMELANDS.map((h) => ({
+                  value: h.id,
+                  label: isFa ? h.nameFa : h.nameEn,
+                  sublabel: isFa ? `${h.introFa} (${h.perkFa})` : `${h.introEn} (${h.perkEn})`,
+                  badge: isFa ? h.perkFa.split('·')[0].trim() : h.perkEn.split('·')[0].trim(),
+                  badgeTone: 'gold',
+                }))}
+              />
+
+              {/* Birth Port in Selected Homeland */}
+              <NordicSelect
+                label={isFa ? 'بندرگاه یا پایتخت زادگاه' : 'Birth Settlement & Port'}
+                value={birthplaceId}
+                icon={<MapPin className="w-4 h-4 text-[#F59E0B]" />}
+                onChange={(val) => setBirthplaceId(val)}
+                options={settlementsInRegion.map((s) => ({
+                  value: s.id,
+                  label: isFa ? SETTLEMENTS_FA[s.id]?.name ?? s.name : s.name.split(' (')[0],
+                  sublabel: s.settlementType ? `Type: ${s.settlementType}` : undefined,
+                }))}
+              />
+
+              {/* 2. Social Class & Occupation */}
+              <NordicSelect
+                label={isFa ? 'طبقه اجتماعی و پیشه شروع' : 'Starting Class & Occupation'}
+                value={occupationId}
+                icon={<Crown className="w-4 h-4 text-[#F59E0B]" />}
+                onChange={(val) => setOccupationId(val as StartingOccupation)}
+                options={OCCUPATIONS.map((occ) => ({
+                  value: occ.id,
+                  label: isFa ? occ.nameFa : occ.nameEn,
+                  sublabel: isFa ? `${occ.descFa} (${occ.perkFa})` : `${occ.descEn} (${occ.perkEn})`,
+                  badge: isFa ? occ.perkFa.split('·')[0].trim() : occ.perkEn.split('·')[0].trim(),
+                  badgeTone: occ.id === 'noble' ? 'gold' : 'ice',
+                }))}
+              />
+
+              {/* 3. Starting Religion */}
+              <NordicSelect
+                label={isFa ? 'آیین و باور مذهبی' : 'Starting Faith & Religion'}
+                value={religion}
+                icon={<Flame className="w-4 h-4 text-[#38BDF8]" />}
+                onChange={(val) => setReligion(val as Religion)}
+                options={[
+                  {
+                    value: Religion.NorsePagan,
+                    label: isFa ? 'خدایان کهن شمال (اودین، ثور و فریر)' : 'Old Norse Gods (Thor, Odin & Freyr)',
+                    sublabel: isFa ? 'برگزاری جشن بلوت، افتخار در دوئل هولم‌گانگ و غارت بدون گناه صومعه‌ها' : 'Blót feasts, holmgang duels, no sin in monastery raids',
+                    badge: isFa ? 'پاگان شمال' : 'Norse Pagan',
+                    badgeTone: 'gold',
+                  },
+                  {
+                    value: Religion.Christian,
+                    label: isFa ? 'مسیح سپید (آیین مسیحیت)' : 'White Christ (Christianity)',
+                    sublabel: isFa ? 'محبوبیت در دربارهای اروپا، کلیساهای چوبی و کاهش شورش متصرفات مسیحی' : 'Court favor in Frankia & England, stave churches, calmer unrest',
+                    badge: isFa ? 'مسیحی' : 'Christian',
+                    badgeTone: 'ice',
+                  },
+                  {
+                    value: Religion.Islam,
+                    label: isFa ? 'اسلام (آیین سرزمین‌های شرقی و خلافت)' : 'Islam (Faith of Serkland & Caliphate)',
+                    sublabel: isFa ? 'تجارت مستقیم درهم و عاج با بغداد و مسیرهای خزر، انضباط و محاسبه' : 'Direct dirham trade with Baghdad & Caspian, algebra & trade routes',
+                    badge: isFa ? 'سرکلند' : 'Serkland',
+                    badgeTone: 'gold',
+                  },
+                  {
+                    value: Religion.SlavicPagan,
+                    label: isFa ? 'خدایان اسلاو (پرون و ایزدان جنگل)' : 'Slavic Gods (Perun & Forest Spirits)',
+                    sublabel: isFa ? 'مقاومت در سرمای زمستان، پیوند خونی با مردمان اسلاو و رودخانه‌ها' : 'Winter cold resilience, river portage endurance, Slavic kinship',
+                    badge: isFa ? 'اسلاو' : 'Slavic',
+                    badgeTone: 'ice',
+                  },
+                ]}
+              />
+
+              {/* 4. Historical Starting Era */}
               <NordicSelect
                 label={isFa ? 'دوره تاریخی شروع' : 'Historical Era'}
                 value={String(selectedEra)}
@@ -499,58 +823,14 @@ export function CharacterCreation({
                   badgeTone: 'ice',
                 }))}
               />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <NordicSelect
-                  label={isFa ? 'سرزمین زادگاه' : 'Homeland'}
-                  value={regionGroup}
-                  icon={<Compass className="w-4 h-4 text-[#38BDF8]" />}
-                  onChange={(val) => handleRegionPick(val as RegionGroup)}
-                  options={REGION_IDS.map((rId) => ({
-                    value: rId,
-                    label: REGION_LABELS[lang][rId],
-                  }))}
-                />
-
-                <NordicSelect
-                  label={isFa ? 'بندر یا شهر تولد' : 'Birth Port'}
-                  value={birthplaceId}
-                  icon={<MapPin className="w-4 h-4 text-[#F59E0B]" />}
-                  onChange={(val) => setBirthplaceId(val)}
-                  options={settlementsInRegion.map((s) => ({
-                    value: s.id,
-                    label: isFa ? SETTLEMENTS_FA[s.id]?.name ?? s.name : s.name.split(' (')[0],
-                  }))}
-                />
-              </div>
-
-              <NordicSelect
-                label={isFa ? 'طبقه اجتماعی در شروع' : 'Starting Social Status'}
-                value={socialClass}
-                icon={<Crown className="w-4 h-4 text-[#F59E0B]" />}
-                onChange={(val) => setSocialClass(val as SocialClass)}
-                options={CLASS_IDS.map((cId) => {
-                  const cfg = SOCIAL_CLASS_CONFIG[cId];
-                  const sub = isFa
-                    ? `${cfg.silver} نقره · ${cfg.farms} مزرعه · ${cfg.longships + cfg.knarrs} کشتی · ${cfg.warriors} جنگجو`
-                    : `${cfg.silver} Silver · ${cfg.farms} Farms · ${cfg.longships + cfg.knarrs} Ships · ${cfg.warriors} Warriors`;
-                  return {
-                    value: cId,
-                    label: CLASS_SHORT_LABELS_I18N[lang][cId],
-                    sublabel: sub,
-                    badge: isFa ? SOCIAL_CLASS_FA[cId].norseTerm : cfg.norseTerm,
-                    badgeTone: 'gold',
-                  };
-                })}
-              />
             </div>
 
-            {/* Collapsible Drawer: Traits, Start Age, Faith & Dynasty Goal */}
+            {/* Collapsible Drawer: Traits, Start Age & Dynasty Goal */}
             <NordicAccordion
               title={
                 isFa
                   ? 'ویژگی‌های شخصیتی، سن شروع و هدف خاندان'
-                  : 'Traits, Start Age, Faith & Goal'
+                  : 'Traits, Starting Age & Dynasty Goal'
               }
               subtitle={
                 isFa
@@ -575,145 +855,92 @@ export function CharacterCreation({
                     options={[
                       {
                         value: '16',
-                        label: isFa ? '۱۶ ساله (جوان آماده نبرد)' : 'Age 16 (Young Adult)',
-                        sublabel: isFa ? 'ورود مستقیم به سفر و غارت' : 'Ready for raids & voyages',
+                        label: isFa ? '۱۶ ساله (جوان آماده نبرد و سفر)' : 'Age 16 (Young Adult)',
+                        sublabel: isFa ? 'ورود مستقیم به سفرهای دریایی و سیاست' : 'Direct entry into voyages & politics',
                       },
                       {
                         value: '6',
                         label: isFa ? '۶ ساله (دوران کودکی)' : 'Age 6 (Childhood)',
-                        sublabel: isFa ? 'تجربه شیطنت‌ها و آموزش کودکی' : 'Childhood events & training',
+                        sublabel: isFa ? 'رویدادهای کودکی، آموزش و رشد' : 'Childhood education & training',
                       },
                       {
                         value: '0',
-                        label: isFa ? 'نوزاد تازه متولدشده (۰ سال)' : 'Newborn (Age 0)',
-                        sublabel: isFa ? 'زندگی کامل از گهواره تا والهالا' : 'Full life from cradle to grave',
+                        label: isFa ? 'نوزاد تازه متولد (۰ سال)' : 'Newborn (Age 0)',
+                        sublabel: isFa ? 'زندگی کامل از گهواره تا کهنسالی' : 'Full life from cradle to grave',
                       },
                     ]}
                   />
 
                   <NordicSelect
-                    label={isFa ? 'آیین و باور' : 'Starting Faith'}
-                    value={religion}
-                    onChange={(val) => setReligion(val as Religion)}
-                    options={[
-                      {
-                        value: Religion.NorsePagan,
-                        label: RELIGION_LABELS[lang][Religion.NorsePagan],
-                      },
-                      {
-                        value: Religion.Syncretic,
-                        label: RELIGION_LABELS[lang][Religion.Syncretic],
-                      },
-                      {
-                        value: Religion.Christian,
-                        label: RELIGION_LABELS[lang][Religion.Christian],
-                      },
-                    ]}
+                    label={isFa ? 'هدف بزرگ دودمان' : 'Dynasty Ambition'}
+                    value={winGoalId}
+                    onChange={(val) => setWinGoalId(val)}
+                    options={WIN_GOALS.map((wg) => ({
+                      value: wg.id,
+                      label: isFa ? WIN_GOALS_FA[wg.id]?.title ?? wg.title : wg.title,
+                      sublabel: isFa ? WIN_GOALS_FA[wg.id]?.description ?? wg.description : wg.description,
+                    }))}
                   />
                 </div>
 
-                <NordicSelect
-                  label={isFa ? 'هدف بزرگ خاندان' : 'Dynasty Ambition'}
-                  value={winGoalId}
-                  onChange={(val) => setWinGoalId(val)}
-                  options={WIN_GOALS.map((wg) => ({
-                    value: wg.id,
-                    label: isFa ? WIN_GOALS_FA[wg.id]?.title ?? wg.title : wg.title,
-                    sublabel: isFa
-                      ? WIN_GOALS_FA[wg.id]?.description ?? wg.description
-                      : wg.description,
-                  }))}
-                />
-
+                {/* Traits selector */}
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-[#94A3B8]">
-                    <span>{isFa ? 'ویژگی‌های شخصیتی (تا ۳ مورد)' : 'Traits (Up to 3)'}</span>
-                    <span className="font-mono tabular-nums text-[#38BDF8]">
-                      {selectedTraits.length}/3
-                    </span>
+                  <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+                    <span>{isFa ? 'ویژگی‌های شخصیتی (۱ تا ۳ مورد)' : 'Personality Traits (1–3)'}</span>
+                    <span className="font-mono text-[#38BDF8]">{selectedTraits.length}/3</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pe-0.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {SELECTABLE_TRAITS.map((t) => {
-                      const active = selectedTraits.includes(t.id);
+                      const isSel = selectedTraits.includes(t.id);
                       const tFa = TRAITS_FA[t.id];
                       return (
                         <button
                           key={t.id}
                           type="button"
                           onClick={() => handleToggleTrait(t.id)}
-                          title={isFa ? tFa?.description ?? t.description : t.description}
-                          className={`min-h-[44px] px-2.5 py-1.5 text-xs rounded-lg border text-start flex items-center justify-between gap-1.5 transition-colors cursor-pointer ${
-                            active
-                              ? 'bg-[#192A3E] border-[#38BDF8] text-[#F1F5F9] font-semibold'
-                              : 'bg-[#0B1118] border-[#233246] text-[#94A3B8] hover:text-[#F1F5F9]'
+                          className={`min-h-[44px] px-3 py-1.5 text-xs rounded-lg border transition-colors cursor-pointer ${
+                            isSel
+                              ? 'bg-[#38BDF8] border-[#38BDF8] text-[#0B1118] font-bold shadow-xs'
+                              : 'bg-[#0B1118] border-[#283B52] text-[#CBD5E1] hover:border-[#38BDF8]/60'
                           }`}
                         >
-                          <span className="truncate">{isFa ? tFa?.name ?? t.name : t.name}</span>
-                          {active && <span className="text-[#38BDF8] font-bold shrink-0">✓</span>}
+                          {isFa ? tFa?.name ?? t.name : t.name}
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-[#1E2D40]">
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-[#94A3B8]">
-                      <span>{isFa ? 'سال دقیق شروع' : 'Exact Year'}</span>
-                      <span className="font-mono tabular-nums text-[#F1F5F9]">
-                        {formatYearLabel(year, lang)}
-                      </span>
-                    </div>
-                    <input
-                      dir="ltr"
-                      type="range"
-                      min={793}
-                      max={1066}
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value))}
-                      className="w-full accent-[#F59E0B] cursor-pointer"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs text-[#94A3B8] block">
-                      {isFa ? 'کد تصادفی دنیا (Seed)' : 'World Seed'}
-                    </label>
-                    <input
-                      dir="ltr"
-                      type="text"
-                      value={seedString}
-                      onChange={(e) => setSeedString(e.target.value)}
-                      className="w-full min-h-[44px] px-3 text-xs font-mono bg-[#0B1118] border border-[#24354C] rounded-xl text-[#F1F5F9] focus:outline-none focus:border-[#38BDF8]"
-                    />
-                  </div>
+                {/* Seed Input */}
+                <div className="space-y-1">
+                  <label className="text-xs text-[#94A3B8]">
+                    {isFa ? 'کد بذر جهان (Seed)' : 'World Seed String'}
+                  </label>
+                  <input
+                    type="text"
+                    value={seedString}
+                    onChange={(e) => setSeedString(e.target.value)}
+                    className="w-full min-h-[42px] px-3 text-xs font-mono bg-[#0B1118] border border-[#283B52] rounded-lg text-[#F1F5F9] focus:outline-none focus:border-[#38BDF8]"
+                  />
                 </div>
               </div>
             </NordicAccordion>
 
-            {/* Primary Start Game CTA */}
+            {/* Launch Game Button */}
             <button
               type="button"
               onClick={handleStart}
-              className="w-full min-h-[54px] bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-[0.99] text-[#0B1118] font-extrabold text-base rounded-xl shadow-[0_0_24px_rgba(245,158,11,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              className="w-full min-h-[52px] sm:min-h-[56px] px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#F59E0B] hover:brightness-110 active:scale-[0.99] text-[#0B1118] font-saga text-lg sm:text-xl font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#F59E0B]/20 transition-all"
             >
-              <Play className={`w-4 h-4 fill-current ${isFa ? 'rotate-180' : ''}`} />
-              <span>{isFa ? 'شروع زندگی جدید!' : 'Start New Life'}</span>
+              <Swords className="w-5 h-5 shrink-0" />
+              <span>
+                {isFa
+                  ? `آغاز سفر در سال ${year} میلادی`
+                  : `Begin Saga in ${year} AD`}
+              </span>
             </button>
           </div>
         )}
-
-        {/* Bottom Save Slots Link */}
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={onOpenLoadModal}
-            className="min-h-[44px] px-4 text-xs text-[#94A3B8] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-          >
-            <FolderOpen className="w-4 h-4" />
-            {isFa ? 'جایگاه‌های ذخیره و تنظیمات' : 'Save Slots & Settings'}
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -219,14 +219,14 @@ export function SettingsSaveModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-xs p-2.5 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[calc(100dvh-1.25rem)] sm:max-h-[min(88dvh,800px)] flex flex-col bg-[#0E1622] border border-[#24354C] rounded-2xl overflow-hidden text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
+        className="w-full max-w-xl max-h-[min(88dvh,720px)] flex flex-col bg-[#0E1622] border border-[#24354C] rounded-2xl overflow-hidden text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">
@@ -569,8 +569,8 @@ export function SettingsSaveModal({
             title={isFa ? 'خروجی و بازیابی کد متنی ذخیره' : 'Export / Import Save Code'}
             subtitle={
               isFa
-                ? 'کپی رشته متنی ELDSAGA1 برای پشتیبان‌گیری یا انتقال به دستگاه دیگر'
-                : 'Copy or paste an ELDSAGA1 save code to back up or transfer your saga'
+                ? 'کپی رشته متنی ذخیره برای پشتیبان‌گیری یا انتقال به دستگاه دیگر'
+                : 'Copy or paste a save code to back up or transfer your saga'
             }
             icon={<FileCode2 className="w-4 h-4" />}
             accent="neutral"

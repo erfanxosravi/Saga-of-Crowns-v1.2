@@ -39,6 +39,24 @@ export const MALE_NAMES_BY_REGION: Record<RegionGroup, string[]> = {
     'Ingolf', 'Leif', 'Thorvald', 'Skallagrim', 'Egil', 'Njal', 'Gunnar',
     'Snorri', 'Kjartan', 'Bolli', 'Thorfinn', 'Flosi', 'Hoskuld', 'Ari',
   ],
+  Baltic: [
+    'Palnatoke', 'Sigvaldi', 'Bue', 'Vagn', 'Styrbjorn', 'Vidigoier', 'Gaupo', 'Algirdas',
+  ],
+  'Kievan Rus & Rivers': [
+    'Rurik', 'Oleg', 'Igor', 'Sviatoslav', 'Vladimir', 'Yaroslav', 'Askold', 'Dir', 'Farulf', 'Gorm',
+  ],
+  'Iberia & Al-Andalus': [
+    'Hastein', 'Bjorn', 'Alphonso', 'Pelayo', 'Abd ar-Rahman', 'Tariq', 'Hakam', 'Mundhir',
+  ],
+  Mediterranean: [
+    'Hastein', 'Bjorn Ironside', 'Robert Guiscard', 'Bohemond', 'Tancred', 'Guaimar', 'Leo',
+  ],
+  'Miklagard & East': [
+    'Harald Hardrada', 'Ragnvald', 'Ingvar', 'Alexios', 'Basil', 'Nikephoros', 'Georgios', 'Bardas',
+  ],
+  'Serkland & Caliphate': [
+    'Ingvar the Far-Travelled', 'Harun', 'Al-Mamun', 'Jafar', 'Ibn Fadlan', 'Tariq', 'Ali',
+  ],
 };
 
 export const FEMALE_NAMES_BY_REGION: Record<RegionGroup, string[]> = {
@@ -69,6 +87,24 @@ export const FEMALE_NAMES_BY_REGION: Record<RegionGroup, string[]> = {
   'North Atlantic': [
     'Aud', 'Gudrun', 'Hallgerd', 'Freydis', 'Gudrid', 'Bergthora', 'Thorgerd',
     'Unn', 'Hrefna', 'Thurid', 'Yngvild', 'Steingerd',
+  ],
+  Baltic: [
+    'Astrid', 'Ingeborg', 'Tove', 'Danute', 'Ragnfrid', 'Gyrid',
+  ],
+  'Kievan Rus & Rivers': [
+    'Olga', 'Ingegerd', 'Rogneda', 'Anna', 'Malfrida', 'Predslava', 'Svyatoslava',
+  ],
+  'Iberia & Al-Andalus': [
+    'Tuda', 'Jimena', 'Urraca', 'Subh', 'Tarub', 'Zahra', 'Aixa',
+  ],
+  Mediterranean: [
+    'Sichelgaita', 'Adelasia', 'Theodora', 'Gemma', 'Beatrix', 'Costanza',
+  ],
+  'Miklagard & East': [
+    'Zoe', 'Theodora', 'Eudokia', 'Anna Dalassene', 'Irene', 'Helena', 'Maria',
+  ],
+  'Serkland & Caliphate': [
+    'Zubayda', 'Shajar', 'Farida', 'Layla', 'Fatima', 'Maryam',
   ],
 };
 
@@ -337,12 +373,20 @@ export const SOCIAL_CLASS_CONFIG: Record<
 export const TITLE_LADDER: TitleRank[] = [
   TitleRank.Thrall,
   TitleRank.Freeman,
-  TitleRank.Bonde,
-  TitleRank.Hersir,
+  TitleRank.Hirdman,
+  TitleRank.Huscarl,
+  TitleRank.Captain,
   TitleRank.Jarl,
   TitleRank.Konungr,
   TitleRank.Overking,
 ];
+
+export function getTitleRankIndex(title: TitleRank): number {
+  if (title === TitleRank.Bonde) return 2; // maps to Hirdman/Warrior level
+  if (title === TitleRank.Hersir) return 3; // maps to Huscarl level
+  const idx = TITLE_LADDER.indexOf(title);
+  return idx >= 0 ? idx : 1;
+}
 
 export const BUILDINGS_CATALOG: Record<
   BuildingType,

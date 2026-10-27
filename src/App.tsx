@@ -47,22 +47,39 @@ import { getSeasonalWeatherProfile, SETTLEMENTS_BY_ID } from './data/geography';
 import { ALL_TRAITS_MAP } from './data/namesAndTraits';
 import {
   advanceTurn,
+  cancelBattle,
+  claimSpecialTitle,
   continueAsHeir,
   createNewGame,
+  DiplomacyApproach,
   dismiss1066Epilogue,
   dismissOnboarding,
+  executeAppointJarlAction,
+  executeBesiegeAction,
   executeBuildHoldingAction,
   executeCityConquestAction,
+  executeDiplomacyAction,
   executeFamilyMemberInteraction,
   executeGeneralAction,
+  executeLocalMarriageAction,
+  executePlotAction,
   executeRaidAction,
   executeSailAction,
+  executeSendSettlersAction,
+  executeSetTributeBurdenAction,
+  executeSettleAction,
+  executeStationGarrisonAction,
+  executeTakeHostagesAction,
+  executeToggleReligiousToleranceAction,
   executeTrainSkillAction,
   FamilyInteractionType,
   getClaimableNextTitle,
+  initiateBattle,
   NewGameParams,
   RaidTactic,
+  resolveBattleTactic,
   resolveEventChoice,
+  SiegeApproach,
 } from './engine/gameEngine';
 import {
   playSound,
@@ -81,6 +98,8 @@ import {
 } from './engine/storage';
 import { formatPersonName, SETTLEMENTS_FA, TRAITS_FA } from './i18n/gameDataFa';
 import {
+  APP_SUBTITLE,
+  APP_TITLE,
   EPITHET_FA,
   formatAgeLabel,
   isRtl,
@@ -92,17 +111,20 @@ import {
   TITLE_LABELS,
 } from './i18n/ui';
 import {
+  BattleTactic,
   BuildingType,
   FullGameState,
   GameScreen,
   GameSettings,
   Language,
+  PlotType,
   Religion,
   Season,
   Sex,
   SkillKey,
   SocialClass,
   TabId,
+  TributeBurden,
 } from './types/game';
 
 export default function App() {
@@ -353,6 +375,39 @@ export default function App() {
     setGameState(next);
   };
 
+  const handleBesiege = (settlementId: string, approach: SiegeApproach) => {
+    if (!gameState) return;
+    playSound('raid', settings.soundEnabled);
+    const next = executeBesiegeAction(gameState, settlementId, approach);
+    if (next.pendingDeath) playSound('death', settings.soundEnabled);
+    setGameState(next);
+    setActiveTab(TabId.Life);
+  };
+
+  const handleSettle = (settlementId: string) => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    const next = executeSettleAction(gameState, settlementId);
+    setGameState(next);
+    setActiveTab(TabId.Life);
+  };
+
+  const handleDiplomacy = (settlementId: string, approach: DiplomacyApproach) => {
+    if (!gameState) return;
+    playSound(approach === 'varangian_oath' ? 'honor' : 'choice', settings.soundEnabled);
+    const next = executeDiplomacyAction(gameState, settlementId, approach);
+    setGameState(next);
+    setActiveTab(TabId.Life);
+  };
+
+  const handleMarryLocal = (settlementId: string) => {
+    if (!gameState) return;
+    playSound('honor', settings.soundEnabled);
+    const next = executeLocalMarriageAction(gameState, settlementId);
+    setGameState(next);
+    setActiveTab(TabId.Life);
+  };
+
   const handleGeneralAction = (
     actionType: Parameters<typeof executeGeneralAction>[1],
     extra?: string
@@ -382,6 +437,70 @@ export default function App() {
     playSound('honor', settings.soundEnabled);
     setGameState(continueAsHeir(gameState, heirId));
     setActiveTab(TabId.Life);
+  };
+
+  const handleSendSettlers = (holdingId: string) => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(executeSendSettlersAction(gameState, holdingId));
+  };
+
+  const handleStationGarrison = (holdingId: string, count: number) => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(executeStationGarrisonAction(gameState, holdingId, count));
+  };
+
+  const handleSetTributeBurden = (holdingId: string, burden: TributeBurden) => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(executeSetTributeBurdenAction(gameState, holdingId, burden));
+  };
+
+  const handleAppointJarl = (holdingId: string) => {
+    if (!gameState) return;
+    playSound('honor', settings.soundEnabled);
+    setGameState(executeAppointJarlAction(gameState, holdingId));
+  };
+
+  const handleTakeHostages = (holdingId: string) => {
+    if (!gameState) return;
+    playSound('honor', settings.soundEnabled);
+    setGameState(executeTakeHostagesAction(gameState, holdingId));
+  };
+
+  const handleToggleTolerance = (holdingId: string) => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(executeToggleReligiousToleranceAction(gameState, holdingId));
+  };
+
+  const handleExecutePlot = (type: PlotType, targetSettlementId?: string) => {
+    if (!gameState) return;
+    playSound('raid', settings.soundEnabled);
+    const next = executePlotAction(gameState, type, targetSettlementId);
+    if (next.pendingDeath) playSound('death', settings.soundEnabled);
+    setGameState(next);
+  };
+
+  const handleClaimSpecialTitle = (titleId: string) => {
+    if (!gameState) return;
+    playSound('honor', settings.soundEnabled);
+    setGameState(claimSpecialTitle(gameState, titleId));
+  };
+
+  const handleResolveBattleTactic = (tactic: BattleTactic) => {
+    if (!gameState) return;
+    playSound('raid', settings.soundEnabled);
+    const next = resolveBattleTactic(gameState, tactic);
+    if (next.pendingDeath) playSound('death', settings.soundEnabled);
+    setGameState(next);
+  };
+
+  const handleCancelBattle = () => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(cancelBattle(gameState));
   };
 
   const textScaleClass =
@@ -772,6 +891,16 @@ export default function App() {
                 onBuildHoldingStructure={handleBuildStructure}
                 onClearFirstFarm={() => handleGeneralAction('farm_settle')}
                 onConquerCity={handleConquerCity}
+                onSendSettlers={handleSendSettlers}
+                onStationGarrison={handleStationGarrison}
+                onSetTributeBurden={handleSetTributeBurden}
+                onAppointJarl={handleAppointJarl}
+                onTakeHostages={handleTakeHostages}
+                onToggleTolerance={handleToggleTolerance}
+                onExecutePlot={handleExecutePlot}
+                onClaimSpecialTitle={handleClaimSpecialTitle}
+                onResolveBattleTactic={handleResolveBattleTactic}
+                onCancelBattle={handleCancelBattle}
               />
             )}
 
@@ -795,6 +924,10 @@ export default function App() {
                 onRaidPort={handleRaid}
                 onConquerCity={handleConquerCity}
                 onTradeHere={() => handleGeneralAction('trade_voyage')}
+                onBesiege={handleBesiege}
+                onSettle={handleSettle}
+                onDiplomacy={handleDiplomacy}
+                onMarryLocal={handleMarryLocal}
               />
             )}
 
@@ -1152,11 +1285,11 @@ export default function App() {
       {/* Character Profile Sheet (Tap portrait in header) */}
       {isMobileStatsSheetOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#05080D]/82 backdrop-blur-xs flex items-end sm:items-center justify-center p-2.5 sm:p-4"
+          className="fixed inset-0 z-50 bg-[#05080D]/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
           onClick={() => setIsMobileStatsSheetOpen(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[calc(100dvh-1.25rem)] sm:max-h-[min(88dvh,740px)] flex flex-col bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] overflow-hidden text-start"
+            className="w-full max-w-lg max-h-[min(88dvh,700px)] flex flex-col bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] overflow-hidden text-start"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">

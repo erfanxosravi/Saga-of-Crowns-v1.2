@@ -212,7 +212,7 @@ export function NorseBottomSheet({
       aria-label={title}
     >
       <div
-        className={`relative w-full sm:max-w-lg max-h-[88dvh] flex flex-col bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.85)] overflow-hidden text-start`}
+        className={`relative w-full sm:max-w-xl max-h-[85dvh] sm:max-h-[min(85dvh,720px)] flex flex-col bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.85)] overflow-hidden text-start`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Affordance */}
