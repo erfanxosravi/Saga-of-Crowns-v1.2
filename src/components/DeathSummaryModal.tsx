@@ -261,12 +261,12 @@ export function DeathSummaryModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="death-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[min(90dvh,740px)] flex flex-col bg-[#0F1722] border border-[#991B1B] rounded-2xl shadow-[0_0_55px_rgba(220,38,38,0.28)] overflow-hidden text-start">
+      <div className="w-full max-w-xl max-h-[min(90dvh,740px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#991B1B] rounded-2xl shadow-[0_0_55px_rgba(220,38,38,0.28)] text-start">
         {/* Top Report Header */}
         <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 bg-[#131D2B] border-b border-[#1E2D40] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">

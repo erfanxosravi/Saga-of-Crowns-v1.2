@@ -41,7 +41,7 @@ export function Epilogue1066Modal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 bg-[#05080D]/88 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 select-none"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-[#05080D]/88 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4 select-none"
     >
       <div className="w-full max-w-xl max-h-[min(90dvh,720px)] flex flex-col overflow-hidden rounded-2xl bg-[#0F1722] border border-[#F59E0B]/45 shadow-2xl text-start">
         {/* Header */}

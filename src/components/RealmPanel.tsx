@@ -124,7 +124,7 @@ export function RealmPanel({
   const specialTitles = checkSpecialTitles(state);
 
   return (
-    <div className="space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* 3-Way Segmented Navigation Header */}
       <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#0B1118] border border-[#1E2D40]">
         <button
@@ -175,7 +175,7 @@ export function RealmPanel({
 
       {/* Active Battle Card (If Ongoing) */}
       {state.activeBattle && (
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2A0E12] via-[#1B1422] to-[#0F1722] border-2 border-rose-500 space-y-3.5 shadow-xl">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2A0E12] via-[#1B1422] to-[#0F1722] border-2 border-rose-500 flex flex-col overflow-hidden space-y-3.5 shadow-xl">
           <div className="flex items-center justify-between gap-2 border-b border-rose-500/30 pb-2">
             <div className="flex items-center gap-2">
               <Swords className="w-5 h-5 text-rose-400 animate-pulse" />
@@ -278,7 +278,7 @@ export function RealmPanel({
 
       {/* TAB 1: HOLDINGS & GOVERNANCE */}
       {tab === 'holdings' && (
-        <div className="space-y-4">
+        <div className="flex flex-col overflow-hidden space-y-4">
           {/* Ruling Rank & Progression Banner */}
           <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#1D1913] via-[#131D2B] to-[#0F1722] border border-[#F59E0B]/45 space-y-3 overflow-hidden">
             <NorseCornerOrnament accent="amber" />
@@ -637,7 +637,7 @@ export function RealmPanel({
 
       {/* TAB 2: FLEET & WARBAND */}
       {tab === 'fleet' && (
-        <div className="space-y-4">
+        <div className="flex flex-col overflow-hidden space-y-4">
           <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
             <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
               <Ship className="w-5 h-5 text-[#38BDF8]" />
@@ -716,7 +716,7 @@ export function RealmPanel({
 
       {/* TAB 3: POLITICS & INTRIGUE */}
       {tab === 'politics' && (
-        <div className="space-y-4">
+        <div className="flex flex-col overflow-hidden space-y-4">
           {/* Emergent Historical Titles (Jarl of Orkney, King of Norway, etc.) */}
           <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
             <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">

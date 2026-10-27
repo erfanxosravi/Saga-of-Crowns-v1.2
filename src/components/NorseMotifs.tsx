@@ -205,14 +205,14 @@ export function NorseBottomSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[#05080D]/80 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-[#05080D]/80 backdrop-blur-xs flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className={`relative w-full sm:max-w-xl max-h-[85dvh] sm:max-h-[min(85dvh,720px)] flex flex-col bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.85)] overflow-hidden text-start`}
+        className={`relative w-full sm:max-w-xl max-h-[85dvh] sm:max-h-[min(85dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.85)] text-start`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Affordance */}

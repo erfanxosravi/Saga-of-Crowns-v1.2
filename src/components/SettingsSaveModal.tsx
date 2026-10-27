@@ -219,14 +219,14 @@ export function SettingsSaveModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-black/85 backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[min(88dvh,720px)] flex flex-col bg-[#0E1622] border border-[#24354C] rounded-2xl overflow-hidden text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
+        className="w-full max-w-xl max-h-[min(88dvh,720px)] flex flex-col overflow-hidden bg-[#0E1622] border border-[#24354C] rounded-2xl text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">

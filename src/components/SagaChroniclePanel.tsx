@@ -39,7 +39,7 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
   }).length;
 
   return (
-    <div className="space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* Nordic Dynasty Banner (wrapped titles, min 12px) */}
       <div className="relative min-h-[144px] rounded-2xl overflow-hidden border border-[#24364D] bg-[#0F1722] flex flex-col justify-end p-4">
         {!imgFailed ? (

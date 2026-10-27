@@ -483,7 +483,7 @@ export function CharacterCreation({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="relative z-10 h-dvh w-full overflow-y-auto overflow-x-hidden bg-[#0B1118] text-[#F1F5F9]"
+      className="relative z-10 h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-[#0B1118] text-[#F1F5F9]"
     >
       {!bgFailed && (
         <div className="pointer-events-none fixed inset-x-0 top-0 h-80 opacity-25 overflow-hidden">
@@ -498,7 +498,8 @@ export function CharacterCreation({
         </div>
       )}
 
-      <div className="relative z-10 min-h-full w-full max-w-xl sm:max-w-2xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8 flex flex-col justify-start sm:justify-center gap-4">
+      <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden">
+        <div className="min-h-full w-full max-w-xl sm:max-w-2xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8 flex flex-col justify-start sm:justify-center gap-4">
         {/* Top Utility Strip */}
         <div className="flex items-center justify-between gap-2">
           <button
@@ -602,7 +603,7 @@ export function CharacterCreation({
         </div>
 
         {mode === 'presets' ? (
-          <div className="space-y-2.5">
+          <div className="flex flex-col overflow-hidden space-y-2.5">
             {PREMADE_CHARACTERS.map((pm) => {
               const place = SETTLEMENTS.find((s) => s.id === pm.birthplaceId);
               const pmFa = PREMADE_CHARACTERS_FA[pm.id];
@@ -647,7 +648,7 @@ export function CharacterCreation({
             })}
           </div>
         ) : (
-          <div className="p-4 sm:p-6 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-4 text-start">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#131D2B] border border-[#233246] flex flex-col overflow-hidden space-y-4 text-start">
             {/* Live Portrait + Name & Sex Row */}
             <div className="flex items-center gap-3.5">
               <button
@@ -941,6 +942,7 @@ export function CharacterCreation({
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

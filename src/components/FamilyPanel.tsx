@@ -369,7 +369,7 @@ export function FamilyPanel({
   const visibleValhalla = showAllValhalla ? valhallaItems : valhallaItems.slice(0, 4);
 
   return (
-    <div className="space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* ================================================================= */}
       {/* 1. HOUSEHOLD (Spouse, Consorts, Children + Courting if unmarried) */}
       {/* ================================================================= */}
@@ -798,7 +798,7 @@ export function FamilyPanel({
                       <div
                         role="alertdialog"
                         aria-label={isFa ? 'تأیید طلاق' : 'Confirm Divorce'}
-                        className="p-4 rounded-2xl bg-[#241016] border border-[#EF4444] space-y-3"
+                        className="p-4 rounded-2xl bg-[#241016] border border-[#EF4444] flex flex-col overflow-hidden space-y-3"
                       >
                         <div className="flex items-start gap-2.5">
                           <AlertTriangle className="w-5 h-5 text-[#F87171] shrink-0 mt-0.5" />

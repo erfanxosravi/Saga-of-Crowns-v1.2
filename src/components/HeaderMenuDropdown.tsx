@@ -128,14 +128,14 @@ export function HeaderMenuDropdown({
         role="dialog"
         aria-modal="false"
         aria-label={isFa ? 'منوی سریع بازی' : 'Quick Game Menu'}
-        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[332px] max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[332px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
           isAnimatedIn
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
         }`}
       >
         {/* Top Saga Status Strip + Close Button */}
-        <div className="px-3.5 py-1.5 border-b border-[#1E2D40] flex items-center justify-between gap-2 bg-[#121C2B]/85">
+        <div className="shrink-0 px-3.5 py-1.5 border-b border-[#1E2D40] flex items-center justify-between gap-2 bg-[#121C2B]/85">
           <div className="flex items-center gap-2.5 text-[11px] font-mono tabular-nums text-[#94A3B8] min-w-0 flex-wrap">
             <span className="text-[#F1F5F9] font-semibold">{formatYearLabel(year, lang)}</span>
             <span aria-hidden="true" className="text-[#475569]">
@@ -171,7 +171,7 @@ export function HeaderMenuDropdown({
         </div>
 
         {/* Grouped Menu Categories */}
-        <div className="p-2">
+        <div className="flex-1 min-h-0 overflow-y-auto p-2">
           {/* Category 1: Game Controls (Season/Sea Chart & Saga Guide) */}
           <div
             role="group"

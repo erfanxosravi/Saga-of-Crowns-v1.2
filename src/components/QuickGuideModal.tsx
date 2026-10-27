@@ -16,14 +16,14 @@ export function QuickGuideModal({ isOpen, onClose, lang }: QuickGuideModalProps)
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-guide-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[min(88dvh,700px)] flex flex-col bg-[#0E1622] border border-[#26384F] rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.88)] text-start"
+        className="w-full max-w-xl max-h-[min(88dvh,700px)] flex flex-col overflow-hidden bg-[#0E1622] border border-[#26384F] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] text-start"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header */}

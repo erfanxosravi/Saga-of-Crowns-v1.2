@@ -483,7 +483,7 @@ export function VikingMap({
   ];
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#070D15] overflow-hidden select-none">
+    <div className="relative w-full h-full max-h-dvh flex flex-col bg-[#070D15] overflow-hidden select-none">
       {/* ================================================================= */}
       {/* INTERACTIVE FULL-HEIGHT VECTOR MAP SVG STAGE                      */}
       {/* ================================================================= */}

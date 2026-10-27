@@ -55,8 +55,25 @@ export function NordicSelect<T extends string = string>({
     if (disabled) return;
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
+      let topBound = 0;
+      let bottomBound = window.innerHeight;
+      let parent = buttonRef.current.parentElement;
+      while (parent && parent !== document.body) {
+        const style = window.getComputedStyle(parent);
+        if (
+          style.overflowY === 'hidden' ||
+          style.overflowY === 'auto' ||
+          style.overflowY === 'scroll' ||
+          style.overflow === 'hidden'
+        ) {
+          const pRect = parent.getBoundingClientRect();
+          topBound = Math.max(topBound, pRect.top);
+          bottomBound = Math.min(bottomBound, pRect.bottom);
+        }
+        parent = parent.parentElement;
+      }
+      const spaceBelow = bottomBound - rect.bottom;
+      const spaceAbove = rect.top - topBound;
       setOpenUpward(spaceBelow < 235 && spaceAbove > spaceBelow);
     }
     setIsOpen((prev) => !prev);
@@ -246,7 +263,7 @@ export function NordicAccordion({
 
   return (
     <div
-      className={`rounded-xl bg-[#131D2B] border transition-colors ${
+      className={`flex flex-col rounded-xl bg-[#131D2B] border transition-colors ${
         isOpen ? activeBorderClass : 'border-[#233246] hover:border-[#2F445E]'
       }`}
     >

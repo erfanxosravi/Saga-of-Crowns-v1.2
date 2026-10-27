@@ -514,7 +514,7 @@ export default function App() {
     return (
       <div
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`h-dvh w-full overflow-hidden bg-[#0B1118] ${textScaleClass}`}
+        className={`h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-[#0B1118] ${textScaleClass}`}
       >
         <EmberCanvas enabled={settings.emberAnimation} />
         <CharacterCreation
@@ -617,7 +617,7 @@ export default function App() {
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className={`h-dvh overflow-hidden bg-[#0B1118] text-[#F1F5F9] flex flex-col select-none ${textScaleClass}`}
+      className={`h-dvh max-h-dvh overflow-hidden bg-[#0B1118] text-[#F1F5F9] flex flex-col select-none ${textScaleClass}`}
     >
       <EmberCanvas enabled={settings.emberAnimation} />
       <SeasonalWeatherOverlay
@@ -722,10 +722,10 @@ export default function App() {
       </div>
 
       {/* Main Fixed-Height Game Stage */}
-      <main className="relative z-10 flex-1 min-h-0 max-w-6xl w-full mx-auto px-0 py-0 sm:px-4 sm:py-3.5 lg:px-6 lg:py-4 flex gap-4 lg:gap-5">
+      <main className="relative z-10 flex-1 min-h-0 max-h-dvh overflow-hidden max-w-6xl w-full mx-auto px-0 py-0 sm:px-4 sm:py-3.5 lg:px-6 lg:py-4 flex gap-4 lg:gap-5">
         {/* Desktop Nordic Character Sheet */}
-        <aside className="hidden lg:flex lg:w-72 xl:w-80 shrink-0 flex-col justify-between p-4 rounded-2xl bg-[#0F1722]/94 border border-[#1E2D40] overflow-y-auto text-start">
-          <div className="space-y-4">
+        <aside className="hidden lg:flex lg:w-72 xl:w-80 shrink-0 max-h-full flex-col justify-between p-4 rounded-2xl bg-[#0F1722]/94 border border-[#1E2D40] overflow-hidden text-start">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pe-0.5">
             {/* Large Reactive Portrait Card */}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-[#131D2B] border border-[#233246]">
               <VikingPortrait
@@ -814,14 +814,14 @@ export default function App() {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono tabular-nums text-[#94A3B8]">
+          <div className="shrink-0 pt-3 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono tabular-nums text-[#94A3B8]">
             <span>{isFa ? `مزرعه: ${r.landFarms}` : `Farms: ${r.landFarms}`}</span>
             <span>{isFa ? `شهرت: ${r.fame}` : `Fame: ${r.fame}`}</span>
           </div>
         </aside>
 
         {/* Center Game Play Box */}
-        <section className="flex-1 min-w-0 flex flex-col min-h-0 sm:rounded-2xl bg-[#0F1722]/90 border-x-0 border-b-0 sm:border border-[#1E2D40] overflow-hidden">
+        <section className="flex-1 min-w-0 flex flex-col min-h-0 max-h-full sm:rounded-2xl bg-[#0F1722]/90 border-x-0 border-b-0 sm:border border-[#1E2D40] overflow-hidden">
           {activeTab !== TabId.Life && (
             <div className="shrink-0 px-3.5 sm:px-5 py-2 border-b border-[#1E2D40] flex items-center justify-between gap-3 bg-[#131D2B]">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -951,7 +951,7 @@ export default function App() {
             <>
               {/* Expandable Secondary Stats Drawer (anchored right above the 4-stat bar) */}
               {showMoreStats && (
-                <div className="shrink-0 px-3.5 sm:px-5 py-3 bg-[#131F30] border-t border-[#26384F] space-y-2.5 text-start">
+                <div className="shrink-0 px-3.5 sm:px-5 py-3 bg-[#131F30] border-t border-[#26384F] flex flex-col overflow-hidden space-y-2.5 text-start">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                     <StatBar label={STAT_LABELS[lang].cunning} value={c.stats.cunning} compact lang={lang} />
                     <StatBar label={STAT_LABELS[lang].charisma} value={c.stats.charisma} compact lang={lang} />
@@ -1126,7 +1126,7 @@ export default function App() {
             </button>
           ) : (
             /* Expanded Stat Drawer in Secondary Screens (Tap button to collapse back to slim row) */
-            <div className="shrink-0 bg-[#101926] border-t border-[#26384F] text-start">
+            <div className="shrink-0 bg-[#101926] border-t border-[#26384F] flex flex-col overflow-hidden text-start">
               <div className="px-3.5 sm:px-5 py-2.5 border-b border-[#1E2D40] flex items-center gap-3">
                 <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-x-3.5 gap-y-2.5 sm:gap-4">
                   <StatBar
@@ -1285,11 +1285,11 @@ export default function App() {
       {/* Character Profile Sheet (Tap portrait in header) */}
       {isMobileStatsSheetOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#05080D]/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+          className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4"
           onClick={() => setIsMobileStatsSheetOpen(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[min(88dvh,700px)] flex flex-col bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] overflow-hidden text-start"
+            className="w-full max-w-lg max-h-[min(88dvh,700px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] text-start"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">

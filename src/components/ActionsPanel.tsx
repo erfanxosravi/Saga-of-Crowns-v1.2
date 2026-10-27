@@ -457,7 +457,7 @@ export function ActionsPanel({
   };
 
   return (
-    <div className="space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* Thrall Freedom Special Banner */}
       {state.character.title === TitleRank.Thrall && (
         <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#281C0E] via-[#1B1712] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">

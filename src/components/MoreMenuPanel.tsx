@@ -131,7 +131,7 @@ export function MoreMenuPanel({
   ];
 
   return (
-    <div className="space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* Rank Promotion Callout when Eligible */}
       {claimable && (
         <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#261B0D] via-[#1B1915] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">

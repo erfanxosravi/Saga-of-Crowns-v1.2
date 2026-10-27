@@ -252,7 +252,7 @@ export function LifeFeed({
   const activeHint = ONBOARDING_HINTS[lang][Math.max(0, Math.min(2, onboardingStep))];
 
   return (
-    <div className="space-y-3 pb-2 text-start">
+    <div className="flex flex-col overflow-hidden space-y-3 pb-2 text-start">
       {showOnboarding && activeHint && (
         <div className="p-4 rounded-xl bg-[#132134] border border-[#38BDF8]/40 flex items-start justify-between gap-3 shadow-sm">
           <div className="flex items-start gap-2.5 min-w-0">
