@@ -591,8 +591,11 @@ export interface WinGoal {
   progressLabel: (state: FullGameState) => string;
 }
 
+export type ThemeMode = 'light' | 'dark';
+
 export interface GameSettings {
   language: Language;
+  theme: ThemeMode;
   textSize: 'sm' | 'base' | 'lg';
   emberAnimation: boolean;
   weatherOverlayEnabled: boolean;

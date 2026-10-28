@@ -261,15 +261,37 @@ export function DeathSummaryModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/88 backdrop-blur-xs p-2.5 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="death-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[min(90dvh,740px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#991B1B] rounded-2xl shadow-[0_0_55px_rgba(220,38,38,0.28)] text-start">
-        {/* Top Report Header */}
-        <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 bg-[#131D2B] border-b border-[#1E2D40] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="w-full max-w-xl max-h-[94dvh] sm:max-h-[min(92dvh,760px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#991B1B] rounded-2xl shadow-[0_0_55px_rgba(220,38,38,0.28)] text-start">
+        {/* Top Report Header — Two-row structure so Name, Epithet, Title & Score never truncate */}
+        <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 bg-[#131D2B] border-b border-[#1E2D40] space-y-2.5">
+          {/* Top Kicker Row: Death Age/Year + Legacy Score */}
+          <div className="flex items-center justify-between gap-2 border-b border-[#1E2D40]/80 pb-2">
+            <div className="text-xs font-mono font-semibold text-[#F87171] inline-flex items-center gap-1.5 min-w-0">
+              <Skull className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-normal break-words">
+                {isFa
+                  ? `پایان زندگی در ${c.age} سالگی · سال ${state.year} میلادی`
+                  : `DIED AT AGE ${c.age} · ${state.year} AD`}
+              </span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#0B1118] border border-[#24354C] shrink-0">
+              <span className="text-[11px] text-[#94A3B8]">
+                {isFa ? 'امتیاز کل:' : 'Score:'}
+              </span>
+              <span className="text-sm sm:text-base font-mono font-bold tabular-nums text-[#38BDF8]">
+                {death.legacyScore.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Character Portrait + Full Name, Epithet & Earned Saga Title (No Truncation) */}
+          <div className="flex items-center gap-3 min-w-0">
             <VikingPortrait
               age={c.age}
               sex={c.sex}
@@ -277,90 +299,76 @@ export function DeathSummaryModal({
               title={c.title}
               appearance={c.appearance}
               seedId={c.id}
-              size={60}
+              size={56}
               className="shrink-0"
             />
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-mono text-[#F87171] flex items-center gap-1.5">
-                <Skull className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {isFa
-                    ? `پایان زندگی در ${c.age} سالگی · ${state.year} م`
-                    : `DIED AT AGE ${c.age} · ${state.year} AD`}
-                </span>
-              </div>
+            <div className="min-w-0 flex-1 space-y-1">
               <h2
                 id="death-modal-title"
-                className="font-saga text-xl sm:text-2xl font-bold text-[#F1F5F9] line-clamp-2 break-words leading-snug"
+                className="font-saga text-lg sm:text-2xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug"
               >
                 {fullName}
                 {epText}
               </h2>
-              <div className="text-xs text-[#FBBF24] font-semibold truncate mt-0.5">
-                {isFa ? `لقب کارنامه: ${lifeTitle}` : `Title: ${lifeTitle}`}
+              <div className="text-xs text-[#FBBF24] font-semibold whitespace-normal break-words leading-snug">
+                {isFa ? `لقب کارنامه: ${lifeTitle}` : `Earned Title: ${lifeTitle}`}
               </div>
-            </div>
-          </div>
-
-          <div className="text-end shrink-0">
-            <div className="text-[10px] text-[#94A3B8]">
-              {isFa ? 'امتیاز کل' : 'Score'}
-            </div>
-            <div className="text-lg sm:text-xl font-mono font-bold tabular-nums text-[#38BDF8]">
-              {death.legacyScore.toLocaleString()}
             </div>
           </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
-          {/* Darkly Funny Cause + Closing Line */}
-          <div className="p-4 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/70 space-y-2">
-            <p className="text-sm sm:text-base font-medium text-[#F1F5F9] leading-relaxed">
+        {/* Scrollable Middle Body: Cause of Death + 4 Metrics + Share/Obituary */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-3.5 space-y-3">
+          {/* Complete Cause of Death + Closing Line */}
+          <div className="p-3.5 sm:p-4 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/70 space-y-2">
+            <div className="text-[11px] font-bold text-[#F87171]">
+              {isFa ? 'علت پایان زندگی:' : 'Cause of Death:'}
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-[#F1F5F9] whitespace-normal break-words leading-relaxed">
               {causeText}
             </p>
-            <p className="font-saga text-base sm:text-lg font-bold text-[#FBBF24]">
+            <p className="font-saga text-sm sm:text-base font-bold text-[#FBBF24] whitespace-normal break-words pt-0.5">
               « {closingLine} »
             </p>
           </div>
 
-          {/* Compact Report Metrics */}
+          {/* Compact 4-Column Report Metrics */}
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'غارت‌ها' : 'Raids'}</div>
-              <div className="text-sm font-mono font-bold text-[#F1F5F9] tabular-nums">
+              <div className="text-sm font-mono font-bold text-[#F1F5F9] tabular-nums mt-0.5">
                 {c.raidsLed}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'نقره' : 'Silver'}</div>
-              <div className="text-sm font-mono font-bold text-[#FBBF24] tabular-nums">
+              <div className="text-sm font-mono font-bold text-[#FBBF24] tabular-nums mt-0.5">
                 {state.realm.silver}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'مزارع' : 'Farms'}</div>
-              <div className="text-sm font-mono font-bold text-[#34D399] tabular-nums">
+              <div className="text-sm font-mono font-bold text-[#34D399] tabular-nums mt-0.5">
                 {state.realm.landFarms}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'فرزندان' : 'Kids'}</div>
-              <div className="text-sm font-mono font-bold text-[#38BDF8] tabular-nums">
+              <div className="text-sm font-mono font-bold text-[#38BDF8] tabular-nums mt-0.5">
                 {childrenCount}
               </div>
             </div>
           </div>
 
-          {/* Save / Share Image Button + Expandable Full Obituary */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Balanced 2-Column Utility Row: Save/Share Image + Toggle Full Obituary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={handleSaveOrShareCard}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#162232] hover:bg-[#1E2F45] border border-[#38BDF8]/50 text-xs font-semibold text-[#38BDF8] inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition-colors"
+              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#162232] hover:bg-[#1E2F45] border border-[#38BDF8]/50 text-xs font-semibold text-[#38BDF8] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Download className="w-4 h-4 shrink-0" />
-              <span>
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-normal break-words">
                 {cardSavedToast
                   ? isFa
                     ? 'تصویر کارنامه ذخیره شد!'
@@ -375,121 +383,126 @@ export function DeathSummaryModal({
             <button
               type="button"
               onClick={() => setShowFullSaga((v) => !v)}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#131D2B] border border-[#1E2D40] text-xs text-[#94A3B8] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#1E2D40] text-xs font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
-              <span>{isFa ? 'متن کامل حماسه' : 'Full Obituary'}</span>
+              <span>{isFa ? 'متن کامل حماسه زندگی' : 'Full Saga Obituary'}</span>
               {showFullSaga ? (
-                <ChevronUp className="w-3.5 h-3.5" />
+                <ChevronUp className="w-3.5 h-3.5 shrink-0" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-3.5 h-3.5 shrink-0" />
               )}
             </button>
           </div>
 
           {showFullSaga && (
-            <div className="p-3.5 rounded-xl bg-[#0B1118] border border-[#1E2D40] text-xs sm:text-sm text-[#CBD5E1] leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-[#0B1118] border border-[#1E2D40] text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
               {isFa ? death.obituaryProseFa ?? death.obituaryProse : death.obituaryProse}
             </div>
           )}
 
-          {/* ONE-CLICK NEXT LIFE / HEIR ACTIONS */}
-          <div className="pt-2 border-t border-[#1E2D40] space-y-2.5">
-            {primaryHeir ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onContinueWithHeir(primaryHeir.id)}
-                  className="w-full min-h-[54px] px-5 py-3 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] font-bold text-sm sm:text-base shadow-lg flex items-center justify-between gap-3 cursor-pointer transition-colors"
-                >
-                  <span className="inline-flex items-center gap-2 min-w-0 truncate">
-                    <Crown className="w-5 h-5 shrink-0" />
-                    <span className="truncate">
-                      {isFa
-                        ? `ادامه با وارث: ${formatPersonName(primaryHeir.name, 'fa')} (${formatAgeLabel(Math.max(6, primaryHeir.age), 'fa')})`
-                        : `Continue as ${primaryHeir.name} (${formatAgeLabel(Math.max(6, primaryHeir.age), 'en')})`}
-                    </span>
-                  </span>
-                  <span className="text-xs font-extrabold whitespace-nowrap shrink-0">
-                    {isFa ? 'نسل بعد ←' : '1-Click →'}
-                  </span>
-                </button>
-
-                {otherHeirs.length > 0 && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setShowOtherHeirs((v) => !v)}
-                      className="text-xs text-[#94A3B8] hover:text-[#38BDF8] inline-flex items-center gap-1 cursor-pointer py-1"
-                    >
-                      <span>
-                        {isFa
-                          ? `انتخاب از بین ${otherHeirs.length} وارث دیگر`
-                          : `Or pick from ${otherHeirs.length} other heir${otherHeirs.length === 1 ? '' : 's'}`}
-                      </span>
-                      {showOtherHeirs ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                    {showOtherHeirs && (
-                      <div className="mt-1.5 space-y-1.5">
-                        {otherHeirs.map((heir) => (
-                          <button
-                            key={heir.id}
-                            type="button"
-                            onClick={() => onContinueWithHeir(heir.id)}
-                            className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#24354C] flex items-center justify-between gap-2 text-xs text-[#F1F5F9] cursor-pointer"
-                          >
-                            <span className="font-semibold truncate">
-                              {formatPersonName(heir.name, lang)} · {ROLE_LABELS[lang][heir.role]} ·{' '}
-                              {formatAgeLabel(Math.max(6, heir.age), lang)}
-                            </span>
-                            <span className="text-[#FBBF24] font-bold whitespace-nowrap">
-                              {isFa ? 'انتخاب' : 'Play'}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="p-3 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/60 text-xs text-[#FCA5A5]">
-                {isFa
-                  ? 'هیچ وارث زنده‌ای باقی نمانده است؛ اما با یک کلیک می‌توانید یک زندگی جدید را آغاز کنید!'
-                  : 'No living heirs remain — start a fresh Viking life in one tap!'}
+          {/* Other Heirs Accordion List (inside scrollable area when expanded) */}
+          {primaryHeir && otherHeirs.length > 0 && showOtherHeirs && (
+            <div className="p-2.5 rounded-xl bg-[#0B1118] border border-[#24354C] space-y-1.5">
+              <div className="text-[11px] font-bold text-[#94A3B8] px-1">
+                {isFa ? 'سایر وارثان خاندان:' : 'Other Eligible Heirs:'}
               </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {onQuickNewLife && (
+              {otherHeirs.map((heir) => (
                 <button
+                  key={heir.id}
                   type="button"
-                  onClick={onQuickNewLife}
-                  className="min-h-[46px] px-4 py-2.5 rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] text-[#0B1118] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap transition-colors"
+                  onClick={() => onContinueWithHeir(heir.id)}
+                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#24354C] flex items-center justify-between gap-2 text-xs text-[#F1F5F9] cursor-pointer transition-colors"
                 >
-                  <Sparkles className="w-4 h-4 shrink-0" />
-                  <span>
-                    {isFa ? 'زندگی تصادفی جدید (۱ کلیک)' : 'Random New Life (1-Click)'}
+                  <span className="font-semibold whitespace-normal break-words text-start">
+                    {formatPersonName(heir.name, lang)} · {ROLE_LABELS[lang][heir.role]} ·{' '}
+                    {formatAgeLabel(Math.max(6, heir.age), lang)}
+                  </span>
+                  <span className="text-[#FBBF24] font-bold whitespace-nowrap shrink-0">
+                    {isFa ? 'انتخاب ←' : 'Play →'}
                   </span>
                 </button>
-              )}
+              ))}
+            </div>
+          )}
+        </div>
 
+        {/* Sticky Footer: Heir Continuation & New Life Actions (Always Visible, Never Truncated) */}
+        <div className="shrink-0 px-4 sm:px-5 py-3 bg-[#121C2B] border-t border-[#1E2D40] space-y-2">
+          {primaryHeir ? (
+            <>
               <button
                 type="button"
-                onClick={onEndDynastyAndRestart}
-                className={`min-h-[46px] px-4 py-2.5 rounded-xl bg-[#131D2B] hover:bg-[#1B293D] border border-[#24354C] text-xs font-semibold text-[#CBD5E1] inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors ${
-                  onQuickNewLife ? '' : 'sm:col-span-2'
-                }`}
+                onClick={() => onContinueWithHeir(primaryHeir.id)}
+                className="w-full min-h-[52px] px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] font-bold text-xs sm:text-sm shadow-lg flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
               >
-                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {isFa ? 'ساخت شخصیت دلخواه جدید' : 'Custom New Character'}
+                <span className="inline-flex items-center gap-2 min-w-0 text-start">
+                  <Crown className="w-5 h-5 shrink-0" />
+                  <span className="whitespace-normal break-words leading-snug">
+                    {isFa
+                      ? `ادامه با وارث: ${formatPersonName(primaryHeir.name, 'fa')} (${ROLE_LABELS.fa[primaryHeir.role]} · ${formatAgeLabel(Math.max(6, primaryHeir.age), 'fa')})`
+                      : `Continue as ${primaryHeir.name} (${ROLE_LABELS.en[primaryHeir.role]} · ${formatAgeLabel(Math.max(6, primaryHeir.age), 'en')})`}
+                  </span>
+                </span>
+                <span className="text-xs font-extrabold whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-[#0B1118]/15">
+                  {isFa ? 'نسل بعد ←' : 'Next Gen →'}
                 </span>
               </button>
+
+              {otherHeirs.length > 0 && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowOtherHeirs((v) => !v)}
+                    className="text-xs font-medium text-[#94A3B8] hover:text-[#38BDF8] inline-flex items-center gap-1 cursor-pointer py-0.5"
+                  >
+                    <span>
+                      {isFa
+                        ? `انتخاب از بین ${otherHeirs.length} وارث دیگر`
+                        : `Or pick from ${otherHeirs.length} other heir${otherHeirs.length === 1 ? '' : 's'}`}
+                    </span>
+                    {showOtherHeirs ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-2.5 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/60 text-xs text-[#FCA5A5] text-center">
+              {isFa
+                ? 'هیچ وارث زنده‌ای باقی نمانده است؛ یک زندگی جدید را آغاز کنید!'
+                : 'No living heirs remain — start a fresh Viking life!'}
             </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {onQuickNewLife && (
+              <button
+                type="button"
+                onClick={onQuickNewLife}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] text-[#0B1118] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span>
+                  {isFa ? 'زندگی تصادفی جدید (۱ کلیک)' : 'Random New Life (1-Click)'}
+                </span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onEndDynastyAndRestart}
+              className={`min-h-[44px] px-3.5 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1B293D] border border-[#24354C] text-xs font-semibold text-[#CBD5E1] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+                onQuickNewLife ? '' : 'sm:col-span-2'
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {isFa ? 'ساخت شخصیت دلخواه جدید' : 'Custom New Character'}
+              </span>
+            </button>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CloudRain,
   Globe,
+  Moon,
   Save,
   Ship,
   Snowflake,
@@ -15,13 +16,15 @@ import {
   X,
 } from 'lucide-react';
 import { formatYearLabel, isRtl, SEASON_LABELS } from '../i18n/ui';
-import { Language, Season } from '../types/game';
+import { Language, Season, ThemeMode } from '../types/game';
 
 interface HeaderMenuDropdownProps {
   isOpen: boolean;
   onClose: () => void;
   lang: Language;
   onSetLanguage: (next: Language) => void;
+  theme: ThemeMode;
+  onSetTheme: (next: ThemeMode) => void;
   season: Season;
   weatherName: string;
   isMapActive: boolean;
@@ -53,6 +56,8 @@ export function HeaderMenuDropdown({
   onClose,
   lang,
   onSetLanguage,
+  theme,
+  onSetTheme,
   season,
   weatherName,
   isMapActive,
@@ -282,14 +287,76 @@ export function HeaderMenuDropdown({
 
           <hr className="border-t border-[#1E2D40] my-2" />
 
-          {/* Category 2: Quick Toggles (Audio & Language) */}
+          {/* Category 2: Quick Toggles (Theme, Audio & Language) */}
           <div
             role="group"
-            aria-label={isFa ? 'صدا و زبان' : 'Audio & Language'}
+            aria-label={isFa ? 'حالت روز و شب، صدا و زبان' : 'Theme, Audio & Language'}
             className="space-y-0.5"
           >
             <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
-              {isFa ? 'صدا و زبان' : 'Audio & Language'}
+              {isFa ? 'حالت روز و شب، صدا و زبان' : 'Theme, Audio & Language'}
+            </div>
+
+            {/* 4. Day / Night Theme Switcher */}
+            <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-[#152233]/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
+              <div className="flex items-center gap-3 min-w-0 flex-1 text-start">
+                <div
+                  className={`${iconTileBaseClass} ${
+                    theme === 'light'
+                      ? 'border-[#F59E0B]/55 bg-[#F59E0B]/15'
+                      : 'border-[#38BDF8]/45 bg-[#16293E]'
+                  }`}
+                >
+                  {theme === 'light' ? (
+                    <Sun className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-[#38BDF8] shrink-0" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                    {isFa ? 'حالت نمایش (روز / شب)' : 'Display Theme'}
+                  </div>
+                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                    {theme === 'light'
+                      ? isFa
+                        ? 'روشن (عاج و طلای شمالی)'
+                        : 'Daylight (Nordic Ivory)'
+                      : isFa
+                        ? 'تاریک (شب فیورد)'
+                        : 'Night (Fjord Dark)'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[#090F17] border border-[#223247] shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onSetTheme('light')}
+                  aria-pressed={theme === 'light'}
+                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                    theme === 'light'
+                      ? 'bg-[#F59E0B] text-[#0B1118] shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
+                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5 shrink-0" />
+                  <span>{isFa ? 'روز' : 'Day'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetTheme('dark')}
+                  aria-pressed={theme === 'dark'}
+                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                    theme === 'dark'
+                      ? 'bg-[#38BDF8] text-[#0B1118] shadow-[0_2px_8px_rgba(56,189,248,0.28)]'
+                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                  }`}
+                >
+                  <Moon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{isFa ? 'شب' : 'Night'}</span>
+                </button>
+              </div>
             </div>
 
             {/* 4. Language Switcher */}

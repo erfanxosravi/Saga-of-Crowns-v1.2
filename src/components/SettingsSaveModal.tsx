@@ -7,9 +7,11 @@ import {
   FileCode2,
   FolderOpen,
   Globe,
+  Moon,
   Save,
   Shield,
   Sliders,
+  Sun,
   Trash2,
   Type,
   Upload,
@@ -33,6 +35,7 @@ import {
   FullGameState,
   GameSettings,
   Language,
+  ThemeMode,
   TitleRank,
 } from '../types/game';
 import { NordicAccordion, NordicSelect, NordicSelectOption } from './NordicControls';
@@ -216,6 +219,27 @@ export function SettingsSaveModal({
     },
   ];
 
+  const themeOptions: NordicSelectOption<ThemeMode>[] = [
+    {
+      value: 'light',
+      label: isFa ? 'حالت روز (روشن · عاج و طلا)' : 'Daylight Mode (Nordic Ivory)',
+      sublabel: isFa
+        ? 'تم روشن، گرم و چشم‌نواز به سبک پوست‌نوشته‌های سلطنتی شمال'
+        : 'Warm illuminated vellum & sunlit fjord palette (Default)',
+      badge: isFa ? 'روز' : 'Day',
+      badgeTone: 'gold',
+    },
+    {
+      value: 'dark',
+      label: isFa ? 'حالت شب (تاریک · شب فیورد)' : 'Night Mode (Fjord Dark)',
+      sublabel: isFa
+        ? 'تم تاریک کلاسیک به رنگ شب‌های قطبی و اخگر آتش'
+        : 'Deep midnight slate & hearth ember atmosphere',
+      badge: isFa ? 'شب' : 'Night',
+      badgeTone: 'ice',
+    },
+  ];
+
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
@@ -354,6 +378,22 @@ export function SettingsSaveModal({
           >
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NordicSelect
+                  label={isFa ? 'پوسته رنگی (روز / شب)' : 'Color Theme (Day / Night)'}
+                  value={settings.theme ?? 'light'}
+                  options={themeOptions}
+                  onChange={(nextTheme) =>
+                    onUpdateSettings({ ...settings, theme: nextTheme })
+                  }
+                  icon={
+                    (settings.theme ?? 'light') === 'light' ? (
+                      <Sun className="w-4 h-4 text-[#F59E0B]" />
+                    ) : (
+                      <Moon className="w-4 h-4 text-[#38BDF8]" />
+                    )
+                  }
+                />
+
                 {/* Language Switcher (only shown once game has started) */}
                 {currentState && (
                   <NordicSelect

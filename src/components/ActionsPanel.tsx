@@ -3,13 +3,20 @@ import {
   AlertTriangle,
   Castle,
   Check,
+  ChevronDown,
+  ChevronUp,
+  Coins,
   Compass,
+  Crown,
   Flame,
   GraduationCap,
+  Heart,
+  History,
   LockOpen,
   MapPin,
   Scale,
   Shield,
+  Ship,
   Sparkles,
   Swords,
 } from 'lucide-react';
@@ -17,7 +24,7 @@ import { calculateVoyageMetrics, SETTLEMENTS, SETTLEMENTS_BY_ID } from '../data/
 import { hasBoathouse, isFortifiedEnemyCity, RaidTactic } from '../engine/gameEngine';
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import { REGION_LABELS, RELIGION_LABELS, SKILL_LABELS } from '../i18n/ui';
-import { FullGameState, Religion, SkillKey, TitleRank } from '../types/game';
+import { EventIconType, FullGameState, Religion, SkillKey, TitleRank } from '../types/game';
 import { NordicAccordion, NordicSelect, NordicSelectOption } from './NordicControls';
 import {
   NorseAccent,
@@ -130,6 +137,7 @@ export function ActionsPanel({
   const isFa = lang === 'fa';
 
   const [activeSheet, setActiveSheet] = useState<ActivitySheetId | null>(null);
+  const [isRecentHistoryOpen, setIsRecentHistoryOpen] = useState<boolean>(true);
   const [openCategories, setOpenCategories] = useState<Record<ActivityCategoryId, boolean>>({
     military: true,
     diplomacy: false,
@@ -153,6 +161,59 @@ export function ActionsPanel({
       diplomacy: nextState,
       personal: nextState,
     });
+  };
+
+  // Extract the last 3 performed player actions and their immediate results
+  const recentActionLogs = (state.lifeLog ?? [])
+    .filter(
+      (entry) =>
+        entry.category === 'Action' ||
+        entry.category === 'Raiding' ||
+        entry.category === 'Voyage & Sea' ||
+        entry.id.startsWith('log_act_') ||
+        entry.id.startsWith('log_raid_') ||
+        entry.id.startsWith('log_sail_') ||
+        entry.id.startsWith('log_train_') ||
+        entry.id.startsWith('log_conq_') ||
+        entry.id.startsWith('log_siege_') ||
+        entry.id.startsWith('log_settle_') ||
+        entry.id.startsWith('log_diplo_') ||
+        entry.id.startsWith('log_bldg_') ||
+        entry.id.startsWith('log_fam_')
+    )
+    .slice(-3)
+    .reverse();
+
+  const renderActionIcon = (iconType?: EventIconType, id?: string) => {
+    if (id?.startsWith('log_train_')) {
+      return <GraduationCap className="w-4 h-4 text-[#38BDF8]" />;
+    }
+    switch (iconType) {
+      case 'sword':
+        return <Swords className="w-4 h-4 text-[#F87171]" />;
+      case 'ship':
+        return <Ship className="w-4 h-4 text-[#38BDF8]" />;
+      case 'coin':
+        return <Coins className="w-4 h-4 text-[#FBBF24]" />;
+      case 'religion':
+        return <Sparkles className="w-4 h-4 text-[#A78BFA]" />;
+      case 'heart':
+        return <Heart className="w-4 h-4 text-[#F472B6]" />;
+      case 'crown':
+        return <Crown className="w-4 h-4 text-[#F59E0B]" />;
+      default:
+        return <Flame className="w-4 h-4 text-[#F59E0B]" />;
+    }
+  };
+
+  const getDeltaChipStyle = (delta: string) => {
+    if (delta.includes('+')) {
+      return 'bg-[#10B981]/15 text-[#34D399] border-[#10B981]/30';
+    }
+    if (delta.includes('-')) {
+      return 'bg-[#EF4444]/15 text-[#FCA5A5] border-[#EF4444]/30';
+    }
+    return 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/30';
   };
 
   const otherPorts = SETTLEMENTS.filter((s) => s.id !== state.character.locationId);
@@ -526,6 +587,136 @@ export function ActionsPanel({
 
   return (
     <div className="flex flex-col overflow-hidden space-y-3.5 text-start">
+      {/* ================================================================= */}
+      {/* RECENT HISTORY: LAST 3 PERFORMED ACTIONS & IMMEDIATE RESULTS      */}
+      {/* ================================================================= */}
+      <div className="rounded-2xl bg-[#0D1520]/95 border border-[#1E2E42] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setIsRecentHistoryOpen((prev) => !prev)}
+          aria-expanded={isRecentHistoryOpen}
+          className="w-full px-3.5 py-2.5 flex items-center justify-between gap-2 hover:bg-[#131F30] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-[#38BDF8]/15 border border-[#38BDF8]/35 flex items-center justify-center shrink-0">
+              <History className="w-3.5 h-3.5 text-[#38BDF8]" />
+            </div>
+            <div className="text-start min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                  {isFa ? 'تاریخچه اقدامات اخیر' : 'Recent History'}
+                </span>
+                <span className="px-1.5 py-0.5 rounded-md bg-[#162436] border border-[#243852] text-[10px] font-mono tabular-nums text-[#94A3B8]">
+                  {isFa
+                    ? `${recentActionLogs.length}/3 اقدام اخیر`
+                    : `Last ${recentActionLogs.length}/3`}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px] text-[#94A3B8] shrink-0">
+            <span className="hidden sm:inline">
+              {isFa ? 'نتایج فوری' : 'Immediate Results'}
+            </span>
+            {isRecentHistoryOpen ? (
+              <ChevronUp className="w-4 h-4 text-[#94A3B8]" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-[#94A3B8]" />
+            )}
+          </div>
+        </button>
+
+        {isRecentHistoryOpen && (
+          <div className="px-3.5 pb-3 pt-1 border-t border-[#172435]">
+            {recentActionLogs.length === 0 ? (
+              <div className="py-2.5 px-3 rounded-xl bg-[#091019] border border-[#182638] text-xs text-[#94A3B8] flex items-center justify-between gap-2">
+                <span>
+                  {isFa
+                    ? 'هنوز اقدامی ثبت نشده است — یکی از فعالیت‌های زیر را انجام دهید تا نتیجه فوری آن در اینجا نمایش داده شود.'
+                    : 'No actions performed yet — select an activity below to see its immediate results here.'}
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-2 mt-1">
+                {recentActionLogs.map((entry, idx) => {
+                  const isLatest = idx === 0;
+                  const entryTitle = isFa
+                    ? entry.titleFa ?? entry.title ?? 'اقدام انجام‌شده'
+                    : entry.title ?? 'Action Performed';
+                  const entryText = isFa ? entry.textFa ?? entry.text : entry.text;
+                  const entryDeltas =
+                    (isFa ? entry.deltasFa ?? entry.deltas : entry.deltas) ?? [];
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`p-2.5 rounded-xl border transition-colors ${
+                        isLatest
+                          ? entry.isDanger
+                            ? 'bg-[#221118]/90 border-[#EF4444]/50'
+                            : 'bg-[#122033]/95 border-[#38BDF8]/45'
+                          : 'bg-[#0A111B]/90 border-[#1A293D]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                              isLatest
+                                ? 'bg-[#1B2F48] border border-[#38BDF8]/40'
+                                : 'bg-[#121D2C] border border-[#213247]'
+                            }`}
+                          >
+                            {renderActionIcon(entry.iconType, entry.id)}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-[#F1F5F9] truncate">
+                                {entryTitle}
+                              </span>
+                              {isLatest && (
+                                <span className="px-1.5 py-0.2 rounded bg-[#38BDF8]/20 text-[#7DD3FC] text-[10px] font-semibold">
+                                  {isFa ? 'جدید' : 'Latest'}
+                                </span>
+                              )}
+                              <span className="text-[10px] font-mono tabular-nums text-[#64748B]">
+                                · {isFa ? `سال ${entry.year}` : `${entry.year} AD`}
+                              </span>
+                            </div>
+
+                            <p className="text-[11px] text-[#94A3B8] line-clamp-1 mt-0.5 leading-relaxed">
+                              {entryText}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Immediate Result Delta Chips */}
+                        {entryDeltas.length > 0 && (
+                          <div className="flex flex-wrap items-center justify-end gap-1 shrink-0 max-w-[48%]">
+                            {entryDeltas.slice(0, 3).map((d, dIdx) => (
+                              <span
+                                key={`${entry.id}_d_${dIdx}`}
+                                className={`px-1.5 py-0.5 rounded-md border text-[10px] font-mono tabular-nums font-semibold whitespace-nowrap ${getDeltaChipStyle(
+                                  d
+                                )}`}
+                              >
+                                {d}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Thrall Freedom Special Banner */}
       {state.character.title === TitleRank.Thrall && (
         <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#281C0E] via-[#1B1712] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">

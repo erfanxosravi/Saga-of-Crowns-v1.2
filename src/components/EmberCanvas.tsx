@@ -68,12 +68,20 @@ export function EmberCanvas({ enabled }: EmberCanvasProps) {
           p.alpha = 0.25 + Math.random() * 0.4;
         }
 
+        const isLight =
+          typeof document !== 'undefined' &&
+          document.documentElement.dataset.theme !== 'dark';
+        const effectiveAlpha = isLight ? p.alpha * 0.48 : p.alpha;
+
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle =
-          p.warmth > 0.5
-            ? `rgba(255, 140, 26, ${p.alpha.toFixed(3)})`
-            : `rgba(255, 106, 0, ${p.alpha.toFixed(3)})`;
+        ctx.fillStyle = isLight
+          ? p.warmth > 0.5
+            ? `rgba(217, 119, 6, ${effectiveAlpha.toFixed(3)})`
+            : `rgba(180, 83, 9, ${effectiveAlpha.toFixed(3)})`
+          : p.warmth > 0.5
+            ? `rgba(255, 140, 26, ${effectiveAlpha.toFixed(3)})`
+            : `rgba(255, 106, 0, ${effectiveAlpha.toFixed(3)})`;
         ctx.fill();
       }
       animId = window.requestAnimationFrame(render);

@@ -4015,22 +4015,49 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
   const nextGen = state.generation + 1;
   const locName = SETTLEMENTS_BY_ID[newChar.locationId]?.name ?? newChar.locationId;
   const locNameFa = SETTLEMENTS_FA[newChar.locationId]?.name ?? locName;
-  const oldGivenFa = formatPersonName(old.givenName, 'fa');
+  const oldFullEn = `${old.givenName} ${old.patronymic}`;
+  const oldFullFa = formatPersonName(oldFullEn, 'fa');
   const newFullFa = formatPersonName(`${newChar.givenName} ${newChar.patronymic}`, 'fa');
   const dynFa = formatDynastyName(state.dynastyName, 'fa');
 
+  const inheritedFame = Math.round(state.realm.fame * 0.75) + 20;
+  const totalShips = state.realm.longships + state.realm.knarrs;
+  const holdingsCount = state.realm.holdings.length;
+
+  const successionDeltas: string[] = [
+    `Inherited from ${oldFullEn}`,
+    `${state.realm.silver} Silver`,
+    `${state.realm.landFarms} Farms`,
+    `${totalShips} Ships (${state.realm.longships} War, ${state.realm.knarrs} Trade)`,
+    `${state.realm.hirdWarriors} Warriors`,
+    ...(holdingsCount > 0 ? [`${holdingsCount} Holdings`] : []),
+    `${inheritedFame} Fame`,
+  ];
+
+  const successionDeltasFa: string[] = [
+    `میراث از «${oldFullFa}»`,
+    `${state.realm.silver} سکه نقره`,
+    `${state.realm.landFarms} مزرعه`,
+    `${totalShips} کشتی (${state.realm.longships} جنگی، ${state.realm.knarrs} تجاری)`,
+    `${state.realm.hirdWarriors} جنگجو`,
+    ...(holdingsCount > 0 ? [`${holdingsCount} شهر و ملک`] : []),
+    `${inheritedFame} شهرت`,
+  ];
+
   const successionLog: LogEntry = {
-    id: `log_succ_gen${nextGen}_${state.year}_${state.lifeLog.length}`,
+    id: `log_succ_gen${nextGen}_${state.year}`,
     year: state.year,
     season: state.season,
     age: newChar.age,
     locationName: locName,
     category: 'Succession',
     iconType: 'crown',
-    title: `Generation ${nextGen} · ${newChar.givenName} Takes the High-Seat`,
-    titleFa: `نسل ${nextGen} · نشستن «${newFullFa}» بر مسند خاندان`,
-    text: `Raising the memorial cup for ${old.givenName}, ${newChar.givenName} ${newChar.patronymic} takes command at ${locName}, inheriting ${state.realm.silver} silver, ${state.realm.landFarms} farms, and ${state.realm.longships + state.realm.knarrs} ships.`,
-    textFa: `پس از نوشیدن جام یادبود برای «${oldGivenFa}»، اکنون «${newFullFa}» در ${locNameFa} فرمانروای «${dynFa}» شد و ${state.realm.silver} نقره، ${state.realm.landFarms} مزرعه و ${state.realm.longships + state.realm.knarrs} کشتی را به ارث برد.`,
+    title: `Generation ${nextGen} · Inheritance of ${newChar.givenName} ${newChar.patronymic}`,
+    titleFa: `نسل ${nextGen} · آغاز فرمانروایی و گزارش میراث «${newFullFa}»`,
+    text: `Following the passing of ${oldFullEn}, you took the high-seat of ${state.dynastyName} at ${locName}. You inherited ${state.realm.silver} silver, ${state.realm.landFarms} farms, ${state.realm.longships} war longships, ${state.realm.knarrs} trade knarrs, ${state.realm.hirdWarriors} sworn warriors${holdingsCount > 0 ? `, and ${holdingsCount} dynasty holdings` : ''}.`,
+    textFa: `پس از درگذشت «${oldFullFa}»، شما در ${locNameFa} بر مسند فرمانروایی «${dynFa}» نشستید و میراث خاندان را تحویل گرفتید: ${state.realm.silver} سکه نقره، ${state.realm.landFarms} مزرعه، ${state.realm.longships} کشتی جنگی، ${state.realm.knarrs} کشتی تجاری، ${state.realm.hirdWarriors} جنگجوی قسم‌خورده${holdingsCount > 0 ? ` و ${holdingsCount} شهر و ملک تحت فرمان` : ''}.`,
+    deltas: successionDeltas,
+    deltasFa: successionDeltasFa,
   };
 
   const resumed: FullGameState = {
@@ -4043,7 +4070,7 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     character: newChar,
     realm: {
       ...state.realm,
-      fame: Math.round(state.realm.fame * 0.75) + 20,
+      fame: inheritedFame,
     },
     relationships: nextRelationships,
     ancestors: [...state.ancestors, ancestorRecord],
@@ -4051,12 +4078,12 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     lastOutcomeBanner: {
       title: `Generation ${nextGen}: ${newChar.givenName} ${newChar.patronymic}`,
       titleFa: `نسل ${nextGen}: ${newFullFa}`,
-      text: `The dynasty endures! ${newChar.givenName} takes command of ${state.realm.landFarms} farms and ${state.realm.hirdWarriors} warriors.`,
-      textFa: `خاندان پابرجاست! «${formatPersonName(newChar.givenName, 'fa')}» فرماندهی ${state.realm.landFarms} مزرعه و ${state.realm.hirdWarriors} جنگجو را بر عهده گرفت.`,
-      deltaSummary: [`Generation ${nextGen}`, `Rank: ${SHORT_TITLE_LABELS.en[newChar.title]}`],
-      deltaSummaryFa: [`نسل ${nextGen}`, `مقام: ${SHORT_TITLE_LABELS.fa[newChar.title]}`],
+      text: `You inherited ${state.realm.silver} silver, ${state.realm.landFarms} farms, ${totalShips} ships, and ${state.realm.hirdWarriors} warriors from ${oldFullEn}.`,
+      textFa: `از «${oldFullFa}» مجموعاً ${state.realm.silver} نقره، ${state.realm.landFarms} مزرعه، ${totalShips} کشتی و ${state.realm.hirdWarriors} جنگجو به شما ارث رسید.`,
+      deltaSummary: successionDeltas.slice(0, 4),
+      deltaSummaryFa: successionDeltasFa.slice(0, 4),
     },
-    lifeLog: [...state.lifeLog, successionLog],
+    lifeLog: [successionLog],
   };
 
   resumed.achievements = evaluateAchievements(resumed);

@@ -94,6 +94,7 @@ import {
   saveAutosave,
   saveLanguagePreference,
   saveSettings,
+  saveThemePreference,
   setSessionActive,
 } from './engine/storage';
 import { formatPersonName, SETTLEMENTS_FA, TRAITS_FA } from './i18n/gameDataFa';
@@ -124,6 +125,7 @@ import {
   SkillKey,
   SocialClass,
   TabId,
+  ThemeMode,
   TributeBurden,
 } from './types/game';
 
@@ -167,11 +169,15 @@ export default function App() {
 
   const isPlayingGame = Boolean(gameState && gameState.screen === GameScreen.PLAYING);
 
+  const theme: ThemeMode = settings.theme ?? 'light';
+
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = rtl ? 'rtl' : 'ltr';
     document.documentElement.dataset.textSize = settings.textSize;
-  }, [lang, rtl, settings.textSize]);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [lang, rtl, settings.textSize, theme]);
 
   useEffect(() => {
     if (isPlayingGame && settings.ambientAudioEnabled) {
@@ -251,6 +257,9 @@ export default function App() {
     if (next.language !== settings.language) {
       saveLanguagePreference(next.language);
     }
+    if (next.theme && next.theme !== settings.theme) {
+      saveThemePreference(next.theme);
+    }
     setSettings(next);
     saveSettings(next);
     if (gameState) {
@@ -261,6 +270,12 @@ export default function App() {
   const handleSetLanguage = (nextLang: Language) => {
     saveLanguagePreference(nextLang);
     handleUpdateSettings({ ...settings, language: nextLang });
+  };
+
+  const handleSetTheme = (nextTheme: ThemeMode) => {
+    playSound('click', settings.soundEnabled);
+    saveThemePreference(nextTheme);
+    handleUpdateSettings({ ...settings, theme: nextTheme });
   };
 
   const isAudioOn = settings.ambientAudioEnabled || settings.soundEnabled;
@@ -355,7 +370,7 @@ export default function App() {
     const next = executeRaidAction(gameState, targetId, tactic);
     if (next.pendingDeath) playSound('death', settings.soundEnabled);
     setGameState(next);
-    setActiveTab(TabId.Life);
+    setActiveTab((prev) => (prev === TabId.Actions ? TabId.Actions : TabId.Life));
   };
 
   const handleConquerCity = (targetId?: string) => {
@@ -364,7 +379,7 @@ export default function App() {
     const next = executeCityConquestAction(gameState, targetId);
     if (next.pendingDeath) playSound('death', settings.soundEnabled);
     setGameState(next);
-    setActiveTab(TabId.Life);
+    setActiveTab((prev) => (prev === TabId.Actions ? TabId.Actions : TabId.Life));
   };
 
   const handleSail = (destId: string) => {
@@ -704,6 +719,8 @@ export default function App() {
             onClose={handleCloseHeaderMenu}
             lang={lang}
             onSetLanguage={handleSetLanguage}
+            theme={theme}
+            onSetTheme={handleSetTheme}
             season={gameState.season}
             weatherName={weatherProfile.weatherName}
             isMapActive={activeTab === TabId.Map}
@@ -849,27 +866,35 @@ export default function App() {
             </div>
           )}
 
-          {/* Internally Scrollable Viewport (Full-height stage on Map; top-padded soft fade on secondary screens) */}
+          {/* Persistent Life Feed Scroll Container (preserves scroll position across tab switches) */}
           <div
             className={
               activeTab === TabId.Life
                 ? 'flex-1 min-h-0 overflow-y-auto px-3.5 py-4 sm:px-5 sm:py-5 select-text feed-scroll-mask'
-                : activeTab === TabId.Map
-                  ? 'flex-1 min-h-0 flex flex-col overflow-hidden select-none'
-                  : 'flex-1 min-h-0 overflow-y-auto px-3.5 pt-5 pb-7 sm:px-5 sm:pt-6 sm:pb-8 select-text secondary-scroll-mask'
+                : 'hidden'
             }
           >
-            {activeTab === TabId.Life && (
-              <LifeFeed
-                entries={gameState.lifeLog}
-                lang={lang}
-                onboardingStep={gameState.onboardingStep}
-                onboardingDismissed={gameState.onboardingDismissed}
-                onDismissOnboarding={() =>
-                  setGameState((prev) => (prev ? dismissOnboarding(prev) : prev))
-                }
-              />
-            )}
+            <LifeFeed
+              entries={gameState.lifeLog}
+              lang={lang}
+              isActive={activeTab === TabId.Life}
+              onboardingStep={gameState.onboardingStep}
+              onboardingDismissed={gameState.onboardingDismissed}
+              onDismissOnboarding={() =>
+                setGameState((prev) => (prev ? dismissOnboarding(prev) : prev))
+              }
+            />
+          </div>
+
+          {/* Secondary Tabs Viewport (Full-height stage on Map; top-padded soft fade on secondary screens) */}
+          {activeTab !== TabId.Life && (
+          <div
+            className={
+              activeTab === TabId.Map
+                ? 'flex-1 min-h-0 flex flex-col overflow-hidden select-none'
+                : 'flex-1 min-h-0 overflow-y-auto px-3.5 pt-5 pb-7 sm:px-5 sm:pt-6 sm:pb-8 select-text secondary-scroll-mask'
+            }
+          >
 
             {activeTab === TabId.Actions && (
               <ActionsPanel
@@ -928,6 +953,13 @@ export default function App() {
                 onSettle={handleSettle}
                 onDiplomacy={handleDiplomacy}
                 onMarryLocal={handleMarryLocal}
+                onBuildHoldingStructure={handleBuildStructure}
+                onSendSettlers={handleSendSettlers}
+                onStationGarrison={handleStationGarrison}
+                onSetTributeBurden={handleSetTributeBurden}
+                onAppointJarl={handleAppointJarl}
+                onTakeHostages={handleTakeHostages}
+                onToggleTolerance={handleToggleTolerance}
               />
             )}
 
@@ -944,6 +976,7 @@ export default function App() {
               />
             )}
           </div>
+          )}
 
           {activeTab === TabId.Life ? (
             <>

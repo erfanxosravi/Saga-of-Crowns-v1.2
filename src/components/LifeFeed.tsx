@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import {
   Coins,
   Crown,
@@ -21,6 +21,7 @@ import { EventCategoryIcon, resolveEventIconType } from './EventCategoryIcon';
 interface LifeFeedProps {
   entries: LogEntry[];
   lang: Language;
+  isActive?: boolean;
   onboardingStep?: number;
   onboardingDismissed?: boolean;
   onDismissOnboarding?: () => void;
@@ -237,22 +238,75 @@ const ONBOARDING_HINTS: Record<Language, { title: string; body: string }[]> = {
 export function LifeFeed({
   entries,
   lang,
+  isActive = true,
   onboardingStep = 3,
   onboardingDismissed = true,
   onDismissOnboarding,
 }: LifeFeedProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const hasMountedRef = useRef<boolean>(false);
+  const prevIsActiveRef = useRef<boolean>(isActive);
+  const lastSeenActiveEntryKeyRef = useRef<string>('');
+  const prevEntryKeyRef = useRef<string>('');
   const isFa = lang === 'fa';
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [entries.length]);
+  const latestEntry = entries.length > 0 ? entries[entries.length - 1] : null;
+  const currentEntryKey = latestEntry ? `${entries.length}:${latestEntry.id}` : 'empty';
+
+  useLayoutEffect(() => {
+    const scrollParent = rootRef.current?.parentElement ?? null;
+
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      prevIsActiveRef.current = isActive;
+      prevEntryKeyRef.current = currentEntryKey;
+      if (isActive) {
+        lastSeenActiveEntryKeyRef.current = currentEntryKey;
+        if (scrollParent) {
+          scrollParent.scrollTop = scrollParent.scrollHeight;
+        }
+      }
+      return;
+    }
+
+    const becameActive = !prevIsActiveRef.current && isActive;
+    const entryChanged = currentEntryKey !== prevEntryKeyRef.current;
+
+    if (becameActive) {
+      // Returning to Life tab from another tab:
+      // - If a new event was logged while away (e.g. from Activities/Map/Family), jump directly to the new event at the bottom before paint.
+      // - Otherwise, leave scrollTop untouched so the feed stays at the exact position where the user left it.
+      if (currentEntryKey !== lastSeenActiveEntryKeyRef.current && scrollParent) {
+        scrollParent.scrollTop = scrollParent.scrollHeight;
+      }
+      lastSeenActiveEntryKeyRef.current = currentEntryKey;
+    } else if (isActive && entryChanged) {
+      // Already on the Life tab and a new event arrived (e.g. "Next Year"):
+      // Avoid scrolling from the very top if the user was far up; position right near the bottom and smoothly glide the new card into view.
+      if (scrollParent) {
+        const distanceFromBottom =
+          scrollParent.scrollHeight - scrollParent.scrollTop - scrollParent.clientHeight;
+        if (distanceFromBottom > 380) {
+          scrollParent.scrollTop = Math.max(
+            0,
+            scrollParent.scrollHeight - scrollParent.clientHeight - 160
+          );
+        }
+      }
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      lastSeenActiveEntryKeyRef.current = currentEntryKey;
+    }
+
+    prevIsActiveRef.current = isActive;
+    prevEntryKeyRef.current = currentEntryKey;
+  }, [isActive, currentEntryKey]);
 
   const showOnboarding = !onboardingDismissed && onboardingStep < 3;
   const activeHint = ONBOARDING_HINTS[lang][Math.max(0, Math.min(2, onboardingStep))];
 
   return (
-    <div className="flex flex-col overflow-hidden space-y-3 pb-2 text-start">
+    <div ref={rootRef} className="flex flex-col overflow-hidden space-y-3 pb-2 text-start">
       {showOnboarding && activeHint && (
         <div className="p-4 rounded-xl bg-[#132134] border border-[#38BDF8]/40 flex items-start justify-between gap-3 shadow-sm">
           <div className="flex items-start gap-2.5 min-w-0">

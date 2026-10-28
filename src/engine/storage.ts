@@ -7,6 +7,7 @@ import {
   GameSettings,
   Language,
   Season,
+  ThemeMode,
   TimeStepMode,
 } from '../types/game';
 
@@ -14,6 +15,7 @@ const AUTOSAVE_KEY = 'eldsaga_autosave_v1';
 const SLOT_PREFIX = 'eldsaga_slot_v1_';
 const SETTINGS_KEY = 'eldsaga_settings_v1';
 const LANG_PREF_KEY = 'eldsaga_lang_pref_v1';
+const THEME_PREF_KEY = 'eldsaga_theme_pref_v2';
 const SESSION_ACTIVE_KEY = 'eldsaga_session_active_v1';
 
 export const CURRENT_SAVE_VERSION = 2;
@@ -30,6 +32,7 @@ export interface SaveSlotSummary {
 
 export const DEFAULT_SETTINGS: GameSettings = {
   language: 'fa',
+  theme: 'light',
   textSize: 'base',
   emberAnimation: true,
   weatherOverlayEnabled: true,
@@ -68,14 +71,25 @@ export function loadSettings(): GameSettings {
     // Fallback to Persian default
   }
 
+  let persistedTheme: ThemeMode = 'light';
+  try {
+    const savedTheme = localStorage.getItem(THEME_PREF_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      persistedTheme = savedTheme;
+    }
+  } catch {
+    // Fallback to Light default
+  }
+
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS, language: persistedLang };
+    if (!raw) return { ...DEFAULT_SETTINGS, language: persistedLang, theme: persistedTheme };
     const parsed = JSON.parse(raw);
     const merged: GameSettings = {
       ...DEFAULT_SETTINGS,
       ...parsed,
       language: persistedLang,
+      theme: persistedTheme,
       // Enforce crisp BitLife year-by-year flow
       timeStepMode: TimeStepMode.Year,
     };
@@ -92,7 +106,7 @@ export function loadSettings(): GameSettings {
     }
     return merged;
   } catch {
-    return { ...DEFAULT_SETTINGS, language: persistedLang };
+    return { ...DEFAULT_SETTINGS, language: persistedLang, theme: persistedTheme };
   }
 }
 
@@ -104,8 +118,19 @@ export function saveLanguagePreference(lang: Language): void {
   }
 }
 
+export function saveThemePreference(theme: ThemeMode): void {
+  try {
+    localStorage.setItem(THEME_PREF_KEY, theme);
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export function saveSettings(settings: GameSettings): void {
   try {
+    if (settings.theme === 'light' || settings.theme === 'dark') {
+      localStorage.setItem(THEME_PREF_KEY, settings.theme);
+    }
     localStorage.setItem(
       SETTINGS_KEY,
       JSON.stringify({ ...settings, timeStepMode: TimeStepMode.Year })
@@ -222,6 +247,7 @@ export function migrateGameState(raw: unknown): FullGameState | null {
     settings: {
       ...DEFAULT_SETTINGS,
       ...(parsed.settings ?? {}),
+      theme: loadSettings().theme,
       timeStepMode: TimeStepMode.Year,
     },
   };
