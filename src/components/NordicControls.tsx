@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 
 export interface NordicSelectOption<T extends string = string> {
@@ -45,36 +46,50 @@ export function NordicSelect<T extends string = string>({
   ariaLabel,
 }: NordicSelectProps<T>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [openUpward, setOpenUpward] = useState<boolean>(false);
+  const [menuStyle, setMenuStyle] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  }>({ left: 0, width: 260, maxHeight: 240 });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const selectedOption = options.find((opt) => opt.value === value) ?? options[0];
 
+  const updateMenuPosition = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const spaceBelow = vh - rect.bottom - 12;
+    const spaceAbove = rect.top - 12;
+    const shouldUp = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const avail = shouldUp ? spaceAbove : spaceBelow;
+    const maxHeight = Math.max(140, Math.min(260, Math.floor(avail)));
+
+    if (shouldUp) {
+      setMenuStyle({
+        bottom: Math.max(8, vh - rect.top + 6),
+        left: Math.max(8, rect.left),
+        width: rect.width,
+        maxHeight,
+      });
+    } else {
+      setMenuStyle({
+        top: rect.bottom + 6,
+        left: Math.max(8, rect.left),
+        width: rect.width,
+        maxHeight,
+      });
+    }
+  };
+
   const handleToggleOpen = () => {
     if (disabled) return;
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      let topBound = 0;
-      let bottomBound = window.innerHeight;
-      let parent = buttonRef.current.parentElement;
-      while (parent && parent !== document.body) {
-        const style = window.getComputedStyle(parent);
-        if (
-          style.overflowY === 'hidden' ||
-          style.overflowY === 'auto' ||
-          style.overflowY === 'scroll' ||
-          style.overflow === 'hidden'
-        ) {
-          const pRect = parent.getBoundingClientRect();
-          topBound = Math.max(topBound, pRect.top);
-          bottomBound = Math.min(bottomBound, pRect.bottom);
-        }
-        parent = parent.parentElement;
-      }
-      const spaceBelow = bottomBound - rect.bottom;
-      const spaceAbove = rect.top - topBound;
-      setOpenUpward(spaceBelow < 235 && spaceAbove > spaceBelow);
+    if (!isOpen) {
+      updateMenuPosition();
     }
     setIsOpen((prev) => !prev);
   };
@@ -83,7 +98,12 @@ export function NordicSelect<T extends string = string>({
     if (!isOpen) return;
 
     const handleOutside = (e: PointerEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        (!menuRef.current || !menuRef.current.contains(target))
+      ) {
         setIsOpen(false);
       }
     };
@@ -95,13 +115,24 @@ export function NordicSelect<T extends string = string>({
       }
     };
 
+    const handleReposition = () => {
+      updateMenuPosition();
+    };
+
     window.addEventListener('pointerdown', handleOutside);
     window.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
     return () => {
       window.removeEventListener('pointerdown', handleOutside);
       window.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
     };
   }, [isOpen]);
+
+  const docDir =
+    typeof document !== 'undefined' ? document.documentElement.dir || 'rtl' : 'rtl';
 
   return (
     <div ref={containerRef} className={`relative ${isOpen ? 'z-50' : 'z-10'} space-y-1.5`}>
@@ -153,59 +184,70 @@ export function NordicSelect<T extends string = string>({
         </div>
       </button>
 
-      {isOpen && (
-        <div
-          role="listbox"
-          className={`absolute start-0 end-0 z-50 max-h-60 overflow-y-auto rounded-xl bg-[#0D1520] border border-[#2C415C] shadow-[0_18px_42px_rgba(0,0,0,0.88)] p-1.5 space-y-1 ${
-            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          }`}
-        >
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full min-h-[44px] px-3 py-2.5 rounded-lg text-start flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#192A3E] text-[#F1F5F9]'
-                    : 'hover:bg-[#142030] text-[#CBD5E1] hover:text-[#F1F5F9]'
-                }`}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs sm:text-sm font-semibold leading-snug break-words">
-                    {opt.label}
-                  </div>
-                  {opt.sublabel && (
-                    <div className="text-xs text-[#94A3B8] leading-snug mt-0.5 break-words">
-                      {opt.sublabel}
+      {isOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            dir={docDir}
+            role="listbox"
+            style={{
+              position: 'fixed',
+              top: menuStyle.top !== undefined ? `${menuStyle.top}px` : undefined,
+              bottom: menuStyle.bottom !== undefined ? `${menuStyle.bottom}px` : undefined,
+              left: `${menuStyle.left}px`,
+              width: `${menuStyle.width}px`,
+              maxHeight: `${menuStyle.maxHeight}px`,
+            }}
+            className="z-[120] overflow-y-auto rounded-xl bg-[#0D1520] border border-[#2C415C] shadow-[0_18px_42px_rgba(0,0,0,0.92)] p-1.5 space-y-1"
+          >
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full min-h-[44px] px-3 py-2.5 rounded-lg text-start flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#192A3E] text-[#F1F5F9]'
+                      : 'hover:bg-[#142030] text-[#CBD5E1] hover:text-[#F1F5F9]'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs sm:text-sm font-semibold leading-snug break-words">
+                      {opt.label}
                     </div>
-                  )}
-                </div>
+                    {opt.sublabel && (
+                      <div className="text-xs text-[#94A3B8] leading-snug mt-0.5 break-words">
+                        {opt.sublabel}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {opt.badge && (
-                    <span
-                      className={`text-xs font-mono tabular-nums font-semibold ${getBadgeToneClass(
-                        opt.badgeTone
-                      )}`}
-                    >
-                      {opt.badge}
-                    </span>
-                  )}
-                  {isSelected && <Check className="w-4 h-4 text-[#F59E0B] shrink-0" />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {opt.badge && (
+                      <span
+                        className={`text-xs font-mono tabular-nums font-semibold ${getBadgeToneClass(
+                          opt.badgeTone
+                        )}`}
+                      >
+                        {opt.badge}
+                      </span>
+                    )}
+                    {isSelected && <Check className="w-4 h-4 text-[#F59E0B] shrink-0" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

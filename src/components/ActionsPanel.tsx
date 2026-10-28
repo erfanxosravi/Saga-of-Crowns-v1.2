@@ -614,34 +614,43 @@ export function ActionsPanel({
           </div>
         }
         footer={
-          <button
-            type="button"
-            disabled={!canRaid}
-            onClick={() => {
-              onRaid(validRaidTargetId, raidTactic);
-              setActiveSheet(null);
-            }}
-            className="w-full min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
-          >
-            <Swords className="w-4 h-4 shrink-0" />
-            <span>
-              {used.raid
-                ? isFa
-                  ? 'امسال غارت دریایی انجام شده است'
-                  : 'Already Raided This Year'
-                : canRaid
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              disabled={!canRaid}
+              onClick={() => {
+                onRaid(validRaidTargetId, raidTactic);
+                setActiveSheet(null);
+              }}
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            >
+              <Swords className="w-4 h-4 shrink-0" />
+              <span>
+                {used.raid
                   ? isFa
-                    ? `فرمان یورش به ${raidTargetName}!`
-                    : `Launch Raid on ${raidTargetName}!`
-                  : isChild
+                    ? 'امسال غارت دریایی انجام شده است ✓'
+                    : 'Already Raided This Year ✓'
+                  : canRaid
                     ? isFa
-                      ? 'نیازمند حداقل ۱۵ سال سن'
-                      : 'Requires Age 15+'
-                    : isFa
-                      ? 'نیازمند ۱ کشتی جنگی و جنگجو (در بخش ناوگان بسازید)'
-                      : 'Requires 1 Longship & Warriors (Build in Fleet)'}
-            </span>
-          </button>
+                      ? `فرمان یورش به ${raidTargetName}!`
+                      : `Launch Raid on ${raidTargetName}!`
+                    : isChild
+                      ? isFa
+                        ? 'نیازمند حداقل ۱۵ سال سن'
+                        : 'Requires Age 15+'
+                      : isFa
+                        ? 'نیازمند ۱ کشتی جنگی و جنگجو'
+                        : 'Requires 1 Longship & Warriors'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSheet(null)}
+              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+            >
+              {isFa ? 'بستن' : 'Close'}
+            </button>
+          </div>
         }
       >
         {!canRaid && !used.raid && (
@@ -683,7 +692,7 @@ export function ActionsPanel({
                   onClick={() => setRaidTactic(tac.value)}
                   className={`min-h-[68px] p-3 rounded-xl border text-start flex flex-col justify-between gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     sel
-                      ? 'bg-[#2C1219] border-[#EF4444] text-[#F1F5F9]'
+                      ? 'bg-[#2C1219] border-[#EF4444] text-[#F1F5F9] ring-1 ring-[#EF4444]/40'
                       : 'bg-[#131D2B] border-[#233246] hover:border-[#EF4444]/60 text-[#CBD5E1]'
                   }`}
                 >
@@ -723,26 +732,38 @@ export function ActionsPanel({
           </div>
         }
         footer={
-          <button
-            type="button"
-            disabled={Boolean(used.train)}
-            onClick={() => {
-              onTrainSkill(selectedSkill);
-              setActiveSheet(null);
-            }}
-            className="w-full min-h-[48px] px-4 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
-          >
-            {used.train
-              ? isFa
-                ? 'امسال تمرین انجام شده است ✓'
-                : 'Already Trained This Year ✓'
-              : isFa
-                ? `تمرین «${SKILL_LABELS[lang][selectedSkill]}»`
-                : `Train ${SKILL_LABELS[lang][selectedSkill]}`}
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              disabled={Boolean(used.train)}
+              onClick={() => {
+                onTrainSkill(selectedSkill);
+                setActiveSheet(null);
+              }}
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            >
+              <GraduationCap className="w-4 h-4 shrink-0" />
+              <span>
+                {used.train
+                  ? isFa
+                    ? 'امسال تمرین انجام شده است ✓'
+                    : 'Already Trained This Year ✓'
+                  : isFa
+                    ? `تمرین «${SKILL_LABELS[lang][selectedSkill]}»`
+                    : `Train ${SKILL_LABELS[lang][selectedSkill]}`}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSheet(null)}
+              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+            >
+              {isFa ? 'بستن' : 'Close'}
+            </button>
+          </div>
         }
       >
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {ALL_TRAINABLE_SKILLS.map((skKey) => {
             const lv = state.character.skills[skKey];
             const isSel = selectedSkill === skKey;
@@ -752,17 +773,17 @@ export function ActionsPanel({
                 type="button"
                 disabled={Boolean(used.train)}
                 onClick={() => setSelectedSkill(skKey)}
-                className={`w-full min-h-[60px] p-3.5 rounded-xl border text-start flex items-center justify-between gap-3 transition-colors cursor-pointer disabled:opacity-55 ${
+                className={`w-full min-h-[64px] p-3 rounded-xl border text-start flex items-center justify-between gap-3 transition-colors cursor-pointer disabled:opacity-55 ${
                   isSel
-                    ? 'bg-[#15283D] border-[#38BDF8] text-[#F1F5F9]'
+                    ? 'bg-[#15283D] border-[#38BDF8] text-[#F1F5F9] ring-1 ring-[#38BDF8]/40'
                     : 'bg-[#131D2B] border-[#233246] hover:border-[#38BDF8]/50 text-[#CBD5E1]'
                 }`}
               >
                 <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
                     {SKILL_LABELS[lang][skKey]}
                   </div>
-                  <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                  <div className="text-[11px] text-[#94A3B8] whitespace-normal break-words leading-relaxed">
                     {isFa ? SKILL_HINTS[skKey].fa : SKILL_HINTS[skKey].en}
                   </div>
                 </div>
@@ -773,7 +794,7 @@ export function ActionsPanel({
                   <svg
                     viewBox="0 0 100 6"
                     preserveAspectRatio="none"
-                    className="w-16 h-1.5 rounded-full overflow-hidden block"
+                    className="w-14 h-1.5 rounded-full overflow-hidden block"
                     aria-hidden="true"
                   >
                     <rect x="0" y="0" width="100" height="6" className="fill-[#090E15]" />
@@ -811,56 +832,92 @@ export function ActionsPanel({
             <Compass className="w-6 h-6" />
           </div>
         }
+        footer={
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              disabled={Boolean(used.trade) || isChild}
+              onClick={() => {
+                onGeneralAction('trade_voyage');
+                setActiveSheet(null);
+              }}
+              className="w-full min-h-[46px] px-3.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Scale className="w-4 h-4 shrink-0" />
+              <span>
+                {used.trade
+                  ? isFa
+                    ? 'معامله انجام شد ✓'
+                    : 'Traded This Year ✓'
+                  : isChild
+                    ? isFa
+                      ? 'تجارت (نیازمند سن ۱۵+)'
+                      : 'Trade (Age 15+)'
+                    : isFa
+                      ? `معامله در ${currentLocName} (+نقره)`
+                      : `Trade in ${currentLocName} (+Silver)`}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              disabled={!hasShips || Boolean(used.travel)}
+              onClick={() => {
+                onSail(validSailDestId);
+                setActiveSheet(null);
+              }}
+              className="w-full min-h-[46px] px-3.5 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Compass className="w-4 h-4 shrink-0" />
+              <span>
+                {used.travel
+                  ? isFa
+                    ? 'سفر انجام شد ✓'
+                    : 'Sailed This Year ✓'
+                  : hasShips
+                    ? isFa
+                      ? `سفر دریایی به ${sailDestName}`
+                      : `Sail to ${sailDestName}`
+                    : isFa
+                      ? 'سفر (نیازمند کشتی)'
+                      : 'Sail (Needs Ship)'}
+              </span>
+            </button>
+          </div>
+        }
       >
         {/* Option A: Local Market Trade */}
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 text-[#F59E0B] flex items-center justify-center shrink-0">
-              <Scale className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
-                {isFa ? `معامله در بازار ${currentLocName}` : `Market Trade in ${currentLocName}`}
+        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 text-[#F59E0B] flex items-center justify-center shrink-0">
+                <Scale className="w-5 h-5" />
               </div>
-              <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed mt-0.5">
-                {isChild
-                  ? isFa
-                    ? 'نیازمند حداقل ۱۵ سال سن'
-                    : 'Available starting at age 15'
-                  : isFa
-                    ? `فروش خز، کهربا و کالاهای شمالی برای کسب نقره نقد (ثروت بازار ${currentLoc.baseWealth}/10)`
-                    : `Barter furs, amber & northern wares for instant silver (Port wealth ${currentLoc.baseWealth}/10)`}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                  {isFa ? `۱. معامله در بازار ${currentLocName}` : `1. Market Trade in ${currentLocName}`}
+                </div>
+                <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed mt-0.5">
+                  {isChild
+                    ? isFa
+                      ? 'نیازمند حداقل ۱۵ سال سن'
+                      : 'Available starting at age 15'
+                    : isFa
+                      ? `فروش خز، کهربا و کالاهای شمالی برای کسب نقره نقد (ثروت بازار ${currentLoc.baseWealth}/10)`
+                      : `Barter furs, amber & northern wares for instant silver (Port wealth ${currentLoc.baseWealth}/10)`}
+                </p>
+              </div>
             </div>
+            <span className="text-xs font-mono font-bold text-[#FBBF24] shrink-0">
+              {used.trade ? (isFa ? 'انجام شد ✓' : 'Done ✓') : isFa ? '+نقره' : '+Silver'}
+            </span>
           </div>
-
-          <button
-            type="button"
-            disabled={Boolean(used.trade) || isChild}
-            onClick={() => {
-              onGeneralAction('trade_voyage');
-              setActiveSheet(null);
-            }}
-            className="w-full min-h-[44px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs cursor-pointer transition-colors"
-          >
-            {used.trade
-              ? isFa
-                ? 'امسال در بازار معامله کرده‌اید ✓'
-                : 'Already Traded This Year ✓'
-              : isChild
-                ? isFa
-                  ? 'نیازمند سن ۱۵+'
-                  : 'Requires Age 15+'
-                : isFa
-                  ? 'انجام معامله در بازار (+نقره)'
-                  : 'Trade in Market (+Silver)'}
-          </button>
         </div>
 
-        <RuneDivider label={isFa ? 'سفر به بندر دیگر' : 'Set Sail to Another Port'} accent="ice" />
+        <RuneDivider label={isFa ? '۲. سفر به بندر دیگر' : '2. Set Sail to Another Port'} accent="ice" />
 
         {/* Option B: Sail to Destination */}
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
           <NordicSelect
             label={isFa ? 'مقصد سفر دریایی' : 'Voyage Destination Port'}
             value={validSailDestId}
@@ -886,28 +943,6 @@ export function ActionsPanel({
               {isFa ? `خطر دریا: ${voyageInfo.dangerPct}%` : `Sea Risk: ${voyageInfo.dangerPct}%`}
             </span>
           </div>
-
-          <button
-            type="button"
-            disabled={!hasShips || Boolean(used.travel)}
-            onClick={() => {
-              onSail(validSailDestId);
-              setActiveSheet(null);
-            }}
-            className="w-full min-h-[46px] px-4 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs cursor-pointer transition-colors"
-          >
-            {used.travel
-              ? isFa
-                ? 'امسال سفر دریایی انجام شده است ✓'
-                : 'Already Sailed This Year ✓'
-              : hasShips
-                ? isFa
-                  ? `حرکت به سوی ${sailDestName}`
-                  : `Sail to ${sailDestName}`
-                : isFa
-                  ? 'نیازمند ساخت کشتی (در بخش بیشتر ← ناوگان)'
-                  : 'Requires a Ship (Build in More → Fleet)'}
-          </button>
         </div>
       </NorseBottomSheet>
 
@@ -922,17 +957,28 @@ export function ActionsPanel({
         title={isFa ? 'تالار و شورای ثینگ' : 'Court, Hall & The Thing'}
         subtitle={
           isFa
-            ? 'کسب شرافت، شادی و آوازه در میان آزادمردان و جنگجویان'
-            : 'Build honor, hall joy, and saga renown among your people'
+            ? `خزانه فعلی: ${state.realm.silver} نقره · کسب شرافت، شادی و آوازه در میان مردم`
+            : `Treasury: ${state.realm.silver} Silver · Build honor, hall joy, and saga renown`
         }
         icon={
           <div className="w-11 h-11 rounded-2xl bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center">
             <Flame className="w-6 h-6" />
           </div>
         }
+        footer={
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setActiveSheet(null)}
+              className="min-h-[44px] px-5 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#F1F5F9] cursor-pointer transition-colors"
+            >
+              {isFa ? 'بستن پنجره' : 'Done / Close'}
+            </button>
+          </div>
+        }
       >
         {/* 1. Speak at the Thing */}
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
@@ -966,13 +1012,13 @@ export function ActionsPanel({
                   ? 'نیازمند سن ۱۵+'
                   : 'Requires Age 15+'
                 : isFa
-                  ? 'شرکت و سخنرانی در ثینگ'
-                  : 'Speak at the Thing'}
+                  ? 'شرکت و سخنرانی در ثینگ (+۶ شرافت)'
+                  : 'Speak at the Thing (+6 Honor)'}
           </button>
         </div>
 
         {/* 2. Host Great Mead-Hall Feast */}
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
@@ -1012,7 +1058,7 @@ export function ActionsPanel({
         </div>
 
         {/* 3. Patronize Skald Poet */}
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
@@ -1071,17 +1117,84 @@ export function ActionsPanel({
         }
         subtitle={
           isFa
-            ? `دارایی فعلی: ${state.realm.landFarms} مزرعه در ${state.realm.holdings.length} ملک`
-            : `Current holdings: ${state.realm.landFarms} farms across ${state.realm.holdings.length} estates`
+            ? `دارایی فعلی: ${state.realm.landFarms} مزرعه در ${state.realm.holdings.length} ملک · خزانه: ${state.realm.silver} نقره`
+            : `Current holdings: ${state.realm.landFarms} farms across ${state.realm.holdings.length} estates · ${state.realm.silver} Silver`
         }
         icon={
           <div className="w-11 h-11 rounded-2xl bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center">
             <Castle className="w-6 h-6" />
           </div>
         }
+        footer={
+          <div className="flex items-center gap-2.5">
+            {locIsFortified && onConquerCity ? (
+              <button
+                type="button"
+                disabled={
+                  isChild ||
+                  Boolean(used.settle) ||
+                  state.realm.longships <= 0 ||
+                  state.realm.hirdWarriors < 12
+                }
+                onClick={() => {
+                  onConquerCity(currentLoc.id);
+                  setActiveSheet(null);
+                }}
+                className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Swords className="w-4 h-4 shrink-0" />
+                <span>
+                  {used.settle
+                    ? isFa
+                      ? 'امسال اقدام زمین/فتح انجام شد ✓'
+                      : 'Already Used Land/Conquest This Year ✓'
+                    : state.realm.longships <= 0 || state.realm.hirdWarriors < 12
+                      ? isFa
+                        ? 'نیازمند ۱ کشتی جنگی و ۱۲+ جنگجو'
+                        : 'Requires 1 Longship & 12+ Warriors'
+                      : isFa
+                        ? `آغاز محاصره و فتح ${currentLocName}!`
+                        : `Storm & Conquer ${currentLocName}!`}
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isChild || Boolean(used.settle) || state.realm.silver < 35}
+                onClick={() => {
+                  onGeneralAction('farm_settle');
+                  setActiveSheet(null);
+                }}
+                className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Castle className="w-4 h-4 shrink-0" />
+                <span>
+                  {used.settle
+                    ? isFa
+                      ? 'امسال مزرعه خریداری شد ✓'
+                      : 'Already Claimed Land This Year ✓'
+                    : state.realm.silver < 35
+                      ? isFa
+                        ? 'نیازمند ۳۵ سکه نقره'
+                        : 'Need 35 Silver'
+                      : isFa
+                        ? `خرید مزرعه در ${currentLocName} (۳۵ نقره)`
+                        : `Buy Farmland in ${currentLocName} (35 Silver)`}
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setActiveSheet(null)}
+              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+            >
+              {isFa ? 'بستن' : 'Close'}
+            </button>
+          </div>
+        }
       >
         {locIsFortified && onConquerCity ? (
-          <div className="p-4 rounded-2xl bg-[#241117] border border-[#EF4444]/50 space-y-3.5">
+          <div className="p-4 rounded-2xl bg-[#241117] border border-[#EF4444]/50 space-y-2.5">
             <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
               {isFa
                 ? `«${currentLocName}» یک دژ مستحکم دشمن است (دفاع ${currentLoc.baseDefense}/10)`
@@ -1092,35 +1205,9 @@ export function ActionsPanel({
                 ? 'زمین‌های شهرهای مستحکم با نقره فروخته نمی‌شوند. برای تصاحب آن باید با حداقل ۱ کشتی جنگی و ۱۲ جنگجوی هیرد به باروهای شهر یورش ببرید.'
                 : 'Fortified cities cannot be purchased with silver. Storm the ramparts with at least 1 War Longship and 12+ Hird Warriors to claim it as your estate.'}
             </p>
-            <button
-              type="button"
-              disabled={
-                isChild ||
-                Boolean(used.settle) ||
-                state.realm.longships <= 0 ||
-                state.realm.hirdWarriors < 12
-              }
-              onClick={() => {
-                onConquerCity(currentLoc.id);
-                setActiveSheet(null);
-              }}
-              className="w-full min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
-            >
-              {used.settle
-                ? isFa
-                  ? 'امسال اقدام زمین/فتح انجام شد ✓'
-                  : 'Already Used Land/Conquest This Year ✓'
-                : state.realm.longships <= 0 || state.realm.hirdWarriors < 12
-                  ? isFa
-                    ? 'نیازمند ۱ کشتی جنگی و ۱۲+ جنگجو'
-                    : 'Requires 1 Longship & 12+ Warriors'
-                  : isFa
-                    ? `آغاز محاصره و فتح ${currentLocName}!`
-                    : `Storm & Conquer ${currentLocName}!`}
-            </button>
           </div>
         ) : (
-          <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3.5">
+          <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
             <div className="flex items-start justify-between gap-3">
               <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
                 {isFa ? `خرید مزرعه در ${currentLocName}` : `Buy Farmland in ${currentLocName}`}
@@ -1134,27 +1221,6 @@ export function ActionsPanel({
                 ? 'هر مزرعه درآمد سالانه نقره و ذخیره غله خاندان را افزایش می‌دهد و راه رسیدن به مقام بونده، هرسیر و یارل را هموار می‌کند.'
                 : 'Each farmstead increases yearly harvest stores and silver income while advancing you toward Bonde, Hersir, and Jarl rank.'}
             </p>
-            <button
-              type="button"
-              disabled={isChild || Boolean(used.settle) || state.realm.silver < 35}
-              onClick={() => {
-                onGeneralAction('farm_settle');
-                setActiveSheet(null);
-              }}
-              className="w-full min-h-[48px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
-            >
-              {used.settle
-                ? isFa
-                  ? 'امسال مزرعه خریداری شد ✓'
-                  : 'Already Claimed Land This Year ✓'
-                : state.realm.silver < 35
-                  ? isFa
-                    ? 'نیازمند ۳۵ سکه نقره'
-                    : 'Need 35 Silver'
-                  : isFa
-                    ? `خرید مزرعه در ${currentLocName} (۳۵ نقره)`
-                    : `Buy Farmland in ${currentLocName} (35 Silver)`}
-            </button>
           </div>
         )}
       </NorseBottomSheet>
@@ -1178,8 +1244,51 @@ export function ActionsPanel({
             <Shield className="w-6 h-6" />
           </div>
         }
+        footer={
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              disabled={isChild || faithDone}
+              onClick={() => {
+                onGeneralAction(
+                  state.character.religion === Religion.Christian
+                    ? 'convert_pagan'
+                    : 'convert_christian'
+                );
+                setActiveSheet(null);
+              }}
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#8B5CF6] hover:bg-[#A78BFA] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            >
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>
+                {faithDone
+                  ? isFa
+                    ? 'امسال تغییر آیین انجام شده است ✓'
+                    : 'Already Converted This Year ✓'
+                  : isChild
+                    ? isFa
+                      ? 'نیازمند سن ۱۵+'
+                      : 'Requires Age 15+'
+                    : state.character.religion === Religion.Christian
+                      ? isFa
+                        ? 'بازگشت به آیین خدایان نورس'
+                        : 'Embrace Old Norse Gods'
+                      : isFa
+                        ? 'پذیرش غسل تعمید مسیحی'
+                        : 'Accept Christian Baptism'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSheet(null)}
+              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+            >
+              {isFa ? 'بستن' : 'Close'}
+            </button>
+          </div>
+        }
       >
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3.5">
+        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
           <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
             {state.character.religion === Religion.Christian
               ? isFa
@@ -1198,36 +1307,6 @@ export function ActionsPanel({
                 ? 'بهبود روابط تجاری با شاهان مسیحی اروپا و امکان ساخت کلیسای چوبی استیو در املاک.'
                 : 'Improve trade ties with Christian realms and unlock Stave Church construction on your estates.'}
           </p>
-
-          <button
-            type="button"
-            disabled={isChild || faithDone}
-            onClick={() => {
-              onGeneralAction(
-                state.character.religion === Religion.Christian
-                  ? 'convert_pagan'
-                  : 'convert_christian'
-              );
-              setActiveSheet(null);
-            }}
-            className="w-full min-h-[48px] px-4 rounded-xl bg-[#8B5CF6] hover:bg-[#A78BFA] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
-          >
-            {faithDone
-              ? isFa
-                ? 'امسال تغییر آیین انجام شده است ✓'
-                : 'Already Converted This Year ✓'
-              : isChild
-                ? isFa
-                  ? 'نیازمند سن ۱۵+'
-                  : 'Requires Age 15+'
-                : state.character.religion === Religion.Christian
-                  ? isFa
-                    ? 'بازگشت به آیین خدایان نورس'
-                    : 'Embrace Old Norse Gods'
-                  : isFa
-                    ? 'پذیرش غسل تعمید مسیحی'
-                    : 'Accept Christian Baptism'}
-          </button>
         </div>
       </NorseBottomSheet>
     </div>

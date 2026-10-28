@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { BookOpen, Castle, Crown, Save, Ship, Trophy } from 'lucide-react';
+import { Castle, Crown, Ship, Trophy } from 'lucide-react';
 import { BITLIFE_ACHIEVEMENTS } from '../data/deathsAndAchievements';
 import { getClaimableNextTitle } from '../engine/gameEngine';
 import { SHORT_TITLE_LABELS } from '../i18n/ui';
@@ -11,8 +11,6 @@ export type RealmSection = 'holdings' | 'fleet' | 'intrigue';
 interface MoreMenuPanelProps {
   state: FullGameState;
   onNavigateTab: (tab: TabId, realmSection?: RealmSection) => void;
-  onOpenSettings: () => void;
-  onOpenGuide: () => void;
   onClaimRank?: () => void;
 }
 
@@ -24,15 +22,12 @@ interface MoreTileDef {
   accent: NorseAccent;
   surfaceClass: string;
   iconBoxClass: string;
-  spanFullMobile?: boolean;
   onClick: () => void;
 }
 
 export function MoreMenuPanel({
   state,
   onNavigateTab,
-  onOpenSettings,
-  onOpenGuide,
   onClaimRank,
 }: MoreMenuPanelProps) {
   const lang = state.settings.language;
@@ -45,8 +40,6 @@ export function MoreMenuPanel({
     const p = ach.getProgress(state);
     return state.achievements.includes(ach.id) || p.current >= p.target;
   }).length;
-
-  const audioOn = state.settings.ambientAudioEnabled || state.settings.soundEnabled;
 
   const tiles: MoreTileDef[] = [
     {
@@ -101,33 +94,6 @@ export function MoreMenuPanel({
       iconBoxClass: 'bg-[#FB923C]/15 text-[#FB923C] ring-1 ring-[#FB923C]/30',
       onClick: () => onNavigateTab(TabId.Saga),
     },
-    {
-      id: 'settings',
-      title: isFa ? 'ذخیره و تنظیمات' : 'Saves & Settings',
-      summary: isFa
-        ? `سال ${state.year} · ۳ جایگاه ذخیره · صدا ${audioOn ? 'روشن' : 'خاموش'}`
-        : `${state.year} AD · 3 save slots · Audio ${audioOn ? 'on' : 'off'}`,
-      icon: <Save className="w-6 h-6" />,
-      accent: 'emerald',
-      surfaceClass:
-        'bg-gradient-to-br from-[#10221E] via-[#131D2B] to-[#111926] border-[#34D399]/35 hover:border-[#34D399]',
-      iconBoxClass: 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30',
-      onClick: onOpenSettings,
-    },
-    {
-      id: 'guide',
-      title: isFa ? 'راهنما و واژه‌نامه' : 'Guide & Glossary',
-      summary: isFa
-        ? 'قوانین بازی، غارت، جانشینی و ۶ اصطلاح نورس'
-        : 'Rules, raids, succession & 6 Norse terms',
-      icon: <BookOpen className="w-6 h-6" />,
-      accent: 'violet',
-      surfaceClass:
-        'bg-gradient-to-br from-[#18182C] via-[#131D2B] to-[#111926] border-[#A78BFA]/35 hover:border-[#A78BFA]',
-      iconBoxClass: 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30',
-      spanFullMobile: true,
-      onClick: onOpenGuide,
-    },
   ];
 
   return (
@@ -173,20 +139,18 @@ export function MoreMenuPanel({
       )}
 
       <RuneDivider
-        label={isFa ? 'مدیریت قلمرو، میراث و ابزارها' : 'Realm, Legacy & Chronicle'}
+        label={isFa ? 'مدیریت قلمرو و میراث دودمان' : 'Realm, Intrigue & Dynasty Legacy'}
         accent="amber"
       />
 
-      {/* Grid of Large Icon Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-3.5">
+      {/* 2x2 Grid of Realm & Legacy Tiles */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
         {tiles.map((tile) => (
           <button
             key={tile.id}
             type="button"
             onClick={tile.onClick}
-            className={`relative min-h-[138px] p-4 rounded-2xl border text-start flex flex-col justify-between gap-3.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
-              tile.surfaceClass
-            } ${tile.spanFullMobile ? 'col-span-2 sm:col-span-1' : ''}`}
+            className={`relative min-h-[144px] p-4 rounded-2xl border text-start flex flex-col justify-between gap-3.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${tile.surfaceClass}`}
           >
             <NorseCornerOrnament accent={tile.accent} />
 

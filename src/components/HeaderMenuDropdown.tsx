@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
+  BookOpen,
   ChevronRight,
   CloudRain,
   Globe,
-  HelpCircle,
-  Settings,
+  Save,
   Ship,
   Snowflake,
   Sun,
@@ -102,10 +102,10 @@ export function HeaderMenuDropdown({
   const rtl = isRtl(lang);
 
   const rowBaseClass =
-    'group w-full min-h-[52px] px-2.5 py-2 rounded-xl flex items-center justify-between gap-3 text-start transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70';
+    'group w-full min-h-[54px] px-2.5 py-2 rounded-xl flex items-center justify-between gap-3 text-start transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70';
 
   const iconTileBaseClass =
-    'w-8 h-8 rounded-lg bg-[#142030] border border-[#22344D] flex items-center justify-center shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none group-hover:scale-105';
+    'w-9 h-9 rounded-lg bg-[#142030] border border-[#22344D] flex items-center justify-center shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none group-hover:scale-105';
 
   const chevronClass = `w-4 h-4 text-[#64748B] group-hover:text-[#F1F5F9] shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
     rtl ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'
@@ -128,7 +128,7 @@ export function HeaderMenuDropdown({
         role="dialog"
         aria-modal="false"
         aria-label={isFa ? 'منوی سریع بازی' : 'Quick Game Menu'}
-        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[332px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[348px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
           isAnimatedIn
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
@@ -172,17 +172,75 @@ export function HeaderMenuDropdown({
 
         {/* Grouped Menu Categories */}
         <div className="flex-1 min-h-0 overflow-y-auto p-2">
-          {/* Category 1: Game Controls (Season/Sea Chart & Saga Guide) */}
+          {/* Category 1: Save, Settings & Guide */}
           <div
             role="group"
-            aria-label={isFa ? 'کنترل‌ها و راهنمای بازی' : 'Game Controls'}
+            aria-label={isFa ? 'ذخیره، راهنما و کنترل‌ها' : 'Saves, Guide & Controls'}
             className="space-y-0.5"
           >
             <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
-              {isFa ? 'کنترل‌ها و راهنما' : 'Game Controls'}
+              {isFa ? 'ذخیره، راهنما و وضعیت' : 'Saves, Guide & Status'}
             </div>
 
-            {/* 1. Season & Sea Weather */}
+            {/* 1. Save & Settings */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenSettings();
+              }}
+              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div
+                  className={`${iconTileBaseClass} border-[#34D399]/35 bg-[#34D399]/12 group-hover:border-[#34D399]/65 group-hover:bg-[#34D399]/20`}
+                >
+                  <Save className="w-4 h-4 text-[#34D399] shrink-0" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                    {isFa ? 'ذخیره و تنظیمات' : 'Saves & Settings'}
+                  </div>
+                  <div className="text-[11px] font-mono tabular-nums text-[#94A3B8] truncate mt-0.5">
+                    {isFa
+                      ? `سال ${year} · ۳ جایگاه ذخیره · صدا ${isAudioOn ? 'روشن' : 'خاموش'}`
+                      : `${year} AD · 3 save slots · Audio ${isAudioOn ? 'on' : 'off'}`}
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className={chevronClass} />
+            </button>
+
+            {/* 2. Guide & Glossary */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenGuide();
+              }}
+              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div
+                  className={`${iconTileBaseClass} border-[#A78BFA]/35 bg-[#A78BFA]/12 group-hover:border-[#A78BFA]/65 group-hover:bg-[#A78BFA]/20`}
+                >
+                  <BookOpen className="w-4 h-4 text-[#A78BFA] shrink-0" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                    {isFa ? 'راهنما و واژه‌نامه' : 'Guide & Glossary'}
+                  </div>
+                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                    {isFa
+                      ? 'قوانین بازی، غارت، جانشینی و ۶ اصطلاح نورس'
+                      : 'Rules, raids, succession & 6 Norse terms'}
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className={chevronClass} />
+            </button>
+
+            {/* 3. Season & Sea Weather */}
             <button
               type="button"
               onClick={() => {
@@ -220,48 +278,21 @@ export function HeaderMenuDropdown({
               </div>
               <ChevronRight className={chevronClass} />
             </button>
-
-            {/* 2. Quick Saga Guide */}
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenGuide();
-              }}
-              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                  className={`${iconTileBaseClass} group-hover:border-[#38BDF8]/50 group-hover:bg-[#17283D]`}
-                >
-                  <HelpCircle className="w-4 h-4 text-[#38BDF8] shrink-0" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
-                    {isFa ? 'راهنمای بازی و واژه‌نامه' : 'Saga Guide & Glossary'}
-                  </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
-                    {isFa ? 'قوانین، القاب و مفاهیم نورس' : 'Rules, ranks & Norse lore'}
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className={chevronClass} />
-            </button>
           </div>
 
           <hr className="border-t border-[#1E2D40] my-2" />
 
-          {/* Category 2: Settings, Audio & Language */}
+          {/* Category 2: Quick Toggles (Audio & Language) */}
           <div
             role="group"
-            aria-label={isFa ? 'تنظیمات و زبان' : 'Settings & Language'}
+            aria-label={isFa ? 'صدا و زبان' : 'Audio & Language'}
             className="space-y-0.5"
           >
             <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
-              {isFa ? 'تنظیمات و زبان' : 'Settings & Language'}
+              {isFa ? 'صدا و زبان' : 'Audio & Language'}
             </div>
 
-            {/* 3. Language Switcher */}
+            {/* 4. Language Switcher */}
             <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-[#152233]/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div className="flex items-center gap-3 min-w-0 flex-1 text-start">
                 <div
@@ -305,7 +336,7 @@ export function HeaderMenuDropdown({
               </div>
             </div>
 
-            {/* 4. Sound & Ambience Toggle */}
+            {/* 5. Sound & Ambience Toggle */}
             <button
               type="button"
               role="switch"
@@ -352,35 +383,6 @@ export function HeaderMenuDropdown({
               >
                 {isAudioOn ? (isFa ? 'روشن' : 'On') : isFa ? 'خاموش' : 'Off'}
               </span>
-            </button>
-
-            {/* 5. Save Slots & Full Settings */}
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenSettings();
-              }}
-              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                  className={`${iconTileBaseClass} group-hover:border-[#F59E0B]/55 group-hover:bg-[#1D2838]`}
-                >
-                  <Settings className="w-4 h-4 text-[#F59E0B] shrink-0 transition-transform duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none group-hover:rotate-45" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
-                    {isFa ? 'ذخیره بازی و تنظیمات کامل' : 'Save Slots & Settings'}
-                  </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
-                    {isFa
-                      ? 'جایگاه‌های ذخیره، سختی و نمایش'
-                      : 'Manage saves, difficulty & display'}
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className={chevronClass} />
             </button>
           </div>
         </div>

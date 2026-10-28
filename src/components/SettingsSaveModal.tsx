@@ -243,7 +243,7 @@ export function SettingsSaveModal({
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 px-3.5 sm:px-6 pt-5 pb-6 space-y-3.5 overflow-y-auto secondary-scroll-mask">
+        <div className="flex-1 min-h-0 px-3.5 sm:px-6 pt-5 pb-6 space-y-3.5 overflow-y-auto">
           {statusMessage && (
             <div className="px-3.5 py-2.5 rounded-xl bg-[#1F1A12] border border-[#F59E0B] text-xs text-[#F1F5F9]">
               {statusMessage}

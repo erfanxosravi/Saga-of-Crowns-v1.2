@@ -55,7 +55,7 @@ export function QuickGuideModal({ isOpen, onClose, lang }: QuickGuideModalProps)
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-5 pb-6 space-y-5 text-start secondary-scroll-mask">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-5 pb-6 space-y-5 text-start">
           {/* 4-Step Gameplay Loop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {g.steps.map((step, idx) => (

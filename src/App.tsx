@@ -940,8 +940,6 @@ export default function App() {
                   if (sec) setRealmSection(sec);
                   setActiveTab(t);
                 }}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenGuide={() => setIsGuideOpen(true)}
                 onClaimRank={() => handleGeneralAction('claim_rank')}
               />
             )}

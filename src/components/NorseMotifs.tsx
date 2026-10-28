@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export type NorseAccent = 'amber' | 'crimson' | 'ice' | 'emerald' | 'violet' | 'slate';
@@ -165,7 +166,8 @@ interface NorseBottomSheetProps {
 
 /**
  * Mobile-first slide-up bottom sheet (centers cleanly on larger viewports)
- * with 44x44 touch close button, Escape key handling, and non-clipping scroll area.
+ * rendered via React Portal to document.body so it is never clipped by parent
+ * scroll containers or CSS masks.
  */
 export function NorseBottomSheet({
   isOpen,
@@ -194,25 +196,31 @@ export function NorseBottomSheet({
 
   const borderAccentClass =
     accent === 'crimson'
-      ? 'border-[#DC2626]/60'
+      ? 'border-[#DC2626]/70'
       : accent === 'ice'
-        ? 'border-[#38BDF8]/50'
+        ? 'border-[#38BDF8]/60'
         : accent === 'emerald'
-          ? 'border-[#34D399]/50'
+          ? 'border-[#34D399]/60'
           : accent === 'violet'
-            ? 'border-[#A78BFA]/50'
-            : 'border-[#F59E0B]/50';
+            ? 'border-[#A78BFA]/60'
+            : 'border-[#F59E0B]/60';
 
-  return (
+  const currentDir =
+    typeof document !== 'undefined' && document.documentElement.dir
+      ? (document.documentElement.dir as 'rtl' | 'ltr')
+      : 'rtl';
+
+  const sheetNode = (
     <div
-      className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-[#05080D]/80 backdrop-blur-xs flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4"
+      dir={currentDir}
+      className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4 text-[#F1F5F9]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className={`relative w-full sm:max-w-xl max-h-[85dvh] sm:max-h-[min(85dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_-16px_48px_rgba(0,0,0,0.85)] text-start`}
+        className={`relative w-full sm:max-w-xl max-h-[88dvh] sm:max-h-[min(88dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.9)] text-start`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Affordance */}
@@ -221,7 +229,7 @@ export function NorseBottomSheet({
         </div>
 
         {/* Sheet Header */}
-        <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-[#1E2D40] bg-[#121C2B] flex items-start justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-5 py-3.5 border-b border-[#1E2D40] bg-[#121C2B] flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             {icon && <div className="shrink-0 mt-0.5">{icon}</div>}
             <div className="min-w-0 flex-1">
@@ -246,18 +254,24 @@ export function NorseBottomSheet({
           </button>
         </div>
 
-        {/* Sheet Scrollable Content (with top & bottom padding so first/last card is never cut off) */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 pt-4 pb-6 secondary-scroll-mask space-y-3.5">
+        {/* Sheet Scrollable Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-3.5">
           {children}
         </div>
 
-        {/* Optional Sticky Footer CTA */}
+        {/* Sticky Footer CTA */}
         {footer && (
-          <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#1E2D40] bg-[#0B1118]/95">
+          <div className="shrink-0 px-4 sm:px-5 py-3.5 border-t border-[#1E2D40] bg-[#121C2B]">
             {footer}
           </div>
         )}
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(sheetNode, document.body);
+  }
+  return sheetNode;
 }
+
