@@ -18,7 +18,7 @@ import { hasBoathouse, isFortifiedEnemyCity, RaidTactic } from '../engine/gameEn
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import { REGION_LABELS, RELIGION_LABELS, SKILL_LABELS } from '../i18n/ui';
 import { FullGameState, Religion, SkillKey, TitleRank } from '../types/game';
-import { NordicSelect, NordicSelectOption } from './NordicControls';
+import { NordicAccordion, NordicSelect, NordicSelectOption } from './NordicControls';
 import {
   NorseAccent,
   NorseBottomSheet,
@@ -50,6 +50,7 @@ interface ActionsPanelProps {
 }
 
 type ActivitySheetId = 'raid' | 'train' | 'voyage' | 'hall' | 'land' | 'faith';
+type ActivityCategoryId = 'military' | 'diplomacy' | 'personal';
 
 const SKILL_HINTS: Record<SkillKey, { fa: string; en: string }> = {
   combat: {
@@ -104,6 +105,7 @@ const ALL_TRAINABLE_SKILLS: SkillKey[] = [
 
 interface ActivityCardItem {
   id: ActivitySheetId;
+  category: ActivityCategoryId;
   title: string;
   description: string;
   costRiskBadge: string;
@@ -128,6 +130,30 @@ export function ActionsPanel({
   const isFa = lang === 'fa';
 
   const [activeSheet, setActiveSheet] = useState<ActivitySheetId | null>(null);
+  const [openCategories, setOpenCategories] = useState<Record<ActivityCategoryId, boolean>>({
+    military: true,
+    diplomacy: false,
+    personal: false,
+  });
+
+  const toggleCategory = (catId: ActivityCategoryId) => {
+    setOpenCategories((prev) => ({
+      ...prev,
+      [catId]: !prev[catId],
+    }));
+  };
+
+  const allCategoriesOpen =
+    openCategories.military && openCategories.diplomacy && openCategories.personal;
+
+  const handleToggleAllCategories = () => {
+    const nextState = !allCategoriesOpen;
+    setOpenCategories({
+      military: nextState,
+      diplomacy: nextState,
+      personal: nextState,
+    });
+  };
 
   const otherPorts = SETTLEMENTS.filter((s) => s.id !== state.character.locationId);
   const [selectedSkill, setSelectedSkill] = useState<SkillKey>('combat');
@@ -257,6 +283,7 @@ export function ActionsPanel({
   const cards: ActivityCardItem[] = [
     {
       id: 'raid',
+      category: 'military',
       title: isFa ? 'غارت دریایی' : 'Coastal Raid',
       description: isFa
         ? 'یورش با کشتی جنگی به صومعه‌ها و بنادر برای نقره و شهرت'
@@ -285,84 +312,8 @@ export function ActionsPanel({
       isRaidHero: true,
     },
     {
-      id: 'train',
-      title: isFa ? 'تمرین مهارت' : 'Train Skill',
-      description: isFa
-        ? 'پرورش شمشیرزنی، دریانوردی، قانون، شعر یا تجارت'
-        : 'Sharpen combat, sailing, law, skaldcraft, or trade',
-      costRiskBadge: isFa ? 'رایگان · بی‌خطر' : 'Free · Safe',
-      costRiskTone: 'ice',
-      statusLabel: used.train
-        ? isFa
-          ? 'تمرین انجام شد ✓'
-          : 'Trained This Year ✓'
-        : isFa
-          ? 'آماده تمرین (۱ بار/سال)'
-          : 'Available (1/yr)',
-      isDone: Boolean(used.train),
-      isLocked: false,
-      accent: 'ice',
-      icon: <GraduationCap className="w-6 h-6" />,
-    },
-    {
-      id: 'voyage',
-      title: isFa ? 'تجارت و سفر دریایی' : 'Trade & Voyage',
-      description: isFa
-        ? `معامله در بازار ${currentLocName} یا دریانوردی به بندر جدید`
-        : `Trade goods in ${currentLocName} or sail to a new port`,
-      costRiskBadge: isFa ? '+نقره · خطر دریا' : '+Silver · Sea Risk',
-      costRiskTone: 'emerald',
-      statusLabel:
-        used.trade && used.travel
-          ? isFa
-            ? 'هر دو انجام شد ✓'
-            : 'Both Completed ✓'
-          : !used.trade && !isChild
-            ? isFa
-              ? 'بازار و سفر باز است'
-              : 'Trade & Sail Open'
-            : !used.travel && hasShips
-              ? isFa
-                ? 'سفر دریایی باز است'
-                : 'Voyage Open'
-              : isChild && !hasShips
-                ? isFa
-                  ? 'نیازمند سن ۱۵+ یا کشتی'
-                  : 'Needs Age 15+ or Ship'
-                : isFa
-                  ? 'در دسترس'
-                  : 'Available',
-      isDone: Boolean(used.trade && used.travel),
-      isLocked: Boolean(isChild && !hasShips),
-      accent: 'emerald',
-      icon: <Compass className="w-6 h-6" />,
-    },
-    {
-      id: 'hall',
-      title: isFa ? 'تالار و شورای ثینگ' : 'Court & Hall',
-      description: isFa
-        ? 'سخنرانی در ثینگ، برگزاری سوروسات تالار و استخدام شاعر'
-        : 'Speak at the Thing, host mead-hall feasts & hire skalds',
-      costRiskBadge: isFa ? '۰ تا ۱۶ نقره · +شرافت' : '0–16 Silver · +Honor',
-      costRiskTone: 'amber',
-      statusLabel: isChild
-        ? isFa
-          ? 'نیازمند سن ۱۵+'
-          : 'Age 15+ Required'
-        : allHallDone
-          ? isFa
-            ? 'تمام مراسم انجام شد ✓'
-            : 'All Completed ✓'
-          : isFa
-            ? `${3 - hallDoneCount} از ۳ اقدام باز است`
-            : `${3 - hallDoneCount}/3 Actions Open`,
-      isDone: allHallDone,
-      isLocked: isChild,
-      accent: 'amber',
-      icon: <Flame className="w-6 h-6" />,
-    },
-    {
       id: 'land',
+      category: 'military',
       title: locIsFortified
         ? isFa
           ? 'فتح دژ شهر'
@@ -418,7 +369,88 @@ export function ActionsPanel({
       icon: <Castle className="w-6 h-6" />,
     },
     {
+      id: 'hall',
+      category: 'diplomacy',
+      title: isFa ? 'تالار و شورای ثینگ' : 'Court & Hall',
+      description: isFa
+        ? 'سخنرانی در ثینگ، برگزاری سوروسات تالار و استخدام شاعر'
+        : 'Speak at the Thing, host mead-hall feasts & hire skalds',
+      costRiskBadge: isFa ? '۰ تا ۱۶ نقره · +شرافت' : '0–16 Silver · +Honor',
+      costRiskTone: 'amber',
+      statusLabel: isChild
+        ? isFa
+          ? 'نیازمند سن ۱۵+'
+          : 'Age 15+ Required'
+        : allHallDone
+          ? isFa
+            ? 'تمام مراسم انجام شد ✓'
+            : 'All Completed ✓'
+          : isFa
+            ? `${3 - hallDoneCount} از ۳ اقدام باز است`
+            : `${3 - hallDoneCount}/3 Actions Open`,
+      isDone: allHallDone,
+      isLocked: isChild,
+      accent: 'amber',
+      icon: <Flame className="w-6 h-6" />,
+    },
+    {
+      id: 'voyage',
+      category: 'diplomacy',
+      title: isFa ? 'تجارت و سفر دریایی' : 'Trade & Voyage',
+      description: isFa
+        ? `معامله در بازار ${currentLocName} یا دریانوردی به بندر جدید`
+        : `Trade goods in ${currentLocName} or sail to a new port`,
+      costRiskBadge: isFa ? '+نقره · خطر دریا' : '+Silver · Sea Risk',
+      costRiskTone: 'emerald',
+      statusLabel:
+        used.trade && used.travel
+          ? isFa
+            ? 'هر دو انجام شد ✓'
+            : 'Both Completed ✓'
+          : !used.trade && !isChild
+            ? isFa
+              ? 'بازار و سفر باز است'
+              : 'Trade & Sail Open'
+            : !used.travel && hasShips
+              ? isFa
+                ? 'سفر دریایی باز است'
+                : 'Voyage Open'
+              : isChild && !hasShips
+                ? isFa
+                  ? 'نیازمند سن ۱۵+ یا کشتی'
+                  : 'Needs Age 15+ or Ship'
+                : isFa
+                  ? 'در دسترس'
+                  : 'Available',
+      isDone: Boolean(used.trade && used.travel),
+      isLocked: Boolean(isChild && !hasShips),
+      accent: 'emerald',
+      icon: <Compass className="w-6 h-6" />,
+    },
+    {
+      id: 'train',
+      category: 'personal',
+      title: isFa ? 'تمرین مهارت' : 'Train Skill',
+      description: isFa
+        ? 'پرورش شمشیرزنی، دریانوردی، قانون، شعر یا تجارت'
+        : 'Sharpen combat, sailing, law, skaldcraft, or trade',
+      costRiskBadge: isFa ? 'رایگان · بی‌خطر' : 'Free · Safe',
+      costRiskTone: 'ice',
+      statusLabel: used.train
+        ? isFa
+          ? 'تمرین انجام شد ✓'
+          : 'Trained This Year ✓'
+        : isFa
+          ? 'آماده تمرین (۱ بار/سال)'
+          : 'Available (1/yr)',
+      isDone: Boolean(used.train),
+      isLocked: false,
+      accent: 'ice',
+      icon: <GraduationCap className="w-6 h-6" />,
+    },
+    {
       id: 'faith',
+      category: 'personal',
       title: isFa ? 'آیین و خدایان' : 'Gods & Faith',
       description: isFa
         ? 'پیمان با خدایان کهن نورس یا پذیرش غسل تعمید مسیحی'
@@ -441,6 +473,42 @@ export function ActionsPanel({
     },
   ];
 
+  const categories: {
+    id: ActivityCategoryId;
+    title: string;
+    subtitle: string;
+    accent: 'crimson' | 'gold' | 'ice';
+    icon: ReactNode;
+  }[] = [
+    {
+      id: 'military',
+      title: isFa ? 'نظامی و قلمروگشایی' : 'Military & Expansion',
+      subtitle: isFa
+        ? 'غارت دریایی، فتح دژهای دشمن و گسترش املاک و مزارع'
+        : 'Coastal raids, stronghold sieges & homestead expansion',
+      accent: 'crimson',
+      icon: <Swords className="w-5 h-5" />,
+    },
+    {
+      id: 'diplomacy',
+      title: isFa ? 'دیپلماسی، تالار و دریانوردی' : 'Diplomacy, Court & Voyages',
+      subtitle: isFa
+        ? 'شورای ثینگ، سوروسات تالار، تجارت بازار و سفر دریایی'
+        : 'The Thing assembly, mead-hall feasts, trade & sea voyages',
+      accent: 'gold',
+      icon: <Flame className="w-5 h-5" />,
+    },
+    {
+      id: 'personal',
+      title: isFa ? 'فردی، مهارت و آیین' : 'Personal & Faith',
+      subtitle: isFa
+        ? 'پرورش مهارت‌های فردی و پیمان با خدایان نورس یا مسیحیت'
+        : 'Hone personal skills, walk with the Norse Gods or convert',
+      accent: 'ice',
+      icon: <GraduationCap className="w-5 h-5" />,
+    },
+  ];
+
   const getBadgeToneClasses = (tone: ActivityCardItem['costRiskTone']) => {
     switch (tone) {
       case 'crimson':
@@ -457,7 +525,7 @@ export function ActionsPanel({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden space-y-4 text-start">
+    <div className="flex flex-col overflow-hidden space-y-3.5 text-start">
       {/* Thrall Freedom Special Banner */}
       {state.character.title === TitleRank.Thrall && (
         <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#281C0E] via-[#1B1712] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
@@ -488,108 +556,171 @@ export function ActionsPanel({
         </div>
       )}
 
-      <RuneDivider
-        label={
-          isFa
-            ? 'انتخاب فعالیت سالانه · هر کارت با رفتن به سال بعد تازه می‌شود'
-            : 'Choose Yearly Deeds · Resets Next Year'
-        }
-        accent="amber"
-      />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <RuneDivider
+            label={
+              isFa
+                ? 'دسته‌بندی فعالیت‌های سالانه · با رفتن به سال بعد تازه می‌شود'
+                : 'Yearly Activity Categories · Resets Next Year'
+            }
+            accent="amber"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleAllCategories}
+          className="min-h-[34px] px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] hover:border-[#38BDF8]/50 text-[11px] font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+        >
+          {allCategoriesOpen
+            ? isFa
+              ? 'بستن همه'
+              : 'Collapse All'
+            : isFa
+              ? 'باز کردن همه'
+              : 'Expand All'}
+        </button>
+      </div>
 
-      {/* 2-Column Visible Category Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
-        {cards.map((card) => {
-          const isRaid = Boolean(card.isRaidHero);
-          const cardSurface = isRaid
-            ? 'bg-gradient-to-br from-[#3B0D15] via-[#240D14] to-[#131826] border-[#EF4444]/80 hover:border-[#F87171] shadow-[0_8px_28px_rgba(220,38,38,0.22)]'
-            : card.accent === 'ice'
-              ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
-              : card.accent === 'emerald'
-                ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
-                : card.accent === 'violet'
-                  ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
-                  : card.accent === 'crimson'
-                    ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
-                    : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
+      {/* Collapsible Category Sections */}
+      <div className="space-y-3">
+        {categories.map((cat) => {
+          const catCards = cards.filter((c) => c.category === cat.id);
+          const doneCount = catCards.filter((c) => c.isDone).length;
+          const readyCount = catCards.filter((c) => !c.isDone && !c.isLocked).length;
+          const allCatDone = doneCount === catCards.length;
 
-          const iconWrap = isRaid
-            ? 'bg-[#DC2626]/25 text-[#F87171] ring-1 ring-[#EF4444]/60 shadow-[0_0_16px_rgba(239,68,68,0.28)]'
-            : card.accent === 'ice'
-              ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
-              : card.accent === 'emerald'
-                ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
-                : card.accent === 'violet'
-                  ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
-                  : card.accent === 'crimson'
-                    ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
-                    : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
-
-          return (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => setActiveSheet(card.id)}
-              className={`relative min-h-[188px] p-3.5 sm:p-4 rounded-2xl border text-start flex flex-col justify-between gap-3 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface} ${
-                card.isDone ? 'opacity-80' : ''
+          const statusBadge = (
+            <span
+              className={`px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-semibold border ${
+                allCatDone
+                  ? 'bg-[#34D399]/15 text-[#34D399] border-[#34D399]/35'
+                  : readyCount > 0
+                    ? 'bg-[#F59E0B]/15 text-[#FCD34D] border-[#F59E0B]/35'
+                    : 'bg-[#1A2738] text-[#94A3B8] border-[#2A3B52]'
               }`}
             >
-              <NorseCornerOrnament accent={card.accent} />
+              {allCatDone
+                ? isFa
+                  ? 'تکمیل شد ✓'
+                  : 'All Done ✓'
+                : readyCount > 0
+                  ? isFa
+                    ? `${readyCount} آماده`
+                    : `${readyCount} Ready`
+                  : isFa
+                    ? `${doneCount}/${catCards.length}`
+                    : `${doneCount}/${catCards.length}`}
+            </span>
+          );
 
-              {/* Top Icon + Cost/Risk Badge */}
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${iconWrap}`}
-                  >
-                    {card.icon}
-                  </div>
-                  {card.isDone && (
-                    <span className="w-7 h-7 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
-                      <Check className="w-4 h-4" />
-                    </span>
-                  )}
-                </div>
+          return (
+            <NordicAccordion
+              key={cat.id}
+              title={cat.title}
+              subtitle={cat.subtitle}
+              icon={cat.icon}
+              accent={cat.accent}
+              statusNode={statusBadge}
+              isOpen={openCategories[cat.id]}
+              onToggle={() => toggleCategory(cat.id)}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {catCards.map((card) => {
+                  const isRaid = Boolean(card.isRaidHero);
+                  const cardSurface = isRaid
+                    ? 'bg-gradient-to-br from-[#3B0D15] via-[#240D14] to-[#131826] border-[#EF4444]/80 hover:border-[#F87171] shadow-[0_8px_28px_rgba(220,38,38,0.22)]'
+                    : card.accent === 'ice'
+                      ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
+                      : card.accent === 'emerald'
+                        ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
+                        : card.accent === 'violet'
+                          ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
+                          : card.accent === 'crimson'
+                            ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
+                            : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
 
-                {/* Title & Wrapped Short Description */}
-                <div className="space-y-1 min-w-0">
-                  <div
-                    className={`text-sm sm:text-base font-bold whitespace-normal break-words leading-snug ${
-                      isRaid ? 'text-[#FFE4E6]' : 'text-[#F1F5F9]'
-                    }`}
-                  >
-                    {card.title}
-                  </div>
-                  <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
+                  const iconWrap = isRaid
+                    ? 'bg-[#DC2626]/25 text-[#F87171] ring-1 ring-[#EF4444]/60 shadow-[0_0_16px_rgba(239,68,68,0.28)]'
+                    : card.accent === 'ice'
+                      ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
+                      : card.accent === 'emerald'
+                        ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
+                        : card.accent === 'violet'
+                          ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
+                          : card.accent === 'crimson'
+                            ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
+                            : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
+
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => setActiveSheet(card.id)}
+                      className={`relative min-h-[152px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface} ${
+                        card.isDone ? 'opacity-80' : ''
+                      }`}
+                    >
+                      <NorseCornerOrnament accent={card.accent} />
+
+                      {/* Top Icon + Cost/Risk Badge */}
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrap}`}
+                          >
+                            {card.icon}
+                          </div>
+                          {card.isDone && (
+                            <span className="w-6 h-6 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
+                              <Check className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title & Wrapped Short Description */}
+                        <div className="space-y-1 min-w-0">
+                          <div
+                            className={`text-sm font-bold whitespace-normal break-words leading-snug ${
+                              isRaid ? 'text-[#FFE4E6]' : 'text-[#F1F5F9]'
+                            }`}
+                          >
+                            {card.title}
+                          </div>
+                          <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+                            {card.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Cost/Risk Badge + Cooldown/Availability State */}
+                      <div className="space-y-1.5 pt-2 border-t border-white/8">
+                        <div
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-semibold whitespace-normal break-words leading-snug ${getBadgeToneClasses(
+                            card.costRiskTone
+                          )}`}
+                        >
+                          {card.costRiskBadge}
+                        </div>
+                        <div
+                          className={`text-xs font-mono tabular-nums whitespace-normal break-words leading-snug ${
+                            card.isDone
+                              ? 'text-[#34D399] font-semibold'
+                              : card.isLocked
+                                ? 'text-[#94A3B8]'
+                                : isRaid
+                                  ? 'text-[#FCA5A5] font-semibold'
+                                  : 'text-[#E2E8F0]'
+                          }`}
+                        >
+                          {card.statusLabel}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-
-              {/* Cost/Risk Badge + Cooldown/Availability State */}
-              <div className="space-y-1.5 pt-2 border-t border-white/8">
-                <div
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-semibold whitespace-normal break-words leading-snug ${getBadgeToneClasses(
-                    card.costRiskTone
-                  )}`}
-                >
-                  {card.costRiskBadge}
-                </div>
-                <div
-                  className={`text-xs font-mono tabular-nums whitespace-normal break-words leading-snug ${
-                    card.isDone
-                      ? 'text-[#34D399] font-semibold'
-                      : card.isLocked
-                        ? 'text-[#94A3B8]'
-                        : isRaid
-                          ? 'text-[#FCA5A5] font-semibold'
-                          : 'text-[#E2E8F0]'
-                  }`}
-                >
-                  {card.statusLabel}
-                </div>
-              </div>
-            </button>
+            </NordicAccordion>
           );
         })}
       </div>
