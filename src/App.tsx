@@ -38,6 +38,7 @@ import { MoreMenuPanel, RealmSection } from './components/MoreMenuPanel';
 import { QuickGuideModal } from './components/QuickGuideModal';
 import { RealmPanel } from './components/RealmPanel';
 import { SagaChroniclePanel } from './components/SagaChroniclePanel';
+import { SagaBadgeRibbon } from './components/SagaBadgeSystem';
 import { SeasonalWeatherOverlay } from './components/SeasonalWeatherOverlay';
 import { SettingsSaveModal } from './components/SettingsSaveModal';
 import { StatBar } from './components/StatBar';
@@ -866,11 +867,20 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === TabId.Life && (
+            <div className="shrink-0 px-3.5 pt-2.5 sm:px-5 sm:pt-3">
+              <SagaBadgeRibbon
+                state={gameState}
+                onOpenFullSagaTab={() => setActiveTab(TabId.Saga)}
+              />
+            </div>
+          )}
+
           {/* Persistent Life Feed Scroll Container (preserves scroll position across tab switches) */}
           <div
             className={
               activeTab === TabId.Life
-                ? 'flex-1 min-h-0 overflow-y-auto px-3.5 py-4 sm:px-5 sm:py-5 select-text feed-scroll-mask'
+                ? 'flex-1 min-h-0 overflow-y-auto px-3.5 py-3.5 sm:px-5 sm:py-4 select-text feed-scroll-mask'
                 : 'hidden'
             }
           >

@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { Award, BookOpen, Check, Copy, Flame, GitBranch } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  Check,
+  Copy,
+  Flame,
+  GitBranch,
+  History,
+  Lock,
+  Sparkles,
+  Trophy,
+} from 'lucide-react';
 import { BITLIFE_ACHIEVEMENTS } from '../data/deathsAndAchievements';
 import { calculateLegacyScore } from '../engine/gameEngine';
 import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
@@ -7,6 +18,15 @@ import { SHORT_TITLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
 import longhouseHearthUrl from '../assets/images/norse_longhouse_hearth_fire_1793047791880.jpg';
 import { NorseCornerOrnament, RuneDivider } from './NorseMotifs';
+import {
+  BADGE_CATEGORY_LABELS,
+  BadgeCategory,
+  evaluateHistoricalMilestones,
+  getAchievementBadgeMeta,
+  HISTORICAL_MILESTONES,
+  HistoricalMilestonesGrid,
+  renderBadgeIcon,
+} from './SagaBadgeSystem';
 
 interface SagaChroniclePanelProps {
   state: FullGameState;
@@ -15,7 +35,9 @@ interface SagaChroniclePanelProps {
 export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
-  const [subTab, setSubTab] = useState<'badges' | 'ancestors' | 'history'>('badges');
+  const [subTab, setSubTab] = useState<'badges' | 'milestones' | 'ancestors' | 'history'>('badges');
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | BadgeCategory>('all');
+  const [inspectedBadgeId, setInspectedBadgeId] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
   const [copiedSeed, setCopiedSeed] = useState(false);
 
@@ -33,10 +55,31 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
       : state.divergences
     : state.divergences;
 
-  const unlockedCount = BITLIFE_ACHIEVEMENTS.filter((ach) => {
-    const p = ach.getProgress(state);
-    return state.achievements.includes(ach.id) || p.current >= p.target;
-  }).length;
+  const evaluatedAchievements = BITLIFE_ACHIEVEMENTS.map((ach) => {
+    const prog = ach.getProgress(state);
+    const earned = state.achievements.includes(ach.id) || prog.current >= prog.target;
+    const pct = Math.min(100, Math.round((prog.current / Math.max(1, prog.target)) * 100));
+    const meta = getAchievementBadgeMeta(ach.id);
+    return { ach, prog, earned, pct, meta };
+  });
+
+  const unlockedAchievements = evaluatedAchievements.filter((a) => a.earned);
+  const unlockedCount = unlockedAchievements.length;
+
+  const evaluatedMilestones = evaluateHistoricalMilestones(state);
+  const unlockedMilestones = evaluatedMilestones.filter((m) => m.unlocked);
+  const unlockedMilestonesCount = unlockedMilestones.length;
+
+  const filteredAchievements = evaluatedAchievements.filter((item) => {
+    if (badgeFilter === 'all') return true;
+    if (badgeFilter === 'unlocked') return item.earned;
+    return item.meta.category === badgeFilter;
+  });
+
+  const inspectedAchievement =
+    evaluatedAchievements.find((a) => `ach:${a.ach.id}` === inspectedBadgeId) ?? null;
+  const inspectedMilestone =
+    evaluatedMilestones.find((m) => `ms:${m.def.id}` === inspectedBadgeId) ?? null;
 
   return (
     <div className="flex flex-col overflow-hidden space-y-4 text-start">
@@ -95,22 +138,189 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
         </div>
       </div>
 
-      {/* Sub-Tabs (44px touch targets, min 12px text, clean wrapping) */}
-      <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-[#0B1118] border border-[#1E2D40] rounded-2xl">
+      {/* Visually Distinct Unlocked Badges & Historical Seals Showcase */}
+      <div className="p-3.5 rounded-2xl bg-[#101926] border border-[#233246] space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                {isFa ? 'ویترین نشان‌های خاندان و مهرهای تاریخی' : 'Unlocked Dynasty & Era Badges'}
+              </div>
+              <div className="text-[11px] text-[#94A3B8]">
+                {isFa
+                  ? `${unlockedCount} نشان افتخار دودمان · ${unlockedMilestonesCount} مهر عصر وایکینگ‌ها`
+                  : `${unlockedCount} Dynasty Badges · ${unlockedMilestonesCount} Historical Era Seals`}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs font-mono tabular-nums">
+            <span className="px-2 py-0.5 rounded-lg bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#FBBF24] font-bold">
+              {Math.round(
+                ((unlockedCount + unlockedMilestonesCount) /
+                  (BITLIFE_ACHIEVEMENTS.length + HISTORICAL_MILESTONES.length)) *
+                  100
+              )}
+              %
+            </span>
+          </div>
+        </div>
+
+        {/* Medallion Rack */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {unlockedAchievements.map(({ ach, meta }) => {
+            const key = `ach:${ach.id}`;
+            const isSelected = inspectedBadgeId === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setInspectedBadgeId(isSelected ? null : key)}
+                title={isFa ? ach.nameFa : ach.nameEn}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#261D10] border-[#F59E0B] text-[#FDE68A] ring-1 ring-[#F59E0B]/60'
+                    : 'bg-[#181712] hover:bg-[#221F16] border-[#F59E0B]/55 text-[#F1F5F9]'
+                }`}
+              >
+                <span className="w-5 h-5 rounded-lg bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[#FBBF24] flex items-center justify-center shrink-0">
+                  {renderBadgeIcon(meta.iconKey, 'w-3.5 h-3.5')}
+                </span>
+                <span className="whitespace-nowrap">{isFa ? ach.nameFa : ach.nameEn}</span>
+              </button>
+            );
+          })}
+
+          {unlockedMilestones.map(({ def, alteredHistory }) => {
+            const key = `ms:${def.id}`;
+            const isSelected = inspectedBadgeId === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setInspectedBadgeId(isSelected ? null : key)}
+                title={isFa ? def.titleFa : def.titleEn}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  alteredHistory
+                    ? isSelected
+                      ? 'bg-[#221638] border-purple-400 text-purple-200 ring-1 ring-purple-400/60'
+                      : 'bg-[#171429] hover:bg-[#1E1A36] border-purple-400/55 text-[#E9D5FF]'
+                    : isSelected
+                      ? 'bg-[#12263A] border-[#38BDF8] text-[#E0F2FE] ring-1 ring-[#38BDF8]/60'
+                      : 'bg-[#111F30] hover:bg-[#172A40] border-[#38BDF8]/50 text-[#E2E8F0]'
+                }`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${
+                    alteredHistory
+                      ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
+                      : 'bg-[#38BDF8]/15 border-[#38BDF8]/45 text-[#38BDF8]'
+                  }`}
+                >
+                  {renderBadgeIcon(def.iconKey, 'w-3.5 h-3.5')}
+                </span>
+                <span className="whitespace-nowrap">{isFa ? def.shortFa : def.shortEn}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Inspected Badge Detail Banner */}
+        {(inspectedAchievement || inspectedMilestone) && (
+          <div className="p-3 rounded-xl bg-[#131D2B] border border-[#2A3E59] flex items-start justify-between gap-3 text-xs">
+            {inspectedAchievement ? (
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/20 border border-[#F59E0B]/60 text-[#FBBF24] flex flex-col items-center justify-center shrink-0">
+                  {renderBadgeIcon(inspectedAchievement.meta.iconKey, 'w-4 h-4')}
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-sm text-[#F1F5F9]">
+                      {isFa ? inspectedAchievement.ach.nameFa : inspectedAchievement.ach.nameEn}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#F59E0B]/20 text-[#FBBF24] text-[10px] font-bold">
+                      {BADGE_CATEGORY_LABELS[lang][inspectedAchievement.meta.category]}
+                    </span>
+                  </div>
+                  <p className="text-[#CBD5E1] leading-relaxed">
+                    {isFa ? inspectedAchievement.ach.descFa : inspectedAchievement.ach.descEn}
+                  </p>
+                </div>
+              </div>
+            ) : inspectedMilestone ? (
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-xl border flex flex-col items-center justify-center shrink-0 ${
+                    inspectedMilestone.alteredHistory
+                      ? 'bg-purple-500/20 border-purple-400/60 text-purple-300'
+                      : 'bg-[#38BDF8]/15 border-[#38BDF8]/60 text-[#38BDF8]'
+                  }`}
+                >
+                  {renderBadgeIcon(inspectedMilestone.def.iconKey, 'w-4 h-4')}
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-sm text-[#F1F5F9]">
+                      {isFa ? inspectedMilestone.def.titleFa : inspectedMilestone.def.titleEn}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#38BDF8]/20 text-[#38BDF8] text-[10px] font-bold">
+                      {isFa ? inspectedMilestone.def.eraLabelFa : inspectedMilestone.def.eraLabelEn}
+                    </span>
+                  </div>
+                  <p className="text-[#CBD5E1] leading-relaxed">
+                    {isFa ? inspectedMilestone.def.descFa : inspectedMilestone.def.descEn}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setInspectedBadgeId(null)}
+              className="px-2.5 py-1 rounded-lg bg-[#0B1118] hover:bg-[#19283B] border border-[#233246] text-[11px] text-[#94A3B8] hover:text-[#F1F5F9] shrink-0 cursor-pointer"
+            >
+              {isFa ? 'بستن' : 'Close'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 4 Sub-Tabs (Dynasty Badges, Historical Milestones, Lineage, Alt-History) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-[#0B1118] border border-[#1E2D40] rounded-2xl">
         <button
           type="button"
           onClick={() => setSubTab('badges')}
           className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
             subTab === 'badges'
-              ? 'bg-[#38BDF8] text-[#0B1118]'
+              ? 'bg-[#F59E0B] text-[#0B1118]'
               : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
           }`}
         >
           <Award className="w-4 h-4 shrink-0" />
           <span className="whitespace-normal leading-tight text-center">
             {isFa
-              ? `چالش‌ها (${unlockedCount}/${BITLIFE_ACHIEVEMENTS.length})`
-              : `Challenges (${unlockedCount}/${BITLIFE_ACHIEVEMENTS.length})`}
+              ? `نشان‌های خاندان (${unlockedCount}/${BITLIFE_ACHIEVEMENTS.length})`
+              : `Dynasty (${unlockedCount}/${BITLIFE_ACHIEVEMENTS.length})`}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('milestones')}
+          className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+            subTab === 'milestones'
+              ? 'bg-[#38BDF8] text-[#0B1118]'
+              : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
+          }`}
+        >
+          <History className="w-4 h-4 shrink-0" />
+          <span className="whitespace-normal leading-tight text-center">
+            {isFa
+              ? `عطف‌های تاریخ (${unlockedMilestonesCount}/${HISTORICAL_MILESTONES.length})`
+              : `Eras (${unlockedMilestonesCount}/${HISTORICAL_MILESTONES.length})`}
           </span>
         </button>
 
@@ -150,37 +360,96 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
       <RuneDivider accent="amber" />
 
       {subTab === 'badges' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {BITLIFE_ACHIEVEMENTS.map((ach) => {
-            const prog = ach.getProgress(state);
-            const earned = state.achievements.includes(ach.id) || prog.current >= prog.target;
-            const pct = Math.min(100, Math.round((prog.current / Math.max(1, prog.target)) * 100));
+        <div className="space-y-3">
+          {/* Category Filter Strip */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(
+              [
+                { id: 'all', labelEn: 'All Badges', labelFa: 'همه نشان‌ها' },
+                { id: 'unlocked', labelEn: 'Unlocked', labelFa: 'کسب‌شده' },
+                { id: 'warfare', labelEn: 'War & Conquest', labelFa: 'نبرد و فتح' },
+                { id: 'seafaring', labelEn: 'Sea & Discovery', labelFa: 'دریا و اکتشاف' },
+                { id: 'dynasty', labelEn: 'Bloodline & Kin', labelFa: 'دودمان و خاندان' },
+                { id: 'crown', labelEn: 'Crown & Wealth', labelFa: 'تاج و ثروت' },
+                { id: 'saga', labelEn: 'Saga & Legend', labelFa: 'حماسه و افسانه' },
+              ] as const
+            ).map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setBadgeFilter(f.id)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                  badgeFilter === f.id
+                    ? 'bg-[#18293E] border-[#F59E0B]/70 text-[#FBBF24]'
+                    : 'bg-[#131D2B] border-[#233246] text-[#94A3B8] hover:text-[#F1F5F9]'
+                }`}
+              >
+                {isFa ? f.labelFa : f.labelEn}
+              </button>
+            ))}
+          </div>
 
-            return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filteredAchievements.map(({ ach, prog, earned, pct, meta }) => (
               <div
                 key={ach.id}
-                className={`relative p-4 rounded-2xl border space-y-2.5 transition-colors overflow-hidden ${
+                className={`relative p-4 rounded-2xl border space-y-3 transition-colors overflow-hidden ${
                   earned
                     ? 'bg-gradient-to-br from-[#1B1913] via-[#132030] to-[#0F1722] border-[#F59E0B]/70 text-[#F1F5F9]'
                     : 'bg-[#131D2B] border-[#233246] text-[#CBD5E1]'
                 }`}
               >
                 {earned && <NorseCornerOrnament accent="amber" />}
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
-                    {isFa ? ach.nameFa : ach.nameEn}
-                  </div>
-                  <span
-                    className={`text-xs font-mono font-bold tabular-nums shrink-0 ${
-                      earned ? 'text-[#FBBF24]' : 'text-[#94A3B8]'
+
+                <div className="flex items-start gap-3">
+                  {/* Visually Distinct Badge Medallion */}
+                  <div
+                    className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center shrink-0 relative ${
+                      earned
+                        ? 'bg-[#F59E0B]/20 border-[#F59E0B]/70 text-[#FBBF24] shadow-[0_0_18px_rgba(245,158,11,0.28)]'
+                        : pct > 0
+                          ? 'bg-[#182638] border-[#38BDF8]/40 text-[#38BDF8]'
+                          : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
                     }`}
                   >
-                    {earned ? '✓' : `${prog.current}/${prog.target}`}
-                  </span>
+                    {earned ? (
+                      renderBadgeIcon(meta.iconKey, 'w-5 h-5')
+                    ) : pct > 0 ? (
+                      renderBadgeIcon(meta.iconKey, 'w-5 h-5 opacity-80')
+                    ) : (
+                      <Lock className="w-4 h-4 opacity-70" />
+                    )}
+                    <span className="text-[10px] font-serif leading-none mt-0.5 opacity-80">
+                      {meta.rune}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                        {isFa ? ach.nameFa : ach.nameEn}
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold tabular-nums shrink-0 ${
+                          earned
+                            ? 'bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[#FBBF24]'
+                            : 'bg-[#0B1118] border border-[#233246] text-[#94A3B8]'
+                        }`}
+                      >
+                        {earned ? (isFa ? 'کسب‌شده ✓' : 'Unlocked ✓') : `${prog.current}/${prog.target}`}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] font-medium text-[#38BDF8]">
+                      {BADGE_CATEGORY_LABELS[lang][meta.category]}
+                    </div>
+
+                    <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                      {isFa ? ach.descFa : ach.descEn}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
-                  {isFa ? ach.descFa : ach.descEn}
-                </div>
+
                 <svg
                   viewBox="0 0 100 6"
                   preserveAspectRatio="none"
@@ -199,10 +468,12 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
                   />
                 </svg>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       )}
+
+      {subTab === 'milestones' && <HistoricalMilestonesGrid state={state} />}
 
       {subTab === 'ancestors' && (
         <div className="space-y-3">
@@ -255,9 +526,10 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
             divergencesList.map((d, i) => (
               <div
                 key={i}
-                className="p-4 rounded-2xl bg-[#131D2B] border border-[#38BDF8]/40 font-saga text-base text-[#F1F5F9] whitespace-normal break-words leading-relaxed"
+                className="p-4 rounded-2xl bg-[#131D2B] border border-purple-400/45 flex items-start gap-2.5 font-saga text-base text-[#F1F5F9] whitespace-normal break-words leading-relaxed"
               >
-                ᛫ {d}
+                <Sparkles className="w-4 h-4 text-purple-300 shrink-0 mt-1" />
+                <span>{d}</span>
               </div>
             ))
           )}
