@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   CloudRain,
   Coins,
   Compass,
@@ -38,7 +36,6 @@ import { MoreMenuPanel, RealmSection } from './components/MoreMenuPanel';
 import { QuickGuideModal } from './components/QuickGuideModal';
 import { RealmPanel } from './components/RealmPanel';
 import { SagaChroniclePanel } from './components/SagaChroniclePanel';
-import { SagaBadgeRibbon } from './components/SagaBadgeSystem';
 import { SeasonalWeatherOverlay } from './components/SeasonalWeatherOverlay';
 import { SettingsSaveModal } from './components/SettingsSaveModal';
 import { StatBar } from './components/StatBar';
@@ -145,16 +142,10 @@ export default function App() {
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
-  const [showMoreStats, setShowMoreStats] = useState<boolean>(false);
-  const [isSecondaryStatsExpanded, setIsSecondaryStatsExpanded] = useState<boolean>(false);
   const [isMobileStatsSheetOpen, setIsMobileStatsSheetOpen] = useState<boolean>(false);
   const [honorToast, setHonorToast] = useState<HonorToastPayload | null>(null);
   const prevHonorSnapRef = useRef<{ sessionKey: string; honor: number } | null>(null);
   const suppressHonorToastRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    setIsSecondaryStatsExpanded(false);
-  }, [activeTab]);
 
   const handleDismissHonorToast = useCallback(() => {
     setHonorToast(null);
@@ -718,6 +709,7 @@ export default function App() {
           <HeaderMenuDropdown
             isOpen={isHeaderMenuOpen}
             onClose={handleCloseHeaderMenu}
+            state={gameState}
             lang={lang}
             onSetLanguage={handleSetLanguage}
             theme={theme}
@@ -728,6 +720,7 @@ export default function App() {
             onSelectSeasonMap={() =>
               setActiveTab(activeTab === TabId.Map ? TabId.Life : TabId.Map)
             }
+            onOpenSagaBadges={() => setActiveTab(TabId.Saga)}
             isAudioOn={isAudioOn}
             onToggleAudio={handleToggleGameAudio}
             onOpenGuide={() => setIsGuideOpen(true)}
@@ -867,20 +860,11 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === TabId.Life && (
-            <div className="shrink-0 px-3.5 pt-2.5 sm:px-5 sm:pt-3">
-              <SagaBadgeRibbon
-                state={gameState}
-                onOpenFullSagaTab={() => setActiveTab(TabId.Saga)}
-              />
-            </div>
-          )}
-
           {/* Persistent Life Feed Scroll Container (preserves scroll position across tab switches) */}
           <div
             className={
               activeTab === TabId.Life
-                ? 'flex-1 min-h-0 overflow-y-auto px-3.5 py-3.5 sm:px-5 sm:py-4 select-text feed-scroll-mask'
+                ? 'flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 py-2 sm:py-3 select-text feed-scroll-mask'
                 : 'hidden'
             }
           >
@@ -988,268 +972,20 @@ export default function App() {
           </div>
           )}
 
-          {activeTab === TabId.Life ? (
-            <>
-              {/* Expandable Secondary Stats Drawer (anchored right above the 4-stat bar) */}
-              {showMoreStats && (
-                <div className="shrink-0 px-3.5 sm:px-5 py-3 bg-[#131F30] border-t border-[#26384F] flex flex-col overflow-hidden space-y-2.5 text-start">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                    <StatBar label={STAT_LABELS[lang].cunning} value={c.stats.cunning} compact lang={lang} />
-                    <StatBar label={STAT_LABELS[lang].charisma} value={c.stats.charisma} compact lang={lang} />
-                    <StatBar label={STAT_LABELS[lang].wyrd} value={c.stats.wyrd} compact lang={lang} />
-                    <StatBar label={STAT_LABELS[lang].faith} value={c.stats.faith} compact lang={lang} />
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1E2D40] text-xs font-mono tabular-nums text-[#CBD5E1]">
-                    <span className="leading-relaxed">
-                      {SKILL_LABELS[lang].combat} {c.skills.combat} · {SKILL_LABELS[lang].seamanship}{' '}
-                      {c.skills.seamanship} · {SKILL_LABELS[lang].trade} {c.skills.trade} ·{' '}
-                      {SKILL_LABELS[lang].law} {c.skills.law}
-                    </span>
-                    {c.traits.length > 0 && (
-                      <span className="font-sans text-xs text-[#38BDF8] font-medium break-words">
-                        {renderTraitsText(c.traits)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Fixed Bottom 4-Stat Bar (Health, Honor, Power, Joy) + Labeled Expand Toggle */}
-              <div className="shrink-0 px-3.5 sm:px-5 py-2.5 sm:py-3 bg-[#101926] border-t border-[#1E2D40] flex items-center gap-3">
-                <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-x-3.5 gap-y-2.5 sm:gap-4 text-start">
-                  <StatBar
-                    label={isFa ? 'سلامتی' : 'Health'}
-                    value={c.stats.health}
-                    compact
-                    isDangerWhenLow
-                    accent="health"
-                    icon={<Heart className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'شرافت' : 'Honor'}
-                    value={c.stats.honor}
-                    compact
-                    isDangerWhenLow
-                    accent="honor"
-                    icon={<Shield className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'قدرت' : 'Power'}
-                    value={c.stats.strength}
-                    compact
-                    isDangerWhenLow
-                    accent="strength"
-                    icon={<Swords className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'شادی' : 'Joy'}
-                    value={c.stats.happiness}
-                    compact
-                    isDangerWhenLow
-                    accent="happiness"
-                    icon={<Smile className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowMoreStats((v) => !v)}
-                  aria-expanded={showMoreStats}
-                  aria-label={
-                    showMoreStats
-                      ? isFa
-                        ? 'بستن مهارت‌ها و آمار فرعی'
-                        : 'Hide secondary stats & skills'
-                      : isFa
-                        ? 'نمایش مهارت‌ها و آمار فرعی'
-                        : 'Show secondary stats & skills'
-                  }
-                  title={
-                    showMoreStats
-                      ? isFa
-                        ? 'بستن مهارت‌ها، ویژگی‌ها و آمار فرعی'
-                        : 'Hide secondary stats, skills & traits'
-                      : isFa
-                        ? 'نمایش مهارت‌ها، ویژگی‌ها و آمار فرعی'
-                        : 'Show secondary stats, skills & traits'
-                  }
-                  className={`min-w-[58px] sm:min-w-[88px] min-h-[48px] px-2.5 py-1.5 rounded-xl border flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-xs font-semibold shrink-0 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]/70 ${
-                    showMoreStats
-                      ? 'bg-[#18293E] border-[#38BDF8]/55 text-[#38BDF8]'
-                      : 'bg-[#152234] hover:bg-[#1C2D44] border-[#26384F] text-[#CBD5E1] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  {showMoreStats ? (
-                    <ChevronDown className="w-4 h-4 shrink-0" />
-                  ) : (
-                    <ChevronUp className="w-4 h-4 shrink-0" />
-                  )}
-                  <span className="leading-tight whitespace-nowrap">
-                    {showMoreStats ? (isFa ? 'بستن' : 'Hide') : isFa ? 'مهارت‌ها' : 'Skills'}
-                  </span>
-                </button>
-              </div>
-            </>
-          ) : !isSecondaryStatsExpanded ? (
-            /* Slim Single-Row Stat Bar in Secondary Screens (Tap to Expand) */
-            <button
-              type="button"
-              onClick={() => setIsSecondaryStatsExpanded(true)}
-              aria-expanded={false}
-              aria-label={
-                isFa
-                  ? 'نمایش کامل نوارهای وضعیت و مهارت‌ها'
-                  : 'Expand full character stats and skills'
-              }
-              className="shrink-0 w-full min-h-[44px] px-3 sm:px-5 py-1.5 bg-[#101926] hover:bg-[#142032] border-t border-[#1E2D40] flex items-center justify-between gap-2.5 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
-            >
-              <div className="flex-1 min-w-0 grid grid-cols-4 gap-2 sm:gap-4 items-center">
-                {[
-                  {
-                    key: 'health',
-                    val: Math.max(0, Math.min(100, Math.round(c.stats.health))),
-                    icon: <Heart className="w-3.5 h-3.5 shrink-0" />,
-                    tone: c.stats.health < 30 ? 'text-rose-400' : 'text-emerald-400',
-                    fill: c.stats.health < 30 ? 'fill-rose-500' : 'fill-emerald-400',
-                  },
-                  {
-                    key: 'honor',
-                    val: Math.max(0, Math.min(100, Math.round(c.stats.honor))),
-                    icon: <Shield className="w-3.5 h-3.5 shrink-0" />,
-                    tone: c.stats.honor < 30 ? 'text-rose-400' : 'text-amber-300',
-                    fill: c.stats.honor < 30 ? 'fill-rose-500' : 'fill-amber-300',
-                  },
-                  {
-                    key: 'strength',
-                    val: Math.max(0, Math.min(100, Math.round(c.stats.strength))),
-                    icon: <Swords className="w-3.5 h-3.5 shrink-0" />,
-                    tone: c.stats.strength < 30 ? 'text-rose-400' : 'text-indigo-300',
-                    fill: c.stats.strength < 30 ? 'fill-rose-500' : 'fill-indigo-400',
-                  },
-                  {
-                    key: 'happiness',
-                    val: Math.max(0, Math.min(100, Math.round(c.stats.happiness))),
-                    icon: <Smile className="w-3.5 h-3.5 shrink-0" />,
-                    tone: c.stats.happiness < 30 ? 'text-rose-400' : 'text-sky-400',
-                    fill: c.stats.happiness < 30 ? 'fill-rose-500' : 'fill-sky-400',
-                  },
-                ].map((st) => (
-                  <div key={st.key} className="flex items-center gap-1.5 min-w-0">
-                    <span className={st.tone}>{st.icon}</span>
-                    <div className="flex-1 min-w-[20px] h-1.5 rounded-full bg-[#1A2738] overflow-hidden">
-                      <svg
-                        viewBox="0 0 100 6"
-                        preserveAspectRatio="none"
-                        className="w-full h-full block"
-                        aria-hidden="true"
-                      >
-                        <rect
-                          x={rtl ? 100 - st.val : 0}
-                          y="0"
-                          width={st.val}
-                          height="6"
-                          className={st.fill}
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-xs font-mono tabular-nums text-[#E2E8F0] shrink-0">
-                      {st.val}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <ChevronUp className="w-4 h-4 text-[#94A3B8] shrink-0" />
-            </button>
-          ) : (
-            /* Expanded Stat Drawer in Secondary Screens (Tap button to collapse back to slim row) */
-            <div className="shrink-0 bg-[#101926] border-t border-[#26384F] flex flex-col overflow-hidden text-start">
-              <div className="px-3.5 sm:px-5 py-2.5 border-b border-[#1E2D40] flex items-center gap-3">
-                <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-x-3.5 gap-y-2.5 sm:gap-4">
-                  <StatBar
-                    label={isFa ? 'سلامتی' : 'Health'}
-                    value={c.stats.health}
-                    compact
-                    isDangerWhenLow
-                    accent="health"
-                    icon={<Heart className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'شرافت' : 'Honor'}
-                    value={c.stats.honor}
-                    compact
-                    isDangerWhenLow
-                    accent="honor"
-                    icon={<Shield className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'قدرت' : 'Power'}
-                    value={c.stats.strength}
-                    compact
-                    isDangerWhenLow
-                    accent="strength"
-                    icon={<Swords className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                  <StatBar
-                    label={isFa ? 'شادی' : 'Joy'}
-                    value={c.stats.happiness}
-                    compact
-                    isDangerWhenLow
-                    accent="happiness"
-                    icon={<Smile className="w-3.5 h-3.5" />}
-                    lang={lang}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsSecondaryStatsExpanded(false)}
-                  aria-expanded={true}
-                  aria-label={isFa ? 'جمع‌کردن نوار وضعیت' : 'Collapse stats bar'}
-                  className="min-w-[56px] min-h-[44px] px-2.5 py-1.5 rounded-xl bg-[#18293E] border border-[#38BDF8]/55 text-[#38BDF8] flex flex-col sm:flex-row items-center justify-center gap-1 text-xs font-semibold shrink-0 cursor-pointer transition-colors"
-                >
-                  <ChevronDown className="w-4 h-4 shrink-0" />
-                  <span>{isFa ? 'بستن' : 'Slim'}</span>
-                </button>
-              </div>
-
-              <div className="px-3.5 sm:px-5 py-2.5 bg-[#131F30] space-y-2">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <StatBar label={STAT_LABELS[lang].cunning} value={c.stats.cunning} compact lang={lang} />
-                  <StatBar label={STAT_LABELS[lang].charisma} value={c.stats.charisma} compact lang={lang} />
-                  <StatBar label={STAT_LABELS[lang].wyrd} value={c.stats.wyrd} compact lang={lang} />
-                  <StatBar label={STAT_LABELS[lang].faith} value={c.stats.faith} compact lang={lang} />
-                </div>
-                <div className="pt-1.5 border-t border-[#1E2D40] text-xs font-mono tabular-nums text-[#CBD5E1] leading-relaxed">
-                  {SKILL_LABELS[lang].combat} {c.skills.combat} · {SKILL_LABELS[lang].seamanship}{' '}
-                  {c.skills.seamanship} · {SKILL_LABELS[lang].trade} {c.skills.trade} ·{' '}
-                  {SKILL_LABELS[lang].law} {c.skills.law}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Iconic Viking BitLife Control Dock */}
-          <div className="shrink-0 px-2 sm:px-4 py-2.5 bg-[#0B1118] border-t border-[#1E2D40] grid grid-cols-5 items-center gap-1.5 sm:gap-2.5">
+          <div className="shrink-0 px-2 sm:px-4 py-2 bg-[#0B1118] border-t border-[#1E2D40] grid grid-cols-5 items-center gap-1.5 sm:gap-2.5">
             <button
               type="button"
               onClick={() =>
                 setActiveTab(activeTab === TabId.Actions ? TabId.Life : TabId.Actions)
               }
-              className={`min-h-[54px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Actions
                   ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
                   : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
               }`}
             >
-              <Swords className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
+              <Swords className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="truncate max-w-full">{isFa ? 'فعالیت‌ها' : 'Activities'}</span>
             </button>
 
@@ -1258,13 +994,13 @@ export default function App() {
               onClick={() =>
                 setActiveTab(activeTab === TabId.Family ? TabId.Life : TabId.Family)
               }
-              className={`min-h-[54px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Family
                   ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
                   : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
               }`}
             >
-              <Users className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="truncate max-w-full">{isFa ? 'خاندان' : 'Kin'}</span>
             </button>
 
@@ -1275,9 +1011,9 @@ export default function App() {
               disabled={Boolean(
                 gameState.activeEvent || gameState.pendingDeath || gameState.pending1066Epilogue
               )}
-              className="min-h-[58px] px-2 bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-95 disabled:opacity-50 text-[#0B1118] rounded-2xl shadow-[0_0_24px_rgba(245,158,11,0.35)] flex flex-col items-center justify-center transition-all cursor-pointer"
+              className="min-h-[52px] px-2 bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-95 disabled:opacity-50 text-[#0B1118] rounded-2xl shadow-[0_0_24px_rgba(245,158,11,0.35)] flex flex-col items-center justify-center transition-all cursor-pointer"
             >
-              <Flame className="w-5 h-5 sm:w-[22px] sm:h-[22px] fill-current" />
+              <Flame className="w-5 h-5 fill-current" />
               <span className="text-xs sm:text-sm font-extrabold tracking-tight leading-none mt-1 whitespace-nowrap">
                 {isFa ? 'سال بعد' : 'Next Year'}
               </span>
@@ -1288,13 +1024,13 @@ export default function App() {
               onClick={() =>
                 setActiveTab(activeTab === TabId.Map ? TabId.Life : TabId.Map)
               }
-              className={`min-h-[54px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Map
                   ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
                   : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
               }`}
             >
-              <Compass className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
+              <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="truncate max-w-full">{isFa ? 'نقشه' : 'Map'}</span>
             </button>
 
@@ -1307,18 +1043,60 @@ export default function App() {
                     : TabId.More
                 )
               }
-              className={`min-h-[54px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer relative whitespace-nowrap ${
+              className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer relative whitespace-nowrap ${
                 activeTab === TabId.More || activeTab === TabId.Realm || activeTab === TabId.Saga
                   ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
                   : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
               }`}
             >
-              <LayoutGrid className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
+              <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="truncate max-w-full">{isFa ? 'بیشتر' : 'More'}</span>
               {claimableTitle && (
                 <span className="absolute top-1.5 end-2.5 w-2 h-2 rounded-xs bg-[#F59E0B]" />
               )}
             </button>
+          </div>
+
+          {/* Slim Full-Width 4-Stat Strip Below the Next Year Panel */}
+          <div className="shrink-0 px-3 sm:px-5 py-1.5 bg-[#101926] border-t border-[#1E2D40]">
+            <div className="w-full grid grid-cols-4 gap-2.5 sm:gap-5 items-center text-start">
+              <StatBar
+                label={isFa ? 'سلامتی' : 'Health'}
+                value={c.stats.health}
+                compact
+                isDangerWhenLow
+                accent="health"
+                icon={<Heart className="w-3 h-3" />}
+                lang={lang}
+              />
+              <StatBar
+                label={isFa ? 'شرافت' : 'Honor'}
+                value={c.stats.honor}
+                compact
+                isDangerWhenLow
+                accent="honor"
+                icon={<Shield className="w-3 h-3" />}
+                lang={lang}
+              />
+              <StatBar
+                label={isFa ? 'قدرت' : 'Power'}
+                value={c.stats.strength}
+                compact
+                isDangerWhenLow
+                accent="strength"
+                icon={<Swords className="w-3 h-3" />}
+                lang={lang}
+              />
+              <StatBar
+                label={isFa ? 'شادی' : 'Joy'}
+                value={c.stats.happiness}
+                compact
+                isDangerWhenLow
+                accent="happiness"
+                icon={<Smile className="w-3 h-3" />}
+                lang={lang}
+              />
+            </div>
           </div>
         </section>
       </main>

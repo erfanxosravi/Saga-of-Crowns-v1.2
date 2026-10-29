@@ -23,6 +23,7 @@ import {
   BadgeCategory,
   evaluateHistoricalMilestones,
   getAchievementBadgeMeta,
+  getBadgeCategoryPalette,
   HISTORICAL_MILESTONES,
   HistoricalMilestonesGrid,
   renderBadgeIcon,
@@ -158,7 +159,7 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-mono tabular-nums">
-            <span className="px-2 py-0.5 rounded-lg bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#FBBF24] font-bold">
+            <span className="px-2 py-0.5 rounded-lg bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-amber-500 font-bold">
               {Math.round(
                 ((unlockedCount + unlockedMilestonesCount) /
                   (BITLIFE_ACHIEVEMENTS.length + HISTORICAL_MILESTONES.length)) *
@@ -174,6 +175,7 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
           {unlockedAchievements.map(({ ach, meta }) => {
             const key = `ach:${ach.id}`;
             const isSelected = inspectedBadgeId === key;
+            const pal = getBadgeCategoryPalette(meta.category);
             return (
               <button
                 key={key}
@@ -181,12 +183,12 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
                 onClick={() => setInspectedBadgeId(isSelected ? null : key)}
                 title={isFa ? ach.nameFa : ach.nameEn}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#261D10] border-[#F59E0B] text-[#FDE68A] ring-1 ring-[#F59E0B]/60'
-                    : 'bg-[#181712] hover:bg-[#221F16] border-[#F59E0B]/55 text-[#F1F5F9]'
+                  isSelected ? pal.pillSelectedBg : pal.pillBg
                 }`}
               >
-                <span className="w-5 h-5 rounded-lg bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[#FBBF24] flex items-center justify-center shrink-0">
+                <span
+                  className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${pal.iconBox}`}
+                >
                   {renderBadgeIcon(meta.iconKey, 'w-3.5 h-3.5')}
                 </span>
                 <span className="whitespace-nowrap">{isFa ? ach.nameFa : ach.nameEn}</span>
@@ -197,6 +199,7 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
           {unlockedMilestones.map(({ def, alteredHistory }) => {
             const key = `ms:${def.id}`;
             const isSelected = inspectedBadgeId === key;
+            const pal = getBadgeCategoryPalette(alteredHistory ? 'alt_history' : 'milestone');
             return (
               <button
                 key={key}
@@ -204,21 +207,11 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
                 onClick={() => setInspectedBadgeId(isSelected ? null : key)}
                 title={isFa ? def.titleFa : def.titleEn}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  alteredHistory
-                    ? isSelected
-                      ? 'bg-[#221638] border-purple-400 text-purple-200 ring-1 ring-purple-400/60'
-                      : 'bg-[#171429] hover:bg-[#1E1A36] border-purple-400/55 text-[#E9D5FF]'
-                    : isSelected
-                      ? 'bg-[#12263A] border-[#38BDF8] text-[#E0F2FE] ring-1 ring-[#38BDF8]/60'
-                      : 'bg-[#111F30] hover:bg-[#172A40] border-[#38BDF8]/50 text-[#E2E8F0]'
+                  isSelected ? pal.pillSelectedBg : pal.pillBg
                 }`}
               >
                 <span
-                  className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${
-                    alteredHistory
-                      ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
-                      : 'bg-[#38BDF8]/15 border-[#38BDF8]/45 text-[#38BDF8]'
-                  }`}
+                  className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${pal.iconBox}`}
                 >
                   {renderBadgeIcon(def.iconKey, 'w-3.5 h-3.5')}
                 </span>
@@ -233,7 +226,11 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
           <div className="p-3 rounded-xl bg-[#131D2B] border border-[#2A3E59] flex items-start justify-between gap-3 text-xs">
             {inspectedAchievement ? (
               <div className="flex items-start gap-2.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/20 border border-[#F59E0B]/60 text-[#FBBF24] flex flex-col items-center justify-center shrink-0">
+                <div
+                  className={`w-10 h-10 rounded-xl border flex flex-col items-center justify-center shrink-0 ${
+                    getBadgeCategoryPalette(inspectedAchievement.meta.category).iconBox
+                  }`}
+                >
                   {renderBadgeIcon(inspectedAchievement.meta.iconKey, 'w-4 h-4')}
                 </div>
                 <div className="space-y-0.5 min-w-0">
@@ -241,7 +238,11 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
                     <span className="font-bold text-sm text-[#F1F5F9]">
                       {isFa ? inspectedAchievement.ach.nameFa : inspectedAchievement.ach.nameEn}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#F59E0B]/20 text-[#FBBF24] text-[10px] font-bold">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        getBadgeCategoryPalette(inspectedAchievement.meta.category).tagPill
+                      }`}
+                    >
                       {BADGE_CATEGORY_LABELS[lang][inspectedAchievement.meta.category]}
                     </span>
                   </div>
@@ -254,9 +255,9 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
               <div className="flex items-start gap-2.5 min-w-0">
                 <div
                   className={`w-10 h-10 rounded-xl border flex flex-col items-center justify-center shrink-0 ${
-                    inspectedMilestone.alteredHistory
-                      ? 'bg-purple-500/20 border-purple-400/60 text-purple-300'
-                      : 'bg-[#38BDF8]/15 border-[#38BDF8]/60 text-[#38BDF8]'
+                    getBadgeCategoryPalette(
+                      inspectedMilestone.alteredHistory ? 'alt_history' : 'milestone'
+                    ).iconBox
                   }`}
                 >
                   {renderBadgeIcon(inspectedMilestone.def.iconKey, 'w-4 h-4')}
@@ -266,7 +267,13 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
                     <span className="font-bold text-sm text-[#F1F5F9]">
                       {isFa ? inspectedMilestone.def.titleFa : inspectedMilestone.def.titleEn}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#38BDF8]/20 text-[#38BDF8] text-[10px] font-bold">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        getBadgeCategoryPalette(
+                          inspectedMilestone.alteredHistory ? 'alt_history' : 'milestone'
+                        ).tagPill
+                      }`}
+                    >
                       {isFa ? inspectedMilestone.def.eraLabelFa : inspectedMilestone.def.eraLabelEn}
                     </span>
                   </div>
@@ -390,85 +397,92 @@ export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {filteredAchievements.map(({ ach, prog, earned, pct, meta }) => (
-              <div
-                key={ach.id}
-                className={`relative p-4 rounded-2xl border space-y-3 transition-colors overflow-hidden ${
-                  earned
-                    ? 'bg-gradient-to-br from-[#1B1913] via-[#132030] to-[#0F1722] border-[#F59E0B]/70 text-[#F1F5F9]'
-                    : 'bg-[#131D2B] border-[#233246] text-[#CBD5E1]'
-                }`}
-              >
-                {earned && <NorseCornerOrnament accent="amber" />}
+            {filteredAchievements.map(({ ach, prog, earned, pct, meta }) => {
+              const pal = getBadgeCategoryPalette(meta.category);
+              return (
+                <div
+                  key={ach.id}
+                  className={`relative p-4 rounded-2xl border space-y-3 transition-colors overflow-hidden ${
+                    earned
+                      ? `${pal.cardBg} text-[#F1F5F9]`
+                      : 'bg-[#131D2B] border-[#233246] text-[#CBD5E1]'
+                  }`}
+                >
+                  {earned && <NorseCornerOrnament accent="amber" />}
 
-                <div className="flex items-start gap-3">
-                  {/* Visually Distinct Badge Medallion */}
-                  <div
-                    className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center shrink-0 relative ${
-                      earned
-                        ? 'bg-[#F59E0B]/20 border-[#F59E0B]/70 text-[#FBBF24] shadow-[0_0_18px_rgba(245,158,11,0.28)]'
-                        : pct > 0
-                          ? 'bg-[#182638] border-[#38BDF8]/40 text-[#38BDF8]'
-                          : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
-                    }`}
-                  >
-                    {earned ? (
-                      renderBadgeIcon(meta.iconKey, 'w-5 h-5')
-                    ) : pct > 0 ? (
-                      renderBadgeIcon(meta.iconKey, 'w-5 h-5 opacity-80')
-                    ) : (
-                      <Lock className="w-4 h-4 opacity-70" />
-                    )}
-                    <span className="text-[10px] font-serif leading-none mt-0.5 opacity-80">
-                      {meta.rune}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
-                        {isFa ? ach.nameFa : ach.nameEn}
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold tabular-nums shrink-0 ${
-                          earned
-                            ? 'bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[#FBBF24]'
-                            : 'bg-[#0B1118] border border-[#233246] text-[#94A3B8]'
-                        }`}
-                      >
-                        {earned ? (isFa ? 'کسب‌شده ✓' : 'Unlocked ✓') : `${prog.current}/${prog.target}`}
+                  <div className="flex items-start gap-3">
+                    {/* Visually Distinct Badge Medallion */}
+                    <div
+                      className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center shrink-0 relative ${
+                        earned
+                          ? pal.iconBox
+                          : pct > 0
+                            ? 'bg-[#182638] border-[#38BDF8]/40 text-[#38BDF8]'
+                            : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
+                      }`}
+                    >
+                      {earned ? (
+                        renderBadgeIcon(meta.iconKey, 'w-5 h-5')
+                      ) : pct > 0 ? (
+                        renderBadgeIcon(meta.iconKey, 'w-5 h-5 opacity-80')
+                      ) : (
+                        <Lock className="w-4 h-4 opacity-70" />
+                      )}
+                      <span className="text-[10px] font-serif leading-none mt-0.5 opacity-80">
+                        {meta.rune}
                       </span>
                     </div>
 
-                    <div className="text-[11px] font-medium text-[#38BDF8]">
-                      {BADGE_CATEGORY_LABELS[lang][meta.category]}
-                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                          {isFa ? ach.nameFa : ach.nameEn}
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold tabular-nums shrink-0 ${
+                            earned
+                              ? pal.tagPill
+                              : 'bg-[#0B1118] border border-[#233246] text-[#94A3B8]'
+                          }`}
+                        >
+                          {earned
+                            ? isFa
+                              ? 'کسب‌شده ✓'
+                              : 'Unlocked ✓'
+                            : `${prog.current}/${prog.target}`}
+                        </span>
+                      </div>
 
-                    <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
-                      {isFa ? ach.descFa : ach.descEn}
+                      <div className={`text-[11px] font-semibold ${pal.accentText}`}>
+                        {BADGE_CATEGORY_LABELS[lang][meta.category]}
+                      </div>
+
+                      <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                        {isFa ? ach.descFa : ach.descEn}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <svg
-                  viewBox="0 0 100 6"
-                  preserveAspectRatio="none"
-                  className="h-2 w-full rounded-xs overflow-hidden block"
-                  aria-hidden="true"
-                >
-                  <rect x="0" y="0" width="100" height="6" className="fill-[#090E15]" />
-                  <rect
-                    x={isFa ? 100 - pct : 0}
-                    y="0"
-                    width={pct}
-                    height="6"
-                    className={`transition-all duration-300 ${
-                      earned ? 'fill-[#F59E0B]' : 'fill-[#38BDF8]/65'
-                    }`}
-                  />
-                </svg>
-              </div>
-            ))}
+                  <svg
+                    viewBox="0 0 100 6"
+                    preserveAspectRatio="none"
+                    className="h-2 w-full rounded-xs overflow-hidden block"
+                    aria-hidden="true"
+                  >
+                    <rect x="0" y="0" width="100" height="6" className="fill-[#090E15]" />
+                    <rect
+                      x={isFa ? 100 - pct : 0}
+                      y="0"
+                      width={pct}
+                      height="6"
+                      className={`transition-all duration-300 ${
+                        earned ? 'fill-[#F59E0B]' : 'fill-[#38BDF8]/65'
+                      }`}
+                    />
+                  </svg>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

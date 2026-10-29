@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   BookOpen,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   CloudRain,
   Globe,
   Moon,
@@ -10,17 +12,25 @@ import {
   Snowflake,
   Sun,
   Swords,
+  Trophy,
   Volume2,
   VolumeX,
   Wind,
   X,
 } from 'lucide-react';
+import { BITLIFE_ACHIEVEMENTS } from '../data/deathsAndAchievements';
 import { formatYearLabel, isRtl, SEASON_LABELS } from '../i18n/ui';
-import { Language, Season, ThemeMode } from '../types/game';
+import { FullGameState, Language, Season, ThemeMode } from '../types/game';
+import {
+  evaluateHistoricalMilestones,
+  HISTORICAL_MILESTONES,
+  SagaBadgeRibbon,
+} from './SagaBadgeSystem';
 
 interface HeaderMenuDropdownProps {
   isOpen: boolean;
   onClose: () => void;
+  state: FullGameState;
   lang: Language;
   onSetLanguage: (next: Language) => void;
   theme: ThemeMode;
@@ -29,6 +39,7 @@ interface HeaderMenuDropdownProps {
   weatherName: string;
   isMapActive: boolean;
   onSelectSeasonMap: () => void;
+  onOpenSagaBadges: () => void;
   isAudioOn: boolean;
   onToggleAudio: () => void;
   onOpenGuide: () => void;
@@ -54,6 +65,7 @@ function renderSeasonIcon(season: Season) {
 export function HeaderMenuDropdown({
   isOpen,
   onClose,
+  state,
   lang,
   onSetLanguage,
   theme,
@@ -62,6 +74,7 @@ export function HeaderMenuDropdown({
   weatherName,
   isMapActive,
   onSelectSeasonMap,
+  onOpenSagaBadges,
   isAudioOn,
   onToggleAudio,
   onOpenGuide,
@@ -72,6 +85,7 @@ export function HeaderMenuDropdown({
 }: HeaderMenuDropdownProps) {
   const [shouldRender, setShouldRender] = useState<boolean>(isOpen);
   const [isAnimatedIn, setIsAnimatedIn] = useState<boolean>(false);
+  const [isBadgesOpen, setIsBadgesOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -106,6 +120,12 @@ export function HeaderMenuDropdown({
   const isFa = lang === 'fa';
   const rtl = isRtl(lang);
 
+  const unlockedAchCount = BITLIFE_ACHIEVEMENTS.filter((ach) => {
+    const prog = ach.getProgress(state);
+    return state.achievements.includes(ach.id) || prog.current >= prog.target;
+  }).length;
+  const unlockedMsCount = evaluateHistoricalMilestones(state).filter((m) => m.unlocked).length;
+
   const rowBaseClass =
     'group w-full min-h-[54px] px-2.5 py-2 rounded-xl flex items-center justify-between gap-3 text-start transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70';
 
@@ -133,7 +153,7 @@ export function HeaderMenuDropdown({
         role="dialog"
         aria-modal="false"
         aria-label={isFa ? 'منوی سریع بازی' : 'Quick Game Menu'}
-        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[348px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[356px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
           isAnimatedIn
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
@@ -177,17 +197,67 @@ export function HeaderMenuDropdown({
 
         {/* Grouped Menu Categories */}
         <div className="flex-1 min-h-0 overflow-y-auto p-2">
-          {/* Category 1: Save, Settings & Guide */}
+          {/* Category 1: Save, Settings, Badges & Guide */}
           <div
             role="group"
-            aria-label={isFa ? 'ذخیره، راهنما و کنترل‌ها' : 'Saves, Guide & Controls'}
+            aria-label={isFa ? 'ذخیره، نشان‌ها و راهنما' : 'Saves, Badges & Guide'}
             className="space-y-0.5"
           >
             <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
-              {isFa ? 'ذخیره، راهنما و وضعیت' : 'Saves, Guide & Status'}
+              {isFa ? 'نشان‌ها، ذخیره و راهنما' : 'Badges, Saves & Guide'}
             </div>
 
-            {/* 1. Save & Settings */}
+            {/* 1. Saga & Era Badges (Expandable inside Hamburger Menu) */}
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => setIsBadgesOpen((v) => !v)}
+                aria-expanded={isBadgesOpen}
+                className={`${rowBaseClass} ${
+                  isBadgesOpen
+                    ? 'bg-[#17283D] border border-[#F59E0B]/40'
+                    : 'hover:bg-[#152233]/90 active:bg-[#1A2A3F]'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div
+                    className={`${iconTileBaseClass} border-[#F59E0B]/45 bg-[#F59E0B]/15 group-hover:border-[#F59E0B]/75 group-hover:bg-[#F59E0B]/25`}
+                  >
+                    <Trophy className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                      {isFa ? 'نشان‌های حماسه و تاریخ' : 'Saga & Era Badges'}
+                    </div>
+                    <div className="text-[11px] font-mono tabular-nums text-[#94A3B8] truncate mt-0.5">
+                      {isFa
+                        ? `${unlockedAchCount}/${BITLIFE_ACHIEVEMENTS.length} نشان خاندان · ${unlockedMsCount}/${HISTORICAL_MILESTONES.length} مهر تاریخی`
+                        : `${unlockedAchCount}/${BITLIFE_ACHIEVEMENTS.length} Dynasty · ${unlockedMsCount}/${HISTORICAL_MILESTONES.length} Era Seals`}
+                    </div>
+                  </div>
+                </div>
+                {isBadgesOpen ? (
+                  <ChevronUp className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#94A3B8] shrink-0" />
+                )}
+              </button>
+
+              {isBadgesOpen && (
+                <div className="px-1 pb-1">
+                  <SagaBadgeRibbon
+                    state={state}
+                    compactMenuMode
+                    onOpenFullSagaTab={() => {
+                      onClose();
+                      onOpenSagaBadges();
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 2. Save & Settings */}
             <button
               type="button"
               onClick={() => {
@@ -216,7 +286,7 @@ export function HeaderMenuDropdown({
               <ChevronRight className={chevronClass} />
             </button>
 
-            {/* 2. Guide & Glossary */}
+            {/* 3. Guide & Glossary */}
             <button
               type="button"
               onClick={() => {
@@ -245,7 +315,7 @@ export function HeaderMenuDropdown({
               <ChevronRight className={chevronClass} />
             </button>
 
-            {/* 3. Season & Sea Weather */}
+            {/* 4. Season & Sea Weather */}
             <button
               type="button"
               onClick={() => {

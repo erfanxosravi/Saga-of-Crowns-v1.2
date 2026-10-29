@@ -373,6 +373,89 @@ export const BADGE_CATEGORY_LABELS: Record<Language, Record<BadgeCategory, strin
   },
 };
 
+export interface BadgePalette {
+  pillBg: string;
+  pillSelectedBg: string;
+  iconBox: string;
+  tagPill: string;
+  cardBg: string;
+  accentText: string;
+}
+
+export function getBadgeCategoryPalette(
+  category: BadgeCategory | 'milestone' | 'alt_history'
+): BadgePalette {
+  switch (category) {
+    case 'warfare':
+      return {
+        pillBg: 'bg-rose-500/12 hover:bg-rose-500/20 border-rose-500/45 text-[#F1F5F9]',
+        pillSelectedBg: 'bg-rose-500/25 border-rose-500 text-[#F1F5F9] ring-1 ring-rose-500/50',
+        iconBox: 'bg-rose-500 text-white border-rose-600/40 shadow-xs',
+        tagPill: 'bg-rose-500/20 border border-rose-500/45 text-rose-500',
+        cardBg: 'bg-[#131D2B] border-rose-500/55',
+        accentText: 'text-rose-500',
+      };
+    case 'seafaring':
+      return {
+        pillBg: 'bg-sky-500/12 hover:bg-sky-500/20 border-sky-500/45 text-[#F1F5F9]',
+        pillSelectedBg: 'bg-sky-500/25 border-sky-500 text-[#F1F5F9] ring-1 ring-sky-500/50',
+        iconBox: 'bg-sky-500 text-white border-sky-600/40 shadow-xs',
+        tagPill: 'bg-sky-500/20 border border-sky-500/45 text-sky-500',
+        cardBg: 'bg-[#131D2B] border-sky-500/55',
+        accentText: 'text-sky-500',
+      };
+    case 'dynasty':
+      return {
+        pillBg: 'bg-emerald-500/12 hover:bg-emerald-500/20 border-emerald-500/45 text-[#F1F5F9]',
+        pillSelectedBg:
+          'bg-emerald-500/25 border-emerald-500 text-[#F1F5F9] ring-1 ring-emerald-500/50',
+        iconBox: 'bg-emerald-500 text-white border-emerald-600/40 shadow-xs',
+        tagPill: 'bg-emerald-500/20 border border-emerald-500/45 text-emerald-500',
+        cardBg: 'bg-[#131D2B] border-emerald-500/55',
+        accentText: 'text-emerald-500',
+      };
+    case 'crown':
+      return {
+        pillBg: 'bg-amber-500/14 hover:bg-amber-500/22 border-amber-500/50 text-[#F1F5F9]',
+        pillSelectedBg: 'bg-amber-500/25 border-amber-500 text-[#F1F5F9] ring-1 ring-amber-500/50',
+        iconBox: 'bg-amber-500 text-[#0B1118] border-amber-600/40 shadow-xs',
+        tagPill: 'bg-amber-500/20 border border-amber-500/45 text-amber-500',
+        cardBg: 'bg-[#131D2B] border-amber-500/60',
+        accentText: 'text-amber-500',
+      };
+    case 'saga':
+      return {
+        pillBg: 'bg-violet-500/12 hover:bg-violet-500/20 border-violet-500/45 text-[#F1F5F9]',
+        pillSelectedBg:
+          'bg-violet-500/25 border-violet-500 text-[#F1F5F9] ring-1 ring-violet-500/50',
+        iconBox: 'bg-violet-500 text-white border-violet-600/40 shadow-xs',
+        tagPill: 'bg-violet-500/20 border border-violet-500/45 text-violet-500',
+        cardBg: 'bg-[#131D2B] border-violet-500/55',
+        accentText: 'text-violet-500',
+      };
+    case 'alt_history':
+      return {
+        pillBg: 'bg-fuchsia-500/12 hover:bg-fuchsia-500/20 border-fuchsia-500/45 text-[#F1F5F9]',
+        pillSelectedBg:
+          'bg-fuchsia-500/25 border-fuchsia-500 text-[#F1F5F9] ring-1 ring-fuchsia-500/50',
+        iconBox: 'bg-fuchsia-500 text-white border-fuchsia-600/40 shadow-xs',
+        tagPill: 'bg-fuchsia-500/20 border border-fuchsia-500/45 text-fuchsia-500',
+        cardBg: 'bg-[#131D2B] border-fuchsia-500/55',
+        accentText: 'text-fuchsia-500',
+      };
+    case 'milestone':
+    default:
+      return {
+        pillBg: 'bg-teal-500/12 hover:bg-teal-500/20 border-teal-500/45 text-[#F1F5F9]',
+        pillSelectedBg: 'bg-teal-500/25 border-teal-500 text-[#F1F5F9] ring-1 ring-teal-500/50',
+        iconBox: 'bg-teal-500 text-white border-teal-600/40 shadow-xs',
+        tagPill: 'bg-teal-500/20 border border-teal-500/45 text-teal-500',
+        cardBg: 'bg-[#131D2B] border-teal-500/55',
+        accentText: 'text-teal-500',
+      };
+  }
+}
+
 export function renderBadgeIcon(iconKey: string, className = 'w-4 h-4') {
   switch (iconKey) {
     case 'ship':
@@ -410,17 +493,22 @@ export function renderBadgeIcon(iconKey: string, className = 'w-4 h-4') {
 interface SagaBadgeRibbonProps {
   state: FullGameState;
   onOpenFullSagaTab?: () => void;
+  compactMenuMode?: boolean;
 }
 
 /**
- * Compact, visually distinct badge strip shown at the top of the Life Saga tab (`LifeFeed`)
- * to highlight unlocked historical milestones and dynasty achievements at a glance.
+ * Compact, visually distinct badge showcase used inside the Hamburger Menu (`HeaderMenuDropdown`)
+ * or Legacy Hall to highlight unlocked historical milestones and dynasty achievements with distinct category colors.
  */
-export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonProps) {
+export function SagaBadgeRibbon({
+  state,
+  onOpenFullSagaTab,
+  compactMenuMode = false,
+}: SagaBadgeRibbonProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
   const [selectedBadgeKey, setSelectedBadgeKey] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(compactMenuMode);
 
   const milestones = evaluateHistoricalMilestones(state);
   const unlockedMilestones = milestones.filter((m) => m.unlocked);
@@ -435,7 +523,6 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
 
   const unlockedAchievements = evaluatedAchievements.filter((a) => a.earned);
 
-  // Build combined badge list for the ribbon: prioritize recent historical milestones + unlocked dynasty badges
   type RibbonItem =
     | {
         key: string;
@@ -472,69 +559,66 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
   const selectedItem = ribbonItems.find((it) => it.key === selectedBadgeKey) ?? null;
 
   return (
-    <div className="rounded-xl bg-[#101926] border border-[#223247] p-2.5 sm:p-3 space-y-2 transition-all">
-      {/* Top Header Row: Summary Counts + Quick Toggle / Open Full Hall */}
+    <div className="rounded-xl bg-[#131D2B] border border-[#223247] p-2.5 space-y-2 transition-all">
+      {/* Top Header Row: Summary Counts + Open Full Hall */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
-            <Trophy className="w-3.5 h-3.5" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-[#F1F5F9]">
-                {isFa ? 'نشان‌های حماسه و تاریخ' : 'Saga & Era Badges'}
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#182638] border border-[#293D56] text-[11px] font-mono tabular-nums text-[#FBBF24]">
-                <Award className="w-3 h-3 shrink-0" />
-                {unlockedAchievements.length}/{BITLIFE_ACHIEVEMENTS.length}
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#182638] border border-[#293D56] text-[11px] font-mono tabular-nums text-[#38BDF8]">
-                <History className="w-3 h-3 shrink-0" />
-                {unlockedMilestones.length}/{HISTORICAL_MILESTONES.length}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          {nextMilestone && (
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-[11px] font-mono font-bold tabular-nums text-amber-500">
+            <Award className="w-3 h-3 shrink-0" />
+            {unlockedAchievements.length}/{BITLIFE_ACHIEVEMENTS.length}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-500/15 border border-teal-500/40 text-[11px] font-mono font-bold tabular-nums text-teal-500">
+            <History className="w-3 h-3 shrink-0" />
+            {unlockedMilestones.length}/{HISTORICAL_MILESTONES.length}
+          </span>
+          {nextMilestone && !compactMenuMode && (
             <span
-              className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#131D2B] border border-[#233246] text-[11px] font-mono text-[#94A3B8]"
+              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0F1722] border border-[#233246] text-[11px] font-mono text-[#94A3B8]"
               title={isFa ? nextMilestone.def.titleFa : nextMilestone.def.titleEn}
             >
               <span>{isFa ? 'رویداد بعدی:' : 'Next Era:'}</span>
               <strong className="text-[#CBD5E1]">{nextMilestone.def.year} AD</strong>
             </span>
           )}
+        </div>
 
-          <button
-            type="button"
-            onClick={() => setIsExpanded((v) => !v)}
-            className="min-h-[32px] px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] text-[11px] font-semibold text-[#CBD5E1] inline-flex items-center gap-1 cursor-pointer transition-colors"
-          >
-            <span>{isExpanded ? (isFa ? 'جمع‌کردن' : 'Compact') : isFa ? 'همه نشان‌ها' : 'All Badges'}</span>
-            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!compactMenuMode && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded((v) => !v)}
+              className="min-h-[30px] px-2 py-1 rounded-lg bg-[#0F1722] hover:bg-[#19283B] border border-[#233246] text-[11px] font-semibold text-[#CBD5E1] inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>
+                {isExpanded ? (isFa ? 'جمع‌کردن' : 'Compact') : isFa ? 'همه نشان‌ها' : 'All Badges'}
+              </span>
+              {isExpanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
 
           {onOpenFullSagaTab && (
             <button
               type="button"
               onClick={onOpenFullSagaTab}
-              className="min-h-[32px] px-2.5 py-1 rounded-lg bg-[#F59E0B]/15 hover:bg-[#F59E0B]/25 border border-[#F59E0B]/45 text-[11px] font-bold text-[#FBBF24] inline-flex items-center gap-1 cursor-pointer transition-colors"
+              className="min-h-[30px] px-2.5 py-1 rounded-lg bg-[#F59E0B] hover:bg-[#FBBF24] text-[11px] font-bold text-[#0B1118] inline-flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
             >
-              <span>{isFa ? 'تالار افتخارات' : 'Legacy Hall'}</span>
+              <span>{isFa ? 'تالار کامل افتخارات' : 'Full Legacy Hall'}</span>
               <ChevronRight className={`w-3.5 h-3.5 ${isFa ? 'rotate-180' : ''}`} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Horizontal Scrollable or Wrapped Distinct Badge Medallions */}
+      {/* Distinct Color-Coded Badge Medallions */}
       {ribbonItems.length > 0 ? (
         <div
           className={
             isExpanded
-              ? 'flex flex-wrap items-center gap-1.5 pt-0.5'
+              ? 'flex flex-wrap items-center gap-1.5 pt-0.5 max-h-[190px] overflow-y-auto pr-0.5'
               : 'flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 pt-0.5'
           }
         >
@@ -543,6 +627,7 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
 
             if (entry.kind === 'achievement') {
               const { ach, meta } = entry.item;
+              const pal = getBadgeCategoryPalette(meta.category);
               return (
                 <button
                   key={entry.key}
@@ -550,23 +635,22 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
                   onClick={() =>
                     setSelectedBadgeKey((prev) => (prev === entry.key ? null : entry.key))
                   }
-                  className={`group shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#261D10] border-[#F59E0B] text-[#FDE68A] ring-1 ring-[#F59E0B]/50'
-                      : 'bg-[#181814] hover:bg-[#221E15] border-[#F59E0B]/50 text-[#F1F5F9]'
+                  className={`group shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
+                    isSelected ? pal.pillSelectedBg : pal.pillBg
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-md bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[#FBBF24] flex items-center justify-center shrink-0">
+                  <span
+                    className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${pal.iconBox}`}
+                  >
                     {renderBadgeIcon(meta.iconKey, 'w-3 h-3')}
                   </span>
-                  <span className="whitespace-nowrap">
-                    {isFa ? ach.nameFa : ach.nameEn}
-                  </span>
+                  <span className="whitespace-nowrap">{isFa ? ach.nameFa : ach.nameEn}</span>
                 </button>
               );
             }
 
             const { def, alteredHistory } = entry.milestone;
+            const pal = getBadgeCategoryPalette(alteredHistory ? 'alt_history' : 'milestone');
             return (
               <button
                 key={entry.key}
@@ -574,31 +658,17 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
                 onClick={() =>
                   setSelectedBadgeKey((prev) => (prev === entry.key ? null : entry.key))
                 }
-                className={`group shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                  alteredHistory
-                    ? isSelected
-                      ? 'bg-[#1D1632] border-purple-400 text-purple-200 ring-1 ring-purple-400/50'
-                      : 'bg-[#161528] hover:bg-[#1E1B36] border-purple-400/50 text-[#E9D5FF]'
-                    : isSelected
-                      ? 'bg-[#12263A] border-[#38BDF8] text-[#E0F2FE] ring-1 ring-[#38BDF8]/50'
-                      : 'bg-[#111F30] hover:bg-[#16293F] border-[#38BDF8]/45 text-[#E2E8F0]'
+                className={`group shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
+                  isSelected ? pal.pillSelectedBg : pal.pillBg
                 }`}
               >
                 <span
-                  className={`w-5 h-5 rounded-md border flex items-center justify-center text-[11px] font-bold shrink-0 ${
-                    alteredHistory
-                      ? 'bg-purple-500/20 border-purple-400/50 text-purple-300'
-                      : 'bg-[#38BDF8]/15 border-[#38BDF8]/45 text-[#38BDF8]'
-                  }`}
+                  className={`w-5 h-5 rounded-md border flex items-center justify-center text-[10px] font-bold shrink-0 ${pal.iconBox}`}
                 >
                   {renderBadgeIcon(def.iconKey, 'w-3 h-3')}
                 </span>
-                <span className="whitespace-nowrap">
-                  {isFa ? def.shortFa : def.shortEn}
-                </span>
-                {alteredHistory && (
-                  <Sparkles className="w-3 h-3 text-purple-300 shrink-0" />
-                )}
+                <span className="whitespace-nowrap">{isFa ? def.shortFa : def.shortEn}</span>
+                {alteredHistory && <Sparkles className="w-3 h-3 text-fuchsia-500 shrink-0" />}
               </button>
             );
           })}
@@ -613,10 +683,14 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
 
       {/* Selected Badge Inline Details Popover */}
       {selectedItem && (
-        <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#283B52] flex items-start justify-between gap-2.5 text-xs">
+        <div className="p-2.5 rounded-xl bg-[#0F1722] border border-[#283B52] flex items-start justify-between gap-2.5 text-xs">
           {selectedItem.kind === 'achievement' ? (
             <div className="flex items-start gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[#F59E0B]/20 border border-[#F59E0B]/55 text-[#FBBF24] flex flex-col items-center justify-center shrink-0">
+              <div
+                className={`w-8 h-8 rounded-lg border flex flex-col items-center justify-center shrink-0 ${
+                  getBadgeCategoryPalette(selectedItem.item.meta.category).iconBox
+                }`}
+              >
                 {renderBadgeIcon(selectedItem.item.meta.iconKey, 'w-4 h-4')}
               </div>
               <div className="min-w-0 space-y-0.5">
@@ -624,8 +698,12 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
                   <span className="font-bold text-[#F1F5F9]">
                     {isFa ? selectedItem.item.ach.nameFa : selectedItem.item.ach.nameEn}
                   </span>
-                  <span className="px-1.5 py-0.5 rounded bg-[#F59E0B]/20 text-[#FBBF24] text-[10px] font-bold">
-                    {isFa ? 'دستاورد خاندان ✓' : 'Dynasty Badge ✓'}
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      getBadgeCategoryPalette(selectedItem.item.meta.category).tagPill
+                    }`}
+                  >
+                    {BADGE_CATEGORY_LABELS[lang][selectedItem.item.meta.category]}
                   </span>
                 </div>
                 <p className="text-[#CBD5E1] leading-relaxed">
@@ -636,10 +714,10 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
           ) : (
             <div className="flex items-start gap-2.5 min-w-0">
               <div
-                className={`w-9 h-9 rounded-xl border flex flex-col items-center justify-center shrink-0 ${
-                  selectedItem.milestone.alteredHistory
-                    ? 'bg-purple-500/20 border-purple-400/55 text-purple-300'
-                    : 'bg-[#38BDF8]/15 border-[#38BDF8]/55 text-[#38BDF8]'
+                className={`w-8 h-8 rounded-lg border flex flex-col items-center justify-center shrink-0 ${
+                  getBadgeCategoryPalette(
+                    selectedItem.milestone.alteredHistory ? 'alt_history' : 'milestone'
+                  ).iconBox
                 }`}
               >
                 {renderBadgeIcon(selectedItem.milestone.def.iconKey, 'w-4 h-4')}
@@ -653,9 +731,9 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
                   </span>
                   <span
                     className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      selectedItem.milestone.alteredHistory
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : 'bg-[#38BDF8]/20 text-[#38BDF8]'
+                      getBadgeCategoryPalette(
+                        selectedItem.milestone.alteredHistory ? 'alt_history' : 'milestone'
+                      ).tagPill
                     }`}
                   >
                     {selectedItem.milestone.alteredHistory
@@ -679,7 +757,7 @@ export function SagaBadgeRibbon({ state, onOpenFullSagaTab }: SagaBadgeRibbonPro
           <button
             type="button"
             onClick={() => setSelectedBadgeKey(null)}
-            className="px-2 py-1 rounded-lg bg-[#0B1118] hover:bg-[#19283B] border border-[#233246] text-[11px] text-[#94A3B8] hover:text-[#F1F5F9] shrink-0 cursor-pointer"
+            className="px-2 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] text-[11px] text-[#94A3B8] hover:text-[#F1F5F9] shrink-0 cursor-pointer"
           >
             {isFa ? 'بستن' : 'Close'}
           </button>
@@ -701,26 +779,21 @@ export function HistoricalMilestonesGrid({ state }: { state: FullGameState }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {milestones.map(({ def, unlocked, participated, alteredHistory }) => {
         const yearsRemaining = Math.max(0, def.year - state.year);
+        const pal = getBadgeCategoryPalette(alteredHistory ? 'alt_history' : 'milestone');
 
         return (
           <div
             key={def.id}
             className={`relative p-3.5 rounded-2xl border flex items-start gap-3 transition-all overflow-hidden ${
-              alteredHistory
-                ? 'bg-gradient-to-br from-[#1D1530] via-[#131D2B] to-[#0F1722] border-purple-400/65 text-[#F1F5F9]'
-                : unlocked
-                  ? 'bg-gradient-to-br from-[#112236] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/65 text-[#F1F5F9]'
-                  : 'bg-[#131D2B]/75 border-[#233246] text-[#94A3B8] opacity-80'
+              unlocked
+                ? `${pal.cardBg} text-[#F1F5F9]`
+                : 'bg-[#131D2B]/75 border-[#233246] text-[#94A3B8] opacity-80'
             }`}
           >
             {/* Distinct Nordic Seal Medallion */}
             <div
               className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center shrink-0 relative ${
-                alteredHistory
-                  ? 'bg-purple-500/20 border-purple-400/60 text-purple-300 shadow-[0_0_16px_rgba(168,85,247,0.25)]'
-                  : unlocked
-                    ? 'bg-[#38BDF8]/15 border-[#38BDF8]/55 text-[#38BDF8] shadow-[0_0_16px_rgba(56,189,248,0.2)]'
-                    : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
+                unlocked ? pal.iconBox : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
               }`}
             >
               {unlocked ? (
@@ -735,17 +808,21 @@ export function HistoricalMilestonesGrid({ state }: { state: FullGameState }) {
 
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-1.5">
-                <span className="text-[11px] font-mono text-[#38BDF8]">
+                <span className={`text-[11px] font-mono font-semibold ${pal.accentText}`}>
                   {isFa ? def.eraLabelFa : def.eraLabelEn} · {def.rune}
                 </span>
 
                 {alteredHistory ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-[10px] font-bold text-purple-200">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${pal.tagPill}`}
+                  >
                     <GitBranch className="w-3 h-3" />
                     {isFa ? 'تاریخ بدیل' : 'Alt-History'}
                   </span>
                 ) : unlocked ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#38BDF8]/15 border border-[#38BDF8]/40 text-[10px] font-bold text-[#38BDF8]">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${pal.tagPill}`}
+                  >
                     {participated
                       ? isFa
                         ? 'تجربه‌شده ✓'
@@ -775,3 +852,4 @@ export function HistoricalMilestonesGrid({ state }: { state: FullGameState }) {
     </div>
   );
 }
+

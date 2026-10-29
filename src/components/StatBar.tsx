@@ -73,9 +73,13 @@ export function StatBar({
   const pctWidth = Math.round(ratio * 100);
 
   return (
-    <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      <div className="flex items-center justify-between gap-1.5 text-xs leading-tight">
-        <span className="inline-flex items-center gap-1.5 min-w-0">
+    <div className={compact ? 'space-y-1 min-w-0' : 'space-y-2 min-w-0'}>
+      <div
+        className={`flex items-center justify-between gap-1 ${
+          compact ? 'text-[11px] sm:text-xs' : 'text-xs'
+        } leading-none`}
+      >
+        <span className="inline-flex items-center gap-1 min-w-0">
           {icon && <span className={`shrink-0 flex items-center ${iconToneClass}`}>{icon}</span>}
           <span
             className={`font-semibold truncate ${isLow ? 'text-rose-200' : 'text-[#E2E8F0]'}`}
@@ -84,10 +88,14 @@ export function StatBar({
           </span>
         </span>
 
-        <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums shrink-0">
+        <span
+          className={`inline-flex items-center gap-0.5 font-mono ${
+            compact ? 'text-[11px] sm:text-xs' : 'text-xs'
+          } tabular-nums shrink-0`}
+        >
           {deltaFlash !== 0 && (
             <span
-              className={`text-xs font-bold transition-opacity duration-300 ${
+              className={`text-[10px] font-bold transition-opacity duration-300 ${
                 deltaFlash > 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
@@ -111,7 +119,7 @@ export function StatBar({
       </div>
 
       <div
-        className={`w-full ${compact ? 'h-[7px]' : 'h-2'} rounded-full overflow-hidden ring-1 ring-inset ${
+        className={`w-full ${compact ? 'h-1.5' : 'h-2'} rounded-full overflow-hidden ring-1 ring-inset ${
           isLow ? 'bg-rose-950/65 ring-rose-500/35' : 'bg-[#1A2738] ring-white/6'
         }`}
       >
@@ -137,3 +145,4 @@ export function StatBar({
     </div>
   );
 }
+
