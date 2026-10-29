@@ -616,6 +616,9 @@ function triggerDeathState(
           r.role === 'Sworn Sister')
     )
     .sort((a, b) => {
+      if (Boolean(a.isHeirEligible) !== Boolean(b.isHeirEligible)) {
+        return a.isHeirEligible ? -1 : 1;
+      }
       const priority = (role: RelationshipPerson['role']) =>
         role === 'Child' ? 0 : role === 'Foster-Child' ? 1 : role === 'Sibling' ? 2 : 3;
       const diff = priority(a.role) - priority(b.role);
@@ -3623,6 +3626,8 @@ export type FamilyInteractionType =
   | 'teach'
   | 'bless_kin'
   | 'try_for_child'
+  | 'designate_heir'
+  | 'swear_blood_oath'
   | 'argue'
   | 'send_envoy'
   | 'intimidate_foe'
@@ -3917,6 +3922,32 @@ export function executeFamilyMemberInteraction(
     textFa = `به‌جای تبرکشی و خون‌ریزی، با یک وصلتِ پرماجرا به دشمنی با «${nameFa}» پایان دادی!`;
     deltas.push('Feud Ended!', 'Happiness +12', 'Stability +10');
     deltasFa.push('پایان دشمنی خونی!', 'شادی +12', 'ثبات +10');
+  } else if (interaction === 'designate_heir') {
+    for (const rel of relationships) {
+      if (rel.alive) {
+        rel.isHeirEligible = rel.id === target.id;
+      }
+    }
+    target.affinity = clampStat(target.affinity + 18);
+    char.stats.honor = clampStat(char.stats.honor + 5);
+    realm.stability = clampStat(realm.stability + 4);
+    title = `Named ${nameEn} Primary Dynasty Heir`;
+    titleFa = `انتصاب «${nameFa}» به‌عنوان وارث برگزیده خاندان`;
+    text = `Before the hearth-elders, you raised the ancestral horn and proclaimed ${nameEn} as your chosen successor to lead the dynasty!`;
+    textFa = `در حضور بزرگان تالار، شاخ نیاکان را بالا بردید و «${nameFa}» را رسماً به‌عنوان وارث و جانشین اول خاندان معرفی کردید!`;
+    deltas.push(`Heir: ${nameEn}`, 'Bond +18', 'Honor +5', 'Stability +4');
+    deltasFa.push(`وارث برگزیده: ${nameFa}`, 'صمیمیت +18', 'شرافت +5', 'ثبات +4');
+  } else if (interaction === 'swear_blood_oath') {
+    target.role = target.sex === Sex.Female ? 'Sworn Sister' : 'Sworn Brother';
+    target.affinity = clampStat(Math.max(92, target.affinity + 22));
+    char.stats.honor = clampStat(char.stats.honor + 8);
+    realm.fame += 14;
+    title = `Swore Blood-Oath with ${nameEn}`;
+    titleFa = `پیمان اخوت و هم‌قسم شدن با «${nameFa}»`;
+    text = `Cutting palms beneath a raised turf-arch, you and ${nameEn} mingled blood and swore an unbreakable Norse oath of loyalty!`;
+    textFa = `زیر طاق چمنیِ آیینی، همراه با «${nameFa}» پیمان برادری/خواهری خونی بستید تا در رزم و زندگی پشت‌وپناه یکدیگر باشید!`;
+    deltas.push('Sworn Companion!', 'Bond +22', 'Honor +8', '+14 Fame');
+    deltasFa.push('هم‌پیمان خونی!', 'صمیمیت +22', 'شرافت +8', '+14 شهرت');
   }
 
   const nextState: FullGameState = {
