@@ -105,8 +105,10 @@ export function MoreMenuPanel({
 
   const winGoal = WIN_GOALS.find((w) => w.id === state.winGoalId) ?? WIN_GOALS[0];
   const winGoalFa = WIN_GOALS_FA[winGoal.id];
-  const goalProg = winGoal.getProgress(state);
-  const goalPct = Math.min(100, Math.round((goalProg.current / Math.max(1, goalProg.target)) * 100));
+  const isGoalCompleted = winGoal.checkCompleted(state);
+  const goalProgressText = isFa
+    ? winGoalFa?.progressLabel(state) ?? winGoal.progressLabel(state)
+    : winGoal.progressLabel(state);
 
   const cards: MoreCardItem[] = [
     {
@@ -167,12 +169,16 @@ export function MoreMenuPanel({
         ? isFa
           ? 'آماده ارتقای مقام!'
           : 'Promotion Ready!'
-        : isFa
-          ? `پیشرفت هدف: ${goalPct}٪`
-          : `Goal Progress: ${goalPct}%`,
+        : isGoalCompleted
+          ? isFa
+            ? 'هدف پیروزی تکمیل شد ✓'
+            : 'Victory Goal Met ✓'
+          : isFa
+            ? winGoalFa?.title ?? winGoal.title
+            : winGoal.title,
       costRiskTone: 'emerald',
       statusLabel: SHORT_TITLE_LABELS[lang][state.character.title],
-      isReadyHighlight: Boolean(claimable),
+      isReadyHighlight: Boolean(claimable || isGoalCompleted),
       accent: 'emerald',
       icon: <Award className="w-5 h-5" />,
     },
@@ -469,11 +475,23 @@ export function MoreMenuPanel({
                   {isFa ? 'هدف نهایی حماسه' : 'Dynasty Victory Goal'}
                 </div>
                 <div className="text-sm font-bold text-[#F1F5F9] mt-0.5">
-                  {isFa ? winGoalFa?.name ?? winGoal.name : winGoal.name}
+                  {isFa ? winGoalFa?.title ?? winGoal.title : winGoal.title}
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-500">
-                {goalProg.current} / {goalProg.target} ({goalPct}%)
+              <span
+                className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${
+                  isGoalCompleted
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                    : 'bg-[#101926] text-[#F59E0B] border border-[#1E2D40]'
+                }`}
+              >
+                {isGoalCompleted
+                  ? isFa
+                    ? 'محقق شد ✓'
+                    : 'Completed ✓'
+                  : isFa
+                    ? 'در جریان'
+                    : 'In Progress'}
               </span>
             </div>
 
@@ -481,11 +499,8 @@ export function MoreMenuPanel({
               {isFa ? winGoalFa?.description ?? winGoal.description : winGoal.description}
             </p>
 
-            <div className="h-2.5 w-full rounded-full bg-[#0B1118] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${goalPct}%` }}
-              />
+            <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40] text-xs font-mono text-[#38BDF8]">
+              {goalProgressText}
             </div>
           </div>
         </NorseBottomSheet>

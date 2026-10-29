@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export type NorseAccent = 'amber' | 'crimson' | 'ice' | 'emerald' | 'violet' | 'slate';
 
@@ -212,15 +213,21 @@ export function NorseBottomSheet({
       : 'rtl';
 
   const sheetNode = (
-    <div
+    <motion.div
       dir={currentDir}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
       className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4 text-[#F1F5F9]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 18 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 28, mass: 0.85 }}
         className={`relative w-full ${maxWidthClass} max-h-[88dvh] sm:max-h-[min(88dvh,740px)] flex flex-col overflow-hidden bg-[#0F1722] border ${borderAccentClass} rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.85)] text-start`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -261,8 +268,8 @@ export function NorseBottomSheet({
             {footer}
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   if (typeof document !== 'undefined') {
