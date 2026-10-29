@@ -967,6 +967,20 @@ export default function App() {
                   setActiveTab(t);
                 }}
                 onClaimRank={() => handleGeneralAction('claim_rank')}
+                onBuildShipOrHird={(act) => handleGeneralAction(act)}
+                onBuildHoldingStructure={handleBuildStructure}
+                onClearFirstFarm={() => handleGeneralAction('farm_settle')}
+                onConquerCity={handleConquerCity}
+                onSendSettlers={handleSendSettlers}
+                onStationGarrison={handleStationGarrison}
+                onSetTributeBurden={handleSetTributeBurden}
+                onAppointJarl={handleAppointJarl}
+                onTakeHostages={handleTakeHostages}
+                onToggleTolerance={handleToggleTolerance}
+                onExecutePlot={handleExecutePlot}
+                onClaimSpecialTitle={handleClaimSpecialTitle}
+                onResolveBattleTactic={handleResolveBattleTactic}
+                onCancelBattle={handleCancelBattle}
               />
             )}
           </div>

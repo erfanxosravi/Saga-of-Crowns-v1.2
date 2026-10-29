@@ -161,13 +161,13 @@ interface NorseBottomSheetProps {
   accent?: NorseAccent;
   closeLabel?: string;
   footer?: ReactNode;
+  maxWidthClass?: string;
   children: ReactNode;
 }
 
 /**
- * Mobile-first slide-up bottom sheet (centers cleanly on larger viewports)
- * rendered via React Portal to document.body so it is never clipped by parent
- * scroll containers or CSS masks.
+ * Centered Nordic Modal Window rendered via React Portal to document.body
+ * so it is never clipped by parent scroll containers or CSS masks.
  */
 export function NorseBottomSheet({
   isOpen,
@@ -178,6 +178,7 @@ export function NorseBottomSheet({
   accent = 'amber',
   closeLabel = 'Close',
   footer,
+  maxWidthClass = 'max-w-xl',
   children,
 }: NorseBottomSheetProps) {
   useEffect(() => {
@@ -213,27 +214,22 @@ export function NorseBottomSheet({
   const sheetNode = (
     <div
       dir={currentDir}
-      className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4 text-[#F1F5F9]"
+      className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4 text-[#F1F5F9]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className={`relative w-full sm:max-w-xl max-h-[88dvh] sm:max-h-[min(88dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-3xl sm:rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.9)] text-start`}
+        className={`relative w-full ${maxWidthClass} max-h-[88dvh] sm:max-h-[min(88dvh,740px)] flex flex-col overflow-hidden bg-[#0F1722] border ${borderAccentClass} rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.85)] text-start`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile Drag Handle Affordance */}
-        <div className="pt-2.5 pb-1 flex justify-center sm:hidden shrink-0">
-          <div className="w-11 h-1.5 rounded-full bg-[#2A3E59]" />
-        </div>
-
-        {/* Sheet Header */}
+        {/* Modal Header */}
         <div className="shrink-0 px-4 sm:px-5 py-3.5 border-b border-[#1E2D40] bg-[#121C2B] flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             {icon && <div className="shrink-0 mt-0.5">{icon}</div>}
             <div className="min-w-0 flex-1">
-              <h3 className="font-saga text-xl sm:text-2xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+              <h3 className="font-saga text-lg sm:text-xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
                 {title}
               </h3>
               {subtitle && (
@@ -248,20 +244,20 @@ export function NorseBottomSheet({
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
+            className="min-w-[40px] min-h-[40px] rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Sheet Scrollable Content */}
+        {/* Modal Scrollable Content */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-3.5">
           {children}
         </div>
 
         {/* Sticky Footer CTA */}
         {footer && (
-          <div className="shrink-0 px-4 sm:px-5 py-3.5 border-t border-[#1E2D40] bg-[#121C2B]">
+          <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#1E2D40] bg-[#121C2B]">
             {footer}
           </div>
         )}

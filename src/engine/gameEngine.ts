@@ -3611,14 +3611,30 @@ export function getNextTitleRequirementText(title: TitleRank, lang: Language = '
   }
 }
 
-export type FamilyInteractionType = 'talk' | 'gift' | 'teach' | 'argue' | 'peace_marry';
+export type FamilyInteractionType =
+  | 'talk'
+  | 'compliment'
+  | 'gift'
+  | 'lavish_gift'
+  | 'feast_together'
+  | 'spar'
+  | 'council'
+  | 'hunt_together'
+  | 'teach'
+  | 'bless_kin'
+  | 'try_for_child'
+  | 'argue'
+  | 'send_envoy'
+  | 'intimidate_foe'
+  | 'peace_marry';
 
 export function executeFamilyMemberInteraction(
   state: FullGameState,
   personId: string,
   interaction: FamilyInteractionType
 ): FullGameState {
-  if (state.familyInteractionsUsed?.[personId]) return state;
+  const usageKey = `${personId}_${interaction}`;
+  if (state.familyInteractionsUsed?.[usageKey]) return state;
   const idx = state.relationships.findIndex((r) => r.id === personId && r.alive);
   if (idx < 0) return state;
 
@@ -3657,6 +3673,16 @@ export function executeFamilyMemberInteraction(
     textFa = `کنار آتش با «${nameFa}» نشستید، بگووبخند کردید و صمیمیت بینتان بیشتر شد.`;
     deltas.push('Bond +8', 'Happiness +4');
     deltasFa.push('صمیمیت +8', 'شادی +4');
+  } else if (interaction === 'compliment') {
+    target.affinity = clampStat(target.affinity + rng.int(7, 12));
+    char.stats.honor = clampStat(char.stats.honor + 3);
+    char.stats.charisma = clampStat(char.stats.charisma + 2);
+    title = `Praised ${nameEn} in the Hall`;
+    titleFa = `ستایش و دلگرمی به «${nameFa}» در تالار`;
+    text = `Before the hearth-companions, you spoke warmly of ${nameEn}’s loyalty and virtues, lifting their pride.`;
+    textFa = `در جمع یاران تالار از وفاداری و منش «${nameFa}» به نیکی یاد کردید و غرور و محبتش دوچندان شد.`;
+    deltas.push('Bond +9', 'Honor +3', 'Charisma +2');
+    deltasFa.push('صمیمیت +9', 'شرافت +3', 'کاریزما +2');
   } else if (interaction === 'gift') {
     if (realm.silver < 5) return state;
     realm.silver -= 5;
@@ -3669,6 +3695,64 @@ export function executeFamilyMemberInteraction(
     textFa = `یک سنجاقِ نقره‌کوبِ ۵ سکه‌ای به «${nameFa}» کادو دادی و چشمانش از خوشحالی برق زد!`;
     deltas.push('-5 Silver', 'Bond +15', 'Happiness +5');
     deltasFa.push('-5 نقره', 'صمیمیت +15', 'شادی +5');
+  } else if (interaction === 'lavish_gift') {
+    if (realm.silver < 15) return state;
+    realm.silver -= 15;
+    target.affinity = clampStat(target.affinity + rng.int(24, 32));
+    char.stats.happiness = clampStat(char.stats.happiness + 8);
+    char.stats.honor = clampStat(char.stats.honor + 6);
+    realm.fame += 8;
+    title = `Bestowed Golden Arm-Ring on ${nameEn}`;
+    titleFa = `اهدای بازوبند زرین به «${nameFa}»`;
+    text = `You clasped a heavy 15-silver gilded arm-ring around ${nameEn}’s wrist, sealing unshakeable devotion!`;
+    textFa = `یک بازوبند سنگین و زرکوب به ارزش ۱۵ نقره بر بازوی «${nameFa}» بستید و وفاداری او را جاودانه کردید!`;
+    deltas.push('-15 Silver', 'Bond +28', 'Honor +6', '+8 Fame');
+    deltasFa.push('-15 نقره', 'صمیمیت +28', 'شرافت +6', '+8 شهرت');
+  } else if (interaction === 'feast_together') {
+    if (realm.silver < 8) return state;
+    realm.silver -= 8;
+    target.affinity = clampStat(target.affinity + rng.int(15, 21));
+    char.stats.happiness = clampStat(char.stats.happiness + 9);
+    char.stats.health = clampStat(char.stats.health + 2);
+    title = `Private Mead-Feast with ${nameEn}`;
+    titleFa = `بزم خصوصی و نوشیدن مید با «${nameFa}»`;
+    text = `Over roasted venison and honeyed mead-horns, you and ${nameEn} toasted the dynasty’s fortune.`;
+    textFa = `بر سر سفره‌ای از کباب شکار و جام‌های مید عسلی، همراه با «${nameFa}» به سلامتی خاندان نوشیدید.`;
+    deltas.push('-8 Silver', 'Bond +18', 'Happiness +9');
+    deltasFa.push('-8 نقره', 'صمیمیت +18', 'شادی +9');
+  } else if (interaction === 'spar') {
+    target.affinity = clampStat(target.affinity + rng.int(9, 14));
+    char.skills.combat = clampSkill(char.skills.combat + 3);
+    char.stats.strength = clampStat(char.stats.strength + 3);
+    char.stats.health = clampStat(char.stats.health + 2);
+    title = `Shield-Sparring with ${nameEn}`;
+    titleFa = `تمرین رزم و شمشیرزنی با «${nameFa}»`;
+    text = `Trading wooden sword-strikes in the courtyard with ${nameEn} sharpened your reflexes and mutual respect.`;
+    textFa = `در حیاط تالار با شمشیرهای تمرینی و سپر در برابر «${nameFa}» رزمیدید؛ هم بازویتان قوی‌تر شد و هم احترامتان بیشتر!`;
+    deltas.push('Bond +12', 'Combat +3', 'Strength +3');
+    deltasFa.push('صمیمیت +12', 'رزم +3', 'قدرت +3');
+  } else if (interaction === 'council') {
+    target.affinity = clampStat(target.affinity + rng.int(8, 13));
+    char.stats.cunning = clampStat(char.stats.cunning + 3);
+    char.skills.diplomacy = clampSkill(char.skills.diplomacy + 2);
+    char.skills.law = clampSkill(char.skills.law + 2);
+    title = `Sought Counsel from ${nameEn}`;
+    titleFa = `مشورت در امور خاندان با «${nameFa}»`;
+    text = `Listening closely to ${nameEn}’s advice on realm rivalries and trade gave you shrewd new insight.`;
+    textFa = `هم‌فکری و شنیدن دیدگاه‌های «${nameFa}» درباره سیاست و املاک خاندان، تدبیر تازه‌ای به شما بخشید.`;
+    deltas.push('Bond +10', 'Cunning +3', 'Diplomacy +2');
+    deltasFa.push('صمیمیت +10', 'ذکاوت +3', 'دیپلماسی +2');
+  } else if (interaction === 'hunt_together') {
+    target.affinity = clampStat(target.affinity + rng.int(11, 16));
+    char.stats.health = clampStat(char.stats.health + 4);
+    char.stats.happiness = clampStat(char.stats.happiness + 5);
+    realm.foodStores += 8;
+    title = `Northern Hunt with ${nameEn}`;
+    titleFa = `شکار در جنگل‌های شمالی با «${nameFa}»`;
+    text = `Tracking elk through pine-woods alongside ${nameEn}, you returned to the hall with fresh game and high spirits!`;
+    textFa = `پا‌به‌پای «${nameFa}» در جنگل‌های کاج به شکار رفتید و با دست پر و روحیه عالی به تالار بازگشتید!`;
+    deltas.push('Bond +14', 'Health +4', '+8 Food');
+    deltasFa.push('صمیمیت +14', 'سلامتی +4', '+8 آذوقه');
   } else if (interaction === 'teach') {
     target.affinity = clampStat(target.affinity + 10);
     const mentorTrait = rng.pick(['brave', 'cunning', 'oath_keeper']);
@@ -3684,6 +3768,62 @@ export function executeFamilyMemberInteraction(
     textFa = `به «${nameFa}» فوت‌وفنِ سپرداری و رسمِ روزگار یاد دادی تا وارثِ کاربلدی بار بیاید!`;
     deltas.push('Bond +10', 'Honor +3', 'Heir Trained');
     deltasFa.push('صمیمیت +10', 'شرافت +3', 'تقویت وارث');
+  } else if (interaction === 'bless_kin') {
+    if (realm.silver < 5) return state;
+    realm.silver -= 5;
+    target.affinity = clampStat(target.affinity + 12);
+    char.stats.faith = clampStat(char.stats.faith + 4);
+    char.stats.wyrd = clampStat(char.stats.wyrd + 3);
+    title = `Sacred Blessing for ${nameEn}`;
+    titleFa = `دعای خیر و نذر برای «${nameFa}»`;
+    text = `Offering silver and prayers at the sanctuary for ${nameEn}’s health and wyrd strengthened your sacred bond.`;
+    textFa = `با نذر ۵ سکه نقره در نیایشگاه برای تندرستی و بخت بلند «${nameFa}»، پیوند معنوی‌تان استوارتر شد.`;
+    deltas.push('-5 Silver', 'Bond +12', 'Faith +4', 'Wyrd +3');
+    deltasFa.push('-5 نقره', 'صمیمیت +12', 'ایمان +4', 'ویرد +3');
+  } else if (interaction === 'try_for_child') {
+    if (target.role !== 'Spouse' || char.age < 17) return state;
+    target.affinity = clampStat(target.affinity + 12);
+    char.stats.happiness = clampStat(char.stats.happiness + 8);
+    const canConceive = char.age <= 54 && target.age <= 45;
+    if (canConceive && rng.chance(0.55)) {
+      const childSex = rng.chance(0.5) ? Sex.Male : Sex.Female;
+      const childGiven = rng.pick(
+        childSex === Sex.Male
+          ? MALE_NAMES_BY_REGION[loc.regionGroup]
+          : FEMALE_NAMES_BY_REGION[loc.regionGroup]
+      );
+      const fatherFirstName =
+        char.sex === Sex.Male ? char.givenName : target.name.split(' ')[0];
+      const childFull = `${childGiven} ${makePatronymic(fatherFirstName, childSex)}`;
+      const childFa = formatPersonName(childFull, 'fa');
+      relationships.push({
+        id: `rel_child_${state.year}_${relationships.length}_${rng.int(100, 999)}`,
+        name: childFull,
+        sex: childSex,
+        role: 'Child',
+        age: 0,
+        alive: true,
+        affinity: 90,
+        socialClass: char.socialClass,
+        locationId: char.locationId,
+        traits: [rng.pick(['brave', 'cunning', 'strong_limbed', 'charismatic', 'seafarer'])],
+        isHeirEligible: true,
+      });
+      realm.fame += 12;
+      title = `New Child Born: ${childFull}!`;
+      titleFa = `تولد فرزند جدید: «${childFa}»!`;
+      text = `The Norns smiled upon your union with ${nameEn}! A healthy ${childSex === Sex.Male ? 'son' : 'daughter'}, ${childFull}, was born into the dynasty!`;
+      textFa = `نورن‌های سرنوشت به پیوند شما و «${nameFa}» لبخند زدند و فرزند سالمی به نام «${childFa}» پا به تالار خاندان گذاشت!`;
+      deltas.push(`New Heir: ${childFull}`, 'Bond +12', 'Happiness +8', '+12 Fame');
+      deltasFa.push(`فرزند جدید: ${childFa}`, 'صمیمیت +12', 'شادی +8', '+12 شهرت');
+    } else {
+      title = `Romantic Time with ${nameEn}`;
+      titleFa = `خلوت عاشقانه با «${nameFa}»`;
+      text = `You spent warm, devoted nights with ${nameEn}. Though no child was born yet, your marital bond deepened.`;
+      textFa = `شب‌های گرم و صمیمانه‌ای را در کنار «${nameFa}» سپری کردید و مهر و علاقه‌ی زناشویی‌تان عمیق‌تر شد.`;
+      deltas.push('Bond +12', 'Happiness +8');
+      deltasFa.push('صمیمیت +12', 'شادی +8');
+    }
   } else if (interaction === 'argue') {
     target.affinity = clampStat(target.affinity - rng.int(14, 22));
     char.stats.happiness = clampStat(char.stats.happiness - 4);
@@ -3706,6 +3846,40 @@ export function executeFamilyMemberInteraction(
       : `سرِ شام با «${nameFa}» بحثت بالا گرفت؛ لیوان‌ها کوبیده شد روی میز و فضا شکرآب شد.`;
     deltas.push('Bond -18', 'Happiness -4', 'Strength +2');
     deltasFa.push('صمیمیت -18', 'شادی -4', 'قدرت +2');
+  } else if (interaction === 'send_envoy') {
+    if (realm.silver < 10) return state;
+    realm.silver -= 10;
+    const gain = rng.int(16, 26) + Math.floor(char.skills.diplomacy * 0.25);
+    target.affinity = clampStat(target.affinity + gain);
+    char.skills.diplomacy = clampSkill(char.skills.diplomacy + 3);
+    if (target.affinity >= 68) {
+      target.role = target.sex === Sex.Female ? 'Sworn Sister' : 'Sworn Brother';
+      realm.stability = clampStat(realm.stability + 8);
+      title = `Feud Reconciled with ${nameEn}!`;
+      titleFa = `آشتی و پایان دشمنی با «${nameFa}»!`;
+      text = `Your envoy’s peace-gifts and wise words softened ${nameEn}’s heart — they laid down their grudge and swore friendship!`;
+      textFa = `پیک صلح و پیشکش‌های خردمندانه شما دل «${nameFa}» را نرم کرد؛ کینه را کنار گذاشت و هم‌پیمان شما شد!`;
+      deltas.push('-10 Silver', 'Feud Ended!', 'Diplomacy +3', 'Stability +8');
+      deltasFa.push('-10 نقره', 'پایان دشمنی!', 'دیپلماسی +3', 'ثبات +8');
+    } else {
+      title = `Peace Envoy Sent to ${nameEn}`;
+      titleFa = `اعزام پیک مذاکره نزد «${nameFa}»`;
+      text = `Your silver token and diplomatic message cooled ${nameEn}’s hostility substantially.`;
+      textFa = `فرستاده و پیام دیپلماتیک شما از شدت خشم و کینه‌ی «${nameFa}» کاست.`;
+      deltas.push('-10 Silver', `Hostility -${gain}%`, 'Diplomacy +3');
+      deltasFa.push('-10 نقره', `کاهش خصومت ${gain}٪`, 'دیپلماسی +3');
+    }
+  } else if (interaction === 'intimidate_foe') {
+    char.stats.honor = clampStat(char.stats.honor + 4);
+    char.stats.strength = clampStat(char.stats.strength + 2);
+    realm.fame += 6;
+    target.affinity = clampStat(target.affinity + rng.int(8, 15));
+    title = `Show of Force Against ${nameEn}`;
+    titleFa = `نمایش اقتدار و نهیب به «${nameFa}»`;
+    text = `Confronting ${nameEn} with hand on hilt before the assembly, they backed down a step before your resolve.`;
+    textFa = `در جمع بزرگان دست بر قبضه شمشیر گذاشتید و با صلابت در برابر «${nameFa}» ایستادید تا جرئت گستاخی نداشته باشد.`;
+    deltas.push('Honor +4', 'Strength +2', '+6 Fame');
+    deltasFa.push('شرافت +4', 'قدرت +2', '+6 شهرت');
   } else if (interaction === 'peace_marry') {
     const alreadyMarried = relationships.some((r) => r.role === 'Spouse' && r.alive);
     if (alreadyMarried || char.age < 17) return state;
@@ -3751,7 +3925,7 @@ export function executeFamilyMemberInteraction(
     marriedBloodEnemy: state.marriedBloodEnemy || marriedEnemy,
     familyInteractionsUsed: {
       ...(state.familyInteractionsUsed ?? {}),
-      [personId]: true,
+      [usageKey]: true,
     },
     character: char,
     realm,
@@ -3765,7 +3939,12 @@ export function executeFamilyMemberInteraction(
         age: char.age,
         locationName: loc.name,
         category: 'Family',
-        iconType: interaction === 'argue' ? 'sword' : interaction === 'gift' ? 'coin' : 'family',
+        iconType:
+          interaction === 'argue' || interaction === 'spar' || interaction === 'intimidate_foe'
+            ? 'sword'
+            : interaction === 'gift' || interaction === 'lavish_gift' || interaction === 'feast_together'
+              ? 'coin'
+              : 'family',
         title,
         titleFa,
         text,

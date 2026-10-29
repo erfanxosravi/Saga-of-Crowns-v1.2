@@ -31,12 +31,15 @@ import {
 
 interface SagaChroniclePanelProps {
   state: FullGameState;
+  initialSubTab?: 'badges' | 'milestones' | 'ancestors' | 'history';
 }
 
-export function SagaChroniclePanel({ state }: SagaChroniclePanelProps) {
+export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChroniclePanelProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
-  const [subTab, setSubTab] = useState<'badges' | 'milestones' | 'ancestors' | 'history'>('badges');
+  const [subTab, setSubTab] = useState<'badges' | 'milestones' | 'ancestors' | 'history'>(
+    initialSubTab
+  );
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | BadgeCategory>('all');
   const [inspectedBadgeId, setInspectedBadgeId] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);

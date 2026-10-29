@@ -3,20 +3,13 @@ import {
   AlertTriangle,
   Castle,
   Check,
-  ChevronDown,
-  ChevronUp,
-  Coins,
   Compass,
-  Crown,
   Flame,
   GraduationCap,
-  Heart,
-  History,
   LockOpen,
   MapPin,
   Scale,
   Shield,
-  Ship,
   Sparkles,
   Swords,
 } from 'lucide-react';
@@ -24,8 +17,8 @@ import { calculateVoyageMetrics, SETTLEMENTS, SETTLEMENTS_BY_ID } from '../data/
 import { hasBoathouse, isFortifiedEnemyCity, RaidTactic } from '../engine/gameEngine';
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import { REGION_LABELS, RELIGION_LABELS, SKILL_LABELS } from '../i18n/ui';
-import { EventIconType, FullGameState, Religion, SkillKey, TitleRank } from '../types/game';
-import { NordicAccordion, NordicSelect, NordicSelectOption } from './NordicControls';
+import { FullGameState, Religion, SkillKey, TitleRank } from '../types/game';
+import { NordicSelect, NordicSelectOption } from './NordicControls';
 import {
   NorseAccent,
   NorseBottomSheet,
@@ -113,6 +106,7 @@ const ALL_TRAINABLE_SKILLS: SkillKey[] = [
 interface ActivityCardItem {
   id: ActivitySheetId;
   category: ActivityCategoryId;
+  categoryLabel: string;
   title: string;
   description: string;
   costRiskBadge: string;
@@ -137,84 +131,6 @@ export function ActionsPanel({
   const isFa = lang === 'fa';
 
   const [activeSheet, setActiveSheet] = useState<ActivitySheetId | null>(null);
-  const [isRecentHistoryOpen, setIsRecentHistoryOpen] = useState<boolean>(true);
-  const [openCategories, setOpenCategories] = useState<Record<ActivityCategoryId, boolean>>({
-    military: true,
-    diplomacy: false,
-    personal: false,
-  });
-
-  const toggleCategory = (catId: ActivityCategoryId) => {
-    setOpenCategories((prev) => ({
-      ...prev,
-      [catId]: !prev[catId],
-    }));
-  };
-
-  const allCategoriesOpen =
-    openCategories.military && openCategories.diplomacy && openCategories.personal;
-
-  const handleToggleAllCategories = () => {
-    const nextState = !allCategoriesOpen;
-    setOpenCategories({
-      military: nextState,
-      diplomacy: nextState,
-      personal: nextState,
-    });
-  };
-
-  // Extract the last 3 performed player actions and their immediate results
-  const recentActionLogs = (state.lifeLog ?? [])
-    .filter(
-      (entry) =>
-        entry.category === 'Action' ||
-        entry.category === 'Raiding' ||
-        entry.category === 'Voyage & Sea' ||
-        entry.id.startsWith('log_act_') ||
-        entry.id.startsWith('log_raid_') ||
-        entry.id.startsWith('log_sail_') ||
-        entry.id.startsWith('log_train_') ||
-        entry.id.startsWith('log_conq_') ||
-        entry.id.startsWith('log_siege_') ||
-        entry.id.startsWith('log_settle_') ||
-        entry.id.startsWith('log_diplo_') ||
-        entry.id.startsWith('log_bldg_') ||
-        entry.id.startsWith('log_fam_')
-    )
-    .slice(-3)
-    .reverse();
-
-  const renderActionIcon = (iconType?: EventIconType, id?: string) => {
-    if (id?.startsWith('log_train_')) {
-      return <GraduationCap className="w-4 h-4 text-[#38BDF8]" />;
-    }
-    switch (iconType) {
-      case 'sword':
-        return <Swords className="w-4 h-4 text-[#F87171]" />;
-      case 'ship':
-        return <Ship className="w-4 h-4 text-[#38BDF8]" />;
-      case 'coin':
-        return <Coins className="w-4 h-4 text-[#FBBF24]" />;
-      case 'religion':
-        return <Sparkles className="w-4 h-4 text-[#A78BFA]" />;
-      case 'heart':
-        return <Heart className="w-4 h-4 text-[#F472B6]" />;
-      case 'crown':
-        return <Crown className="w-4 h-4 text-[#F59E0B]" />;
-      default:
-        return <Flame className="w-4 h-4 text-[#F59E0B]" />;
-    }
-  };
-
-  const getDeltaChipStyle = (delta: string) => {
-    if (delta.includes('+')) {
-      return 'bg-[#10B981]/15 text-[#34D399] border-[#10B981]/30';
-    }
-    if (delta.includes('-')) {
-      return 'bg-[#EF4444]/15 text-[#FCA5A5] border-[#EF4444]/30';
-    }
-    return 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/30';
-  };
 
   const otherPorts = SETTLEMENTS.filter((s) => s.id !== state.character.locationId);
   const [selectedSkill, setSelectedSkill] = useState<SkillKey>('combat');
@@ -345,6 +261,7 @@ export function ActionsPanel({
     {
       id: 'raid',
       category: 'military',
+      categoryLabel: isFa ? 'نظامی' : 'Military',
       title: isFa ? 'غارت دریایی' : 'Coastal Raid',
       description: isFa
         ? 'یورش با کشتی جنگی به صومعه‌ها و بنادر برای نقره و شهرت'
@@ -369,12 +286,13 @@ export function ActionsPanel({
       isDone: Boolean(used.raid),
       isLocked: isChild || state.realm.longships === 0 || state.realm.hirdWarriors === 0,
       accent: 'crimson',
-      icon: <Swords className="w-6 h-6" />,
+      icon: <Swords className="w-5 h-5" />,
       isRaidHero: true,
     },
     {
       id: 'land',
       category: 'military',
+      categoryLabel: isFa ? 'قلمرو' : 'Expansion',
       title: locIsFortified
         ? isFa
           ? 'فتح دژ شهر'
@@ -427,11 +345,12 @@ export function ActionsPanel({
           ? state.realm.longships <= 0 || state.realm.hirdWarriors < 12
           : state.realm.silver < 35),
       accent: locIsFortified ? 'crimson' : 'amber',
-      icon: <Castle className="w-6 h-6" />,
+      icon: <Castle className="w-5 h-5" />,
     },
     {
       id: 'hall',
       category: 'diplomacy',
+      categoryLabel: isFa ? 'دربار و شورا' : 'Court & Thing',
       title: isFa ? 'تالار و شورای ثینگ' : 'Court & Hall',
       description: isFa
         ? 'سخنرانی در ثینگ، برگزاری سوروسات تالار و استخدام شاعر'
@@ -452,11 +371,12 @@ export function ActionsPanel({
       isDone: allHallDone,
       isLocked: isChild,
       accent: 'amber',
-      icon: <Flame className="w-6 h-6" />,
+      icon: <Flame className="w-5 h-5" />,
     },
     {
       id: 'voyage',
       category: 'diplomacy',
+      categoryLabel: isFa ? 'دریانوردی' : 'Voyages',
       title: isFa ? 'تجارت و سفر دریایی' : 'Trade & Voyage',
       description: isFa
         ? `معامله در بازار ${currentLocName} یا دریانوردی به بندر جدید`
@@ -486,11 +406,12 @@ export function ActionsPanel({
       isDone: Boolean(used.trade && used.travel),
       isLocked: Boolean(isChild && !hasShips),
       accent: 'emerald',
-      icon: <Compass className="w-6 h-6" />,
+      icon: <Compass className="w-5 h-5" />,
     },
     {
       id: 'train',
       category: 'personal',
+      categoryLabel: isFa ? 'مهارت فردی' : 'Skills',
       title: isFa ? 'تمرین مهارت' : 'Train Skill',
       description: isFa
         ? 'پرورش شمشیرزنی، دریانوردی، قانون، شعر یا تجارت'
@@ -507,11 +428,12 @@ export function ActionsPanel({
       isDone: Boolean(used.train),
       isLocked: false,
       accent: 'ice',
-      icon: <GraduationCap className="w-6 h-6" />,
+      icon: <GraduationCap className="w-5 h-5" />,
     },
     {
       id: 'faith',
       category: 'personal',
+      categoryLabel: isFa ? 'آیین و کیش' : 'Faith',
       title: isFa ? 'آیین و خدایان' : 'Gods & Faith',
       description: isFa
         ? 'پیمان با خدایان کهن نورس یا پذیرش غسل تعمید مسیحی'
@@ -530,43 +452,7 @@ export function ActionsPanel({
       isDone: faithDone,
       isLocked: isChild,
       accent: 'violet',
-      icon: <Sparkles className="w-6 h-6" />,
-    },
-  ];
-
-  const categories: {
-    id: ActivityCategoryId;
-    title: string;
-    subtitle: string;
-    accent: 'crimson' | 'gold' | 'ice';
-    icon: ReactNode;
-  }[] = [
-    {
-      id: 'military',
-      title: isFa ? 'نظامی و قلمروگشایی' : 'Military & Expansion',
-      subtitle: isFa
-        ? 'غارت دریایی، فتح دژهای دشمن و گسترش املاک و مزارع'
-        : 'Coastal raids, stronghold sieges & homestead expansion',
-      accent: 'crimson',
-      icon: <Swords className="w-5 h-5" />,
-    },
-    {
-      id: 'diplomacy',
-      title: isFa ? 'دیپلماسی، تالار و دریانوردی' : 'Diplomacy, Court & Voyages',
-      subtitle: isFa
-        ? 'شورای ثینگ، سوروسات تالار، تجارت بازار و سفر دریایی'
-        : 'The Thing assembly, mead-hall feasts, trade & sea voyages',
-      accent: 'gold',
-      icon: <Flame className="w-5 h-5" />,
-    },
-    {
-      id: 'personal',
-      title: isFa ? 'فردی، مهارت و آیین' : 'Personal & Faith',
-      subtitle: isFa
-        ? 'پرورش مهارت‌های فردی و پیمان با خدایان نورس یا مسیحیت'
-        : 'Hone personal skills, walk with the Norse Gods or convert',
-      accent: 'ice',
-      icon: <GraduationCap className="w-5 h-5" />,
+      icon: <Sparkles className="w-5 h-5" />,
     },
   ];
 
@@ -586,137 +472,7 @@ export function ActionsPanel({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden space-y-3.5 text-start">
-      {/* ================================================================= */}
-      {/* RECENT HISTORY: LAST 3 PERFORMED ACTIONS & IMMEDIATE RESULTS      */}
-      {/* ================================================================= */}
-      <div className="rounded-2xl bg-[#0D1520]/95 border border-[#1E2E42] overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setIsRecentHistoryOpen((prev) => !prev)}
-          aria-expanded={isRecentHistoryOpen}
-          className="w-full px-3.5 py-2.5 flex items-center justify-between gap-2 hover:bg-[#131F30] transition-colors cursor-pointer"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#38BDF8]/15 border border-[#38BDF8]/35 flex items-center justify-center shrink-0">
-              <History className="w-3.5 h-3.5 text-[#38BDF8]" />
-            </div>
-            <div className="text-start min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
-                  {isFa ? 'تاریخچه اقدامات اخیر' : 'Recent History'}
-                </span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#162436] border border-[#243852] text-[10px] font-mono tabular-nums text-[#94A3B8]">
-                  {isFa
-                    ? `${recentActionLogs.length}/3 اقدام اخیر`
-                    : `Last ${recentActionLogs.length}/3`}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[11px] text-[#94A3B8] shrink-0">
-            <span className="hidden sm:inline">
-              {isFa ? 'نتایج فوری' : 'Immediate Results'}
-            </span>
-            {isRecentHistoryOpen ? (
-              <ChevronUp className="w-4 h-4 text-[#94A3B8]" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-[#94A3B8]" />
-            )}
-          </div>
-        </button>
-
-        {isRecentHistoryOpen && (
-          <div className="px-3.5 pb-3 pt-1 border-t border-[#172435]">
-            {recentActionLogs.length === 0 ? (
-              <div className="py-2.5 px-3 rounded-xl bg-[#091019] border border-[#182638] text-xs text-[#94A3B8] flex items-center justify-between gap-2">
-                <span>
-                  {isFa
-                    ? 'هنوز اقدامی ثبت نشده است — یکی از فعالیت‌های زیر را انجام دهید تا نتیجه فوری آن در اینجا نمایش داده شود.'
-                    : 'No actions performed yet — select an activity below to see its immediate results here.'}
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-2 mt-1">
-                {recentActionLogs.map((entry, idx) => {
-                  const isLatest = idx === 0;
-                  const entryTitle = isFa
-                    ? entry.titleFa ?? entry.title ?? 'اقدام انجام‌شده'
-                    : entry.title ?? 'Action Performed';
-                  const entryText = isFa ? entry.textFa ?? entry.text : entry.text;
-                  const entryDeltas =
-                    (isFa ? entry.deltasFa ?? entry.deltas : entry.deltas) ?? [];
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className={`p-2.5 rounded-xl border transition-colors ${
-                        isLatest
-                          ? entry.isDanger
-                            ? 'bg-[#221118]/90 border-[#EF4444]/50'
-                            : 'bg-[#122033]/95 border-[#38BDF8]/45'
-                          : 'bg-[#0A111B]/90 border-[#1A293D]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2.5">
-                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                          <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                              isLatest
-                                ? 'bg-[#1B2F48] border border-[#38BDF8]/40'
-                                : 'bg-[#121D2C] border border-[#213247]'
-                            }`}
-                          >
-                            {renderActionIcon(entry.iconType, entry.id)}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-bold text-[#F1F5F9] truncate">
-                                {entryTitle}
-                              </span>
-                              {isLatest && (
-                                <span className="px-1.5 py-0.2 rounded bg-[#38BDF8]/20 text-[#7DD3FC] text-[10px] font-semibold">
-                                  {isFa ? 'جدید' : 'Latest'}
-                                </span>
-                              )}
-                              <span className="text-[10px] font-mono tabular-nums text-[#64748B]">
-                                · {isFa ? `سال ${entry.year}` : `${entry.year} AD`}
-                              </span>
-                            </div>
-
-                            <p className="text-[11px] text-[#94A3B8] line-clamp-1 mt-0.5 leading-relaxed">
-                              {entryText}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Immediate Result Delta Chips */}
-                        {entryDeltas.length > 0 && (
-                          <div className="flex flex-wrap items-center justify-end gap-1 shrink-0 max-w-[48%]">
-                            {entryDeltas.slice(0, 3).map((d, dIdx) => (
-                              <span
-                                key={`${entry.id}_d_${dIdx}`}
-                                className={`px-1.5 py-0.5 rounded-md border text-[10px] font-mono tabular-nums font-semibold whitespace-nowrap ${getDeltaChipStyle(
-                                  d
-                                )}`}
-                              >
-                                {d}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
+    <div className="flex flex-col overflow-hidden space-y-3 text-start">
       {/* Thrall Freedom Special Banner */}
       {state.character.title === TitleRank.Thrall && (
         <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#281C0E] via-[#1B1712] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
@@ -747,171 +503,108 @@ export function ActionsPanel({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <RuneDivider
-            label={
-              isFa
-                ? 'دسته‌بندی فعالیت‌های سالانه · با رفتن به سال بعد تازه می‌شود'
-                : 'Yearly Activity Categories · Resets Next Year'
-            }
-            accent="amber"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={handleToggleAllCategories}
-          className="min-h-[34px] px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] hover:border-[#38BDF8]/50 text-[11px] font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
-        >
-          {allCategoriesOpen
-            ? isFa
-              ? 'بستن همه'
-              : 'Collapse All'
-            : isFa
-              ? 'باز کردن همه'
-              : 'Expand All'}
-        </button>
-      </div>
+      <RuneDivider
+        label={
+          isFa
+            ? 'بخش‌های فعالیت سالانه · برای باز شدن پنجره هر بخش روی آن بزنید'
+            : 'Yearly Activity Sections · Tap Any Section to Open Modal'
+        }
+        accent="amber"
+      />
 
-      {/* Collapsible Category Sections */}
-      <div className="space-y-3">
-        {categories.map((cat) => {
-          const catCards = cards.filter((c) => c.category === cat.id);
-          const doneCount = catCards.filter((c) => c.isDone).length;
-          const readyCount = catCards.filter((c) => !c.isDone && !c.isLocked).length;
-          const allCatDone = doneCount === catCards.length;
+      {/* Unified 2-Column Modal-Opening Section Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {cards.map((card) => {
+          const isRaid = Boolean(card.isRaidHero);
+          const cardSurface = isRaid
+            ? 'bg-gradient-to-br from-[#3B0D15] via-[#240D14] to-[#131826] border-[#EF4444]/80 hover:border-[#F87171]'
+            : card.accent === 'ice'
+              ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
+              : card.accent === 'emerald'
+                ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
+                : card.accent === 'violet'
+                  ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
+                  : card.accent === 'crimson'
+                    ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
+                    : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
 
-          const statusBadge = (
-            <span
-              className={`px-2 py-0.5 rounded-md text-[11px] font-mono tabular-nums font-semibold border ${
-                allCatDone
-                  ? 'bg-[#34D399]/15 text-[#34D399] border-[#34D399]/35'
-                  : readyCount > 0
-                    ? 'bg-[#F59E0B]/15 text-[#FCD34D] border-[#F59E0B]/35'
-                    : 'bg-[#1A2738] text-[#94A3B8] border-[#2A3B52]'
-              }`}
-            >
-              {allCatDone
-                ? isFa
-                  ? 'تکمیل شد ✓'
-                  : 'All Done ✓'
-                : readyCount > 0
-                  ? isFa
-                    ? `${readyCount} آماده`
-                    : `${readyCount} Ready`
-                  : isFa
-                    ? `${doneCount}/${catCards.length}`
-                    : `${doneCount}/${catCards.length}`}
-            </span>
-          );
+          const iconWrap = isRaid
+            ? 'bg-[#DC2626]/25 text-[#F87171] ring-1 ring-[#EF4444]/60'
+            : card.accent === 'ice'
+              ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
+              : card.accent === 'emerald'
+                ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
+                : card.accent === 'violet'
+                  ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
+                  : card.accent === 'crimson'
+                    ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
+                    : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
 
           return (
-            <NordicAccordion
-              key={cat.id}
-              title={cat.title}
-              subtitle={cat.subtitle}
-              icon={cat.icon}
-              accent={cat.accent}
-              statusNode={statusBadge}
-              isOpen={openCategories[cat.id]}
-              onToggle={() => toggleCategory(cat.id)}
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => setActiveSheet(card.id)}
+              className={`relative min-h-[138px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface} ${
+                card.isDone ? 'opacity-80' : ''
+              }`}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {catCards.map((card) => {
-                  const isRaid = Boolean(card.isRaidHero);
-                  const cardSurface = isRaid
-                    ? 'bg-gradient-to-br from-[#3B0D15] via-[#240D14] to-[#131826] border-[#EF4444]/80 hover:border-[#F87171] shadow-[0_8px_28px_rgba(220,38,38,0.22)]'
-                    : card.accent === 'ice'
-                      ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
-                      : card.accent === 'emerald'
-                        ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
-                        : card.accent === 'violet'
-                          ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
-                          : card.accent === 'crimson'
-                            ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
-                            : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
+              <NorseCornerOrnament accent={card.accent} />
 
-                  const iconWrap = isRaid
-                    ? 'bg-[#DC2626]/25 text-[#F87171] ring-1 ring-[#EF4444]/60 shadow-[0_0_16px_rgba(239,68,68,0.28)]'
-                    : card.accent === 'ice'
-                      ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
-                      : card.accent === 'emerald'
-                        ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
-                        : card.accent === 'violet'
-                          ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
-                          : card.accent === 'crimson'
-                            ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
-                            : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
-
-                  return (
-                    <button
-                      key={card.id}
-                      type="button"
-                      onClick={() => setActiveSheet(card.id)}
-                      className={`relative min-h-[152px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface} ${
-                        card.isDone ? 'opacity-80' : ''
-                      }`}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrap}`}
                     >
-                      <NorseCornerOrnament accent={card.accent} />
-
-                      {/* Top Icon + Cost/Risk Badge */}
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrap}`}
-                          >
-                            {card.icon}
-                          </div>
-                          {card.isDone && (
-                            <span className="w-6 h-6 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
-                              <Check className="w-3.5 h-3.5" />
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Title & Wrapped Short Description */}
-                        <div className="space-y-1 min-w-0">
-                          <div
-                            className={`text-sm font-bold whitespace-normal break-words leading-snug ${
-                              isRaid ? 'text-[#FFE4E6]' : 'text-[#F1F5F9]'
-                            }`}
-                          >
-                            {card.title}
-                          </div>
-                          <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
-                            {card.description}
-                          </p>
-                        </div>
+                      {card.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-semibold text-[#94A3B8] block">
+                        {card.categoryLabel}
+                      </span>
+                      <div
+                        className={`text-sm font-bold whitespace-normal break-words leading-snug ${
+                          isRaid ? 'text-[#FFE4E6]' : 'text-[#F1F5F9]'
+                        }`}
+                      >
+                        {card.title}
                       </div>
+                    </div>
+                  </div>
+                  {card.isDone && (
+                    <span className="w-6 h-6 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
 
-                      {/* Cost/Risk Badge + Cooldown/Availability State */}
-                      <div className="space-y-1.5 pt-2 border-t border-white/8">
-                        <div
-                          className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-semibold whitespace-normal break-words leading-snug ${getBadgeToneClasses(
-                            card.costRiskTone
-                          )}`}
-                        >
-                          {card.costRiskBadge}
-                        </div>
-                        <div
-                          className={`text-xs font-mono tabular-nums whitespace-normal break-words leading-snug ${
-                            card.isDone
-                              ? 'text-[#34D399] font-semibold'
-                              : card.isLocked
-                                ? 'text-[#94A3B8]'
-                                : isRaid
-                                  ? 'text-[#FCA5A5] font-semibold'
-                                  : 'text-[#E2E8F0]'
-                          }`}
-                        >
-                          {card.statusLabel}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+                  {card.description}
+                </p>
               </div>
-            </NordicAccordion>
+
+              <div className="pt-2 border-t border-white/8 flex flex-wrap items-center justify-between gap-1.5">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-semibold whitespace-normal break-words leading-snug ${getBadgeToneClasses(
+                    card.costRiskTone
+                  )}`}
+                >
+                  {card.costRiskBadge}
+                </span>
+                <span
+                  className={`text-[11px] font-mono tabular-nums ${
+                    card.isDone
+                      ? 'text-[#34D399] font-semibold'
+                      : card.isLocked
+                        ? 'text-[#94A3B8]'
+                        : 'text-[#E2E8F0] font-semibold'
+                  }`}
+                >
+                  {card.statusLabel}
+                </span>
+              </div>
+            </button>
           );
         })}
       </div>
