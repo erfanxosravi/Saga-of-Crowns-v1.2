@@ -288,14 +288,14 @@ export function LifeFeed({
   return (
     <div ref={rootRef} className="flex flex-col overflow-hidden pb-1 text-start">
       {showOnboarding && activeHint && (
-        <div className="mb-2.5 px-3 py-2 rounded-lg bg-[#132134] border border-[#38BDF8]/35 flex items-start justify-between gap-2.5">
+        <div className="mb-2.5 px-3 py-2 rounded-lg bg-surface-ice-tint border border-status-ice/35 flex items-start justify-between gap-2.5">
           <div className="flex items-start gap-2 min-w-0">
-            <Sparkles className="w-3.5 h-3.5 text-[#38BDF8] shrink-0 mt-0.5" />
+            <Sparkles className="w-3.5 h-3.5 text-accent-ice shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <div className="text-xs font-bold text-[#38BDF8] leading-snug">
+              <div className="text-xs font-bold text-accent-ice leading-snug">
                 {activeHint.title}
               </div>
-              <p className="text-[11px] sm:text-xs text-[#E2E8F0] leading-relaxed mt-0.5">
+              <p className="text-[11px] sm:text-xs text-ink-secondary leading-relaxed mt-0.5">
                 {activeHint.body}
               </p>
             </div>
@@ -304,7 +304,7 @@ export function LifeFeed({
             <button
               type="button"
               onClick={onDismissOnboarding}
-              className="px-2 py-1 rounded-md bg-[#0B1118]/90 hover:bg-[#0B1118] border border-[#24354C] text-[11px] font-semibold text-[#CBD5E1] hover:text-[#F8FAFC] inline-flex items-center gap-1 shrink-0 cursor-pointer whitespace-nowrap transition-colors"
+              className="px-2 py-1 rounded-md bg-surface-canvas/90 hover:bg-surface-canvas border border-border-subtle text-[11px] font-semibold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1 shrink-0 cursor-pointer whitespace-nowrap transition-colors"
             >
               <X className="w-3 h-3" />
               <span>{isFa ? 'رد کردن' : 'Skip'}</span>
@@ -314,29 +314,29 @@ export function LifeFeed({
       )}
 
       {/* Organized BitLife-Style Linear Feed with Uniform Coloring */}
-      <div className="rounded-xl border border-[#1E2D40] bg-[#101926] overflow-hidden">
+      <div className="rounded-xl border border-border-subtle bg-surface-card overflow-hidden">
         {ageGroups.map((group, groupIdx) => (
           <section
             key={`age_group_${group.age}_${group.year}_${groupIdx}`}
-            className={groupIdx > 0 ? 'border-t border-[#1E2D40]' : ''}
+            className={groupIdx > 0 ? 'border-t border-border-subtle' : ''}
           >
             {/* Slim Age & Year Header Bar */}
-            <div className="px-3 py-1.5 bg-[#131D2B] border-b border-[#1E2D40] flex items-center justify-between gap-2">
+            <div className="px-3 py-1.5 bg-surface-secondary border-b border-border-subtle flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 font-mono tabular-nums">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] shrink-0" />
-                <span className="text-xs font-extrabold text-[#F59E0B]">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-500 shrink-0" />
+                <span className="text-xs font-extrabold text-accent-amber">
                   {formatAgeLabel(group.age, lang)}
                 </span>
-                <span className="text-[#64748B]" aria-hidden="true">
+                <span className="text-ink-muted" aria-hidden="true">
                   ·
                 </span>
-                <span className="text-[11px] font-semibold text-[#94A3B8]">
+                <span className="text-[11px] font-semibold text-ink-muted">
                   {formatYearLabel(group.year, lang)}
                 </span>
               </div>
 
               {group.items.length > 1 && (
-                <span className="text-[10px] font-semibold text-[#94A3B8] font-mono tabular-nums">
+                <span className="text-[10px] font-semibold text-ink-muted font-mono tabular-nums">
                   {isFa ? `${group.items.length} رخداد` : `${group.items.length} events`}
                 </span>
               )}
@@ -359,15 +359,15 @@ export function LifeFeed({
                   return (
                     <article
                       key={`${entry.id}_${index}`}
-                      className={`px-3.5 py-3 bg-gradient-to-r from-[#1D1510] via-[#151A24] to-[#101926] flex items-start gap-2.5 ${
-                        itemIdx > 0 ? 'border-t border-[#3B2818]' : ''
+                      className={`px-3.5 py-3 bg-surface-amber-tint flex items-start gap-2.5 ${
+                        itemIdx > 0 ? 'border-t border-border-amber-subtle' : ''
                       }`}
                     >
                       <div
                         className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
                           ln.isElegy
-                            ? 'bg-rose-950/60 border-rose-500/50 text-rose-400'
-                            : 'bg-[#C8641B]/20 border-[#C8641B]/55 text-[#F59E0B]'
+                            ? 'bg-surface-crimson-tint border-border-crimson-subtle text-accent-crimson'
+                            : 'bg-gold-500/15 border-gold-500/50 text-accent-amber'
                         }`}
                       >
                         <Feather className="w-3.5 h-3.5" />
@@ -376,28 +376,28 @@ export function LifeFeed({
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center justify-between gap-1.5">
                           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="px-1.5 py-0.5 rounded bg-[#C8641B]/25 border border-[#C8641B]/50 text-[10px] font-extrabold text-[#FDE68A]">
+                            <span className="px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/45 text-[10px] font-extrabold text-accent-amber-strong">
                               {isFa ? 'خبر از سرزمین‌ها' : 'Word from the Lands'}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded bg-[#131D2B] border border-[#24354C] text-[10px] font-semibold text-[#93C5FD]">
+                            <span className="px-1.5 py-0.5 rounded bg-surface-secondary border border-border-subtle text-[10px] font-semibold text-accent-ice">
                               {isFa ? srcMeta.fa : srcMeta.en}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded bg-[#131D2B] border border-[#24354C] text-[10px] font-mono text-[#CBD5E1]">
+                            <span className="px-1.5 py-0.5 rounded bg-surface-secondary border border-border-subtle text-[10px] font-mono text-ink-secondary">
                               {isFa ? histMeta.fa : histMeta.en}
                             </span>
                             {ln.isCorrection && (
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-[10px] font-bold text-emerald-300">
+                              <span className="px-1.5 py-0.5 rounded bg-surface-emerald-tint border border-status-emerald/40 text-[10px] font-bold text-accent-emerald">
                                 {isFa ? 'اصلاح شایعه' : 'Rumor Corrected'}
                               </span>
                             )}
                             {ln.isRumor && (
-                              <span className="px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 text-[10px] font-bold text-amber-300">
+                              <span className="px-1.5 py-0.5 rounded bg-surface-secondary border border-border-amber-subtle text-[10px] font-bold text-accent-amber">
                                 {isFa ? 'شایعه تاییدنشدنی' : 'Unverified Rumor'}
                               </span>
                             )}
                           </div>
 
-                          <span className="text-[10px] font-mono text-[#94A3B8] shrink-0">
+                          <span className="text-[10px] font-mono text-ink-muted shrink-0">
                             {ln.delaySeasons === 0
                               ? isFa
                                 ? 'همین فصل'
@@ -409,23 +409,23 @@ export function LifeFeed({
                         </div>
 
                         {displayTitle && (
-                          <h3 className="mt-1.5 text-xs sm:text-[13px] font-bold text-[#FEF3C7] leading-snug whitespace-normal break-words">
+                          <h3 className="mt-1.5 text-xs sm:text-[13px] font-bold text-ink-primary leading-snug whitespace-normal break-words">
                             {displayTitle}
                           </h3>
                         )}
 
-                        <p className="mt-1 text-xs sm:text-[13px] text-[#E2E8F0] leading-relaxed whitespace-normal break-words">
+                        <p className="mt-1 text-xs sm:text-[13px] text-ink-secondary leading-relaxed whitespace-normal break-words">
                           {displayText}
                         </p>
 
                         {verseText && (
-                          <blockquote className="mt-2 ps-2.5 border-s-2 border-[#C8641B] text-[11px] italic text-[#FDE68A]/90">
+                          <blockquote className="mt-2 ps-2.5 border-s-2 border-gold-500 text-[11px] italic text-accent-amber-strong">
                             «{verseText}»
                           </blockquote>
                         )}
 
                         {ln.isSkaldDivergence && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/50 border border-purple-500/40 text-[10px] font-semibold text-purple-300">
+                          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-violet-tint border border-status-violet/40 text-[10px] font-semibold text-accent-violet">
                             <BookOpen className="w-3 h-3 shrink-0" />
                             <span>
                               {isFa
@@ -447,14 +447,14 @@ export function LifeFeed({
                 return (
                   <article
                     key={`${entry.id}_${index}`}
-                    className={`px-3 py-2.5 bg-[#101926] flex items-start gap-2.5 ${
-                      itemIdx > 0 ? 'border-t border-[#1E2D40]' : ''
+                    className={`px-3 py-2.5 bg-surface-card flex items-start gap-2.5 ${
+                      itemIdx > 0 ? 'border-t border-border-subtle' : ''
                     }`}
                   >
                     {/* Structured Category Icon Badge */}
                     <div
-                      className={`w-6 h-6 rounded-md bg-[#131D2B] border border-[#233246] flex items-center justify-center shrink-0 mt-0.5 ${
-                        entry.isDanger ? 'text-rose-500' : 'text-[#F59E0B]'
+                      className={`w-6 h-6 rounded-md bg-surface-secondary border border-border-subtle flex items-center justify-center shrink-0 mt-0.5 ${
+                        entry.isDanger ? 'text-accent-crimson' : 'text-accent-amber'
                       }`}
                     >
                       <EventCategoryIcon
@@ -470,20 +470,20 @@ export function LifeFeed({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         {displayTitle ? (
-                          <h3 className="text-xs sm:text-[13px] font-bold text-[#F1F5F9] leading-snug whitespace-normal break-words">
+                          <h3 className="text-xs sm:text-[13px] font-bold text-ink-primary leading-snug whitespace-normal break-words">
                             {displayTitle}
                           </h3>
                         ) : (
-                          <span className="text-xs font-bold text-[#F1F5F9] leading-snug">
+                          <span className="text-xs font-bold text-ink-primary leading-snug">
                             {categoryLabel}
                           </span>
                         )}
 
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#131D2B] border border-[#1E2D40] text-[10px] font-semibold text-[#94A3B8] shrink-0">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-secondary border border-border-subtle text-[10px] font-semibold text-ink-muted shrink-0">
                           {entry.isDivergence ? (
                             <>
-                              <Sparkles className="w-2.5 h-2.5 text-purple-400 shrink-0" />
-                              <span className="text-purple-400">
+                              <Sparkles className="w-2.5 h-2.5 text-accent-violet shrink-0" />
+                              <span className="text-accent-violet">
                                 {isFa ? 'تغییر تاریخ' : 'Alt-History'}
                               </span>
                             </>
@@ -493,7 +493,7 @@ export function LifeFeed({
                         </span>
                       </div>
 
-                      <p className="mt-1 text-xs sm:text-[13px] text-[#CBD5E1] leading-relaxed whitespace-normal break-words">
+                      <p className="mt-1 text-xs sm:text-[13px] text-ink-secondary leading-relaxed whitespace-normal break-words">
                         {displayText}
                       </p>
 
@@ -504,10 +504,10 @@ export function LifeFeed({
                             const tone = classifyDeltaTone(d);
                             const chipColorClass =
                               tone === 'pos'
-                                ? 'bg-emerald-500/12 border-emerald-500/30 text-emerald-500'
+                                ? 'bg-status-emerald/12 border-status-emerald/30 text-accent-emerald'
                                 : tone === 'neg'
-                                  ? 'bg-rose-500/12 border-rose-500/30 text-rose-500'
-                                  : 'bg-sky-500/12 border-sky-500/25 text-sky-500';
+                                  ? 'bg-blood-500/12 border-blood-500/30 text-accent-crimson'
+                                  : 'bg-status-ice/12 border-status-ice/25 text-accent-ice';
 
                             return (
                               <span

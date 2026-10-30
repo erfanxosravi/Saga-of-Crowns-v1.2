@@ -6,6 +6,8 @@ import {
 import { ALL_EVENTS, EVENTS_BY_ID } from '../data/events';
 import {
   calculateVoyageMetrics,
+  isSettlementActiveInYear,
+  resolveActiveSettlementId,
   SETTLEMENTS,
   SETTLEMENTS_BY_ID,
 } from '../data/geography';
@@ -114,11 +116,21 @@ export function getEraFromYear(year: number): 1 | 2 | 3 | 4 {
   return 4;
 }
 
-function getNearbyDiscoveredIds(startId: string, year: number): string[] {
-  const start = SETTLEMENTS_BY_ID[startId] ?? SETTLEMENTS[0];
+function getNearbyDiscoveredIds(startId: string, year: number, sagaMode = true): string[] {
+  const resolvedStartId = resolveActiveSettlementId(startId, year);
+  const start = SETTLEMENTS_BY_ID[resolvedStartId] ?? SETTLEMENTS[0];
   const discovered = new Set<string>([start.id]);
+  if (sagaMode) {
+    for (const s of SETTLEMENTS) {
+      if (!isSettlementActiveInYear(s, year)) continue;
+      if (s.regionGroup === start.regionGroup) {
+        discovered.add(s.id);
+      }
+    }
+    return Array.from(discovered);
+  }
   for (const s of SETTLEMENTS) {
-    if (s.foundedYear && year < s.foundedYear - 5) continue;
+    if (!isSettlementActiveInYear(s, year)) continue;
     const sameRegion = s.regionGroup === start.regionGroup;
     const dLat = Math.abs(s.lat - start.lat);
     const dLon = Math.abs(s.lon - start.lon);
@@ -126,8 +138,13 @@ function getNearbyDiscoveredIds(startId: string, year: number): string[] {
       discovered.add(s.id);
     }
   }
-  // Major emporia known by rumor to most northern mariners
-  ['hedeby', 'kaupang', 'birka', 'jorvik', 'dublin'].forEach((id) => discovered.add(id));
+  // Major emporia known by rumor to most northern mariners in non-Saga mode
+  ['hedeby', 'kaupang', 'birka', 'jorvik', 'dublin'].forEach((id) => {
+    const s = SETTLEMENTS_BY_ID[id];
+    if (s && isSettlementActiveInYear(s, year)) {
+      discovered.add(id);
+    }
+  });
   return Array.from(discovered);
 }
 
@@ -258,7 +275,10 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
   const initialSeedNum = hashSeedString(params.seedString || 'ELDSAGA');
   const rng = new SeededRNG(initialSeedNum);
 
-  const settlement = SETTLEMENTS_BY_ID[params.birthplaceId] ?? SETTLEMENTS_BY_ID['nidaros'];
+  const resolvedBirthId = resolveActiveSettlementId(params.birthplaceId, params.year);
+  const settlement =
+    SETTLEMENTS_BY_ID[resolvedBirthId] ??
+    SETTLEMENTS_BY_ID[resolveActiveSettlementId('nidaros', params.year)];
   const classCfg = SOCIAL_CLASS_CONFIG[params.socialClass];
 
   const extractedFather = params.patronymic
@@ -600,7 +620,11 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     specialTitles: params.ragnarBloodline ? ['Scion of Ragnar Lothbrok'] : [],
     relationships,
     ancestors: [],
-    discoveredSettlements: getNearbyDiscoveredIds(settlement.id, params.year),
+    discoveredSettlements: getNearbyDiscoveredIds(
+      settlement.id,
+      params.year,
+      params.sagaMode ?? true
+    ),
     flags: startingFlags,
     divergences: [],
     divergencesFa: [],
@@ -1440,6 +1464,46 @@ export function advanceTurn(state: FullGameState): FullGameState {
 
   const reached1066Now = nextYear >= 1066 && !state.epilogue1066Shown;
 
+  // Handle historical settlement transitions (e.g., Lade -> Nidaros in 997 AD, newly founded royal seats)
+  char.locationId = resolveActiveSettlementId(char.locationId, nextYear);
+  const migratedHoldingsMap = new Map<string, Holding>();
+  for (const h of realm.holdings) {
+    const activeSettleId = resolveActiveSettlementId(h.settlementId, nextYear);
+    const existing = migratedHoldingsMap.get(activeSettleId);
+    if (existing) {
+      existing.farms += h.farms;
+      existing.garrison = (existing.garrison ?? 0) + (h.garrison ?? 0);
+      existing.buildings = Array.from(new Set([...existing.buildings, ...h.buildings]));
+    } else {
+      migratedHoldingsMap.set(activeSettleId, { ...h, settlementId: activeSettleId });
+    }
+  }
+  realm.holdings = Array.from(migratedHoldingsMap.values());
+
+  const discoveredRegions = new Set(
+    state.discoveredSettlements
+      .map((id) => SETTLEMENTS_BY_ID[id]?.regionGroup)
+      .filter((r): r is RegionGroup => Boolean(r))
+  );
+  const nextDiscoveredSet = new Set<string>();
+  for (const id of state.discoveredSettlements) {
+    const resolvedId = resolveActiveSettlementId(id, nextYear);
+    const s = SETTLEMENTS_BY_ID[resolvedId];
+    if (s && isSettlementActiveInYear(s, nextYear)) {
+      nextDiscoveredSet.add(resolvedId);
+    }
+  }
+  for (const s of SETTLEMENTS) {
+    if (
+      s.foundedYear === nextYear &&
+      discoveredRegions.has(s.regionGroup) &&
+      isSettlementActiveInYear(s, nextYear)
+    ) {
+      nextDiscoveredSet.add(s.id);
+    }
+  }
+  nextDiscoveredSet.add(char.locationId);
+
   let updatedState: FullGameState = {
     ...state,
     year: nextYear,
@@ -1455,6 +1519,7 @@ export function advanceTurn(state: FullGameState): FullGameState {
     pending1066Epilogue: state.pending1066Epilogue || reached1066Now,
     settlementStatuses: currentStatuses,
     tributaries: currentTributaries,
+    discoveredSettlements: Array.from(nextDiscoveredSet),
     hefndMeter: nextHefndMeter,
     character: char,
     realm,
@@ -1606,6 +1671,7 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
   if (eff) {
     if (eff.stats) {
       (Object.keys(eff.stats) as (keyof PersonalStats)[]).forEach((k) => {
+        if (!(k in char.stats)) return;
         const d = eff.stats?.[k] ?? 0;
         if (d !== 0) {
           char.stats[k] = clampStat(char.stats[k] + d);
@@ -1616,6 +1682,7 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
     }
     if (eff.skills) {
       (Object.keys(eff.skills) as (keyof SkillsState)[]).forEach((k) => {
+        if (!(k in char.skills)) return;
         const d = eff.skills?.[k] ?? 0;
         if (d !== 0) {
           char.skills[k] = clampSkill(char.skills[k] + d);
@@ -1631,7 +1698,8 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
     }
     if (eff.landFarms) {
       realm.landFarms = Math.max(0, realm.landFarms + eff.landFarms);
-      const targetLoc = eff.moveToSettlementId || char.locationId;
+      const rawTargetLoc = eff.moveToSettlementId || char.locationId;
+      const targetLoc = resolveActiveSettlementId(rawTargetLoc, state.year);
       const existing = realm.holdings.find((h) => h.settlementId === targetLoc);
       if (existing) {
         existing.farms = Math.max(0, existing.farms + eff.landFarms);
@@ -1710,12 +1778,15 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
       }
     }
     if (eff.moveToSettlementId && SETTLEMENTS_BY_ID[eff.moveToSettlementId]) {
-      char.locationId = eff.moveToSettlementId;
+      const resolvedMoveId = resolveActiveSettlementId(eff.moveToSettlementId, state.year);
+      const destSettle = SETTLEMENTS_BY_ID[resolvedMoveId] ?? SETTLEMENTS_BY_ID[eff.moveToSettlementId];
+      char.locationId = destSettle.id;
       char.voyagesCompleted += 1;
-      getNearbyDiscoveredIds(eff.moveToSettlementId, state.year).forEach((id) => discovered.add(id));
-      deltaSummary.push(`Sailed to ${SETTLEMENTS_BY_ID[eff.moveToSettlementId].name}`);
+      discovered.add(destSettle.id);
+      getNearbyDiscoveredIds(destSettle.id, state.year).forEach((id) => discovered.add(id));
+      deltaSummary.push(`Sailed to ${destSettle.name}`);
       deltaSummaryFa.push(
-        `ورود به ${SETTLEMENTS_FA[eff.moveToSettlementId]?.name ?? SETTLEMENTS_BY_ID[eff.moveToSettlementId].name}`
+        `ورود به ${SETTLEMENTS_FA[destSettle.id]?.name ?? destSettle.name}`
       );
     }
     if (eff.spawnRival) {
@@ -2009,8 +2080,10 @@ export function executeRaidAction(
   tactic: RaidTactic
 ): FullGameState {
   if (state.yearlyActivitiesUsed?.raid) return state;
+  const resolvedTargetId = resolveActiveSettlementId(targetSettlementId, state.year);
+  const target = SETTLEMENTS_BY_ID[resolvedTargetId] ?? SETTLEMENTS_BY_ID['lindisfarne'];
+  if (!isSettlementActiveInYear(target, state.year)) return state;
   const rng = new SeededRNG(state.rngState);
-  const target = SETTLEMENTS_BY_ID[targetSettlementId] ?? SETTLEMENTS_BY_ID['lindisfarne'];
   const char = {
     ...state.character,
     stats: { ...state.character.stats },
@@ -2226,10 +2299,11 @@ export function executeRaidAction(
 }
 
 export function executeSailAction(state: FullGameState, destinationId: string): FullGameState {
-  if (state.yearlyActivitiesUsed?.travel || destinationId === state.character.locationId) return state;
+  const resolvedDestId = resolveActiveSettlementId(destinationId, state.year);
+  if (state.yearlyActivitiesUsed?.travel || resolvedDestId === state.character.locationId) return state;
   const from = SETTLEMENTS_BY_ID[state.character.locationId] ?? SETTLEMENTS[0];
-  const to = SETTLEMENTS_BY_ID[destinationId];
-  if (!to) return state;
+  const to = SETTLEMENTS_BY_ID[resolvedDestId];
+  if (!to || !isSettlementActiveInYear(to, state.year)) return state;
 
   const rng = new SeededRNG(state.rngState);
   const effectiveSeamanship =
@@ -3108,9 +3182,9 @@ export function executeCityConquestAction(
   settlementId?: string
 ): FullGameState {
   if (state.yearlyActivitiesUsed?.settle) return state;
-  const targetId = settlementId ?? state.character.locationId;
+  const targetId = resolveActiveSettlementId(settlementId ?? state.character.locationId, state.year);
   const target = SETTLEMENTS_BY_ID[targetId];
-  if (!target || !isFortifiedEnemyCity(state, target.id)) return state;
+  if (!target || !isSettlementActiveInYear(target, state.year) || !isFortifiedEnemyCity(state, target.id)) return state;
   if (state.realm.longships < 1 || state.realm.hirdWarriors < 12) return state;
 
   const rng = new SeededRNG(state.rngState);
@@ -3272,8 +3346,8 @@ export function executeBesiegeAction(
   approach: SiegeApproach = 'assault'
 ): FullGameState {
   if (state.yearlyActivitiesUsed?.raid) return state;
-  const target = SETTLEMENTS_BY_ID[settlementId];
-  if (!target) return state;
+  const target = SETTLEMENTS_BY_ID[resolveActiveSettlementId(settlementId, state.year)];
+  if (!target || !isSettlementActiveInYear(target, state.year)) return state;
   if (state.realm.longships < 1 && state.realm.hirdWarriors < 6) return state;
 
   const rng = new SeededRNG(state.rngState);
@@ -3524,8 +3598,8 @@ export function executeSettleAction(
   settlementId: string
 ): FullGameState {
   if (state.yearlyActivitiesUsed?.settle) return state;
-  const target = SETTLEMENTS_BY_ID[settlementId];
-  if (!target) return state;
+  const target = SETTLEMENTS_BY_ID[resolveActiveSettlementId(settlementId, state.year)];
+  if (!target || !isSettlementActiveInYear(target, state.year)) return state;
   const cost = 30;
   if (state.realm.silver < cost) return state;
 

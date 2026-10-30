@@ -60,14 +60,14 @@ export function StatBar({
                 : 'fill-sky-400';
 
   const iconToneClass = isLow
-    ? 'text-rose-400'
+    ? 'text-accent-crimson'
     : accent === 'health'
-      ? 'text-emerald-400'
+      ? 'text-accent-emerald'
       : accent === 'honor'
-        ? 'text-amber-300'
+        ? 'text-accent-amber'
         : accent === 'strength'
-          ? 'text-indigo-300'
-          : 'text-sky-400';
+          ? 'text-accent-violet'
+          : 'text-accent-ice';
 
   const isRtl = lang === 'fa';
   const pctWidth = Math.round(ratio * 100);
@@ -82,7 +82,7 @@ export function StatBar({
         <span className="inline-flex items-center gap-1 min-w-0">
           {icon && <span className={`shrink-0 flex items-center ${iconToneClass}`}>{icon}</span>}
           <span
-            className={`font-semibold truncate ${isLow ? 'text-rose-200' : 'text-[#E2E8F0]'}`}
+            className={`font-semibold truncate ${isLow ? 'text-accent-crimson' : 'text-ink-secondary'}`}
           >
             {label}
           </span>
@@ -96,7 +96,7 @@ export function StatBar({
           {deltaFlash !== 0 && (
             <span
               className={`text-[10px] font-bold transition-opacity duration-300 ${
-                deltaFlash > 0 ? 'text-emerald-400' : 'text-rose-400'
+                deltaFlash > 0 ? 'text-accent-emerald' : 'text-accent-crimson'
               }`}
             >
               {deltaFlash > 0 ? `+${deltaFlash}` : deltaFlash}
@@ -105,12 +105,12 @@ export function StatBar({
           <span
             className={
               isLow
-                ? 'text-rose-400 font-bold'
+                ? 'text-accent-crimson font-bold'
                 : deltaFlash > 0
-                  ? 'text-emerald-300 font-semibold'
+                  ? 'text-accent-emerald font-semibold'
                   : deltaFlash < 0
-                    ? 'text-rose-300 font-semibold'
-                    : 'text-[#CBD5E1] font-medium'
+                    ? 'text-accent-crimson font-semibold'
+                    : 'text-ink-secondary font-medium'
             }
           >
             {clamped}
@@ -120,7 +120,7 @@ export function StatBar({
 
       <div
         className={`w-full ${compact ? 'h-1.5' : 'h-2'} rounded-full overflow-hidden ring-1 ring-inset ${
-          isLow ? 'bg-rose-950/65 ring-rose-500/35' : 'bg-[#1A2738] ring-white/6'
+          isLow ? 'bg-surface-crimson-tint ring-blood-500/35' : 'bg-surface-interactive ring-white/6'
         }`}
       >
         <svg

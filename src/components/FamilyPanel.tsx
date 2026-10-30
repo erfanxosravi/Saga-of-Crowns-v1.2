@@ -367,14 +367,14 @@ export function FamilyPanel({
   ) => {
     const iconTone =
       accent === 'crimson'
-        ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
+        ? 'bg-blood-500/15 text-accent-crimson ring-1 ring-blood-500/35'
         : accent === 'ice'
-          ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
+          ? 'bg-status-ice/15 text-accent-ice ring-1 ring-status-ice/35'
           : accent === 'emerald'
-            ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/35'
+            ? 'bg-status-emerald/15 text-accent-emerald ring-1 ring-status-emerald/35'
             : accent === 'slate'
-              ? 'bg-[#64748B]/15 text-[#CBD5E1] ring-1 ring-[#64748B]/35'
-              : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/35';
+              ? 'bg-surface-secondary text-ink-secondary ring-1 ring-border-subtle'
+              : 'bg-gold-500/15 text-accent-amber ring-1 ring-gold-500/35';
 
     return (
       <div className="space-y-1.5 pt-1">
@@ -384,11 +384,11 @@ export function FamilyPanel({
             <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${iconTone}`}>
               {icon}
             </div>
-            <h3 className="font-saga text-base sm:text-lg font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+            <h3 className="font-saga text-base sm:text-lg font-bold text-ink-primary whitespace-normal break-words leading-snug">
               {title}
             </h3>
           </div>
-          <span className="px-2 py-0.5 rounded-md bg-[#131D2B] border border-[#1E2D40] text-xs font-mono tabular-nums text-[#94A3B8] shrink-0">
+          <span className="px-2 py-0.5 rounded-md bg-surface-secondary border border-border-subtle text-xs font-mono tabular-nums text-ink-muted shrink-0">
             {count}
           </span>
         </div>
@@ -414,20 +414,20 @@ export function FamilyPanel({
     const pct = Math.max(0, Math.min(100, isEnemy ? 100 - p.affinity : p.affinity));
 
     const borderClass = isEnemy
-      ? 'border-[#DC2626]/45 hover:border-[#EF4444]'
+      ? 'border-blood-600/45 hover:border-blood-500'
       : groupAccent === 'amber'
-        ? 'border-[#F59E0B]/35 hover:border-[#F59E0B]'
+        ? 'border-gold-500/35 hover:border-gold-500'
         : groupAccent === 'emerald'
-          ? 'border-[#34D399]/35 hover:border-[#34D399]'
-          : 'border-[#233246] hover:border-[#38BDF8]';
+          ? 'border-status-emerald/35 hover:border-status-emerald'
+          : 'border-border-subtle hover:border-status-ice';
 
     const barColorClass = isEnemy
-      ? 'bg-rose-500'
+      ? 'bg-blood-500'
       : pct >= 70
-        ? 'bg-emerald-500'
+        ? 'bg-status-emerald'
         : pct >= 45
-          ? 'bg-amber-500'
-          : 'bg-rose-400';
+          ? 'bg-gold-500'
+          : 'bg-blood-500';
 
     return (
       <motion.button
@@ -443,7 +443,7 @@ export function FamilyPanel({
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.985 }}
         onClick={() => openPersonSheet(p.id)}
-        className={`group relative w-full p-2.5 rounded-xl bg-[#101926] hover:bg-[#131D2B] border ${borderClass} flex flex-col gap-2 text-start transition-colors cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70`}
+        className={`group relative w-full p-2.5 rounded-xl bg-surface-card hover:bg-surface-secondary border ${borderClass} flex flex-col gap-2 text-start transition-colors cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70`}
       >
         <div className="flex items-center justify-between gap-2.5 w-full">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -462,25 +462,25 @@ export function FamilyPanel({
                   animate={{ scale: [1, 1.12, 1] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                   title={isFa ? 'وارث اول خاندان' : 'Primary Heir'}
-                  className="absolute -top-1 -end-1 w-4 h-4 rounded-full bg-[#F59E0B] text-[#0B1118] flex items-center justify-center shadow-sm"
+                  className="absolute -top-1 -end-1 w-4 h-4 rounded-full bg-gold-500 text-nordic-950 flex items-center justify-center shadow-sm"
                 >
                   <Crown className="w-2.5 h-2.5" />
                 </motion.span>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] truncate">
+              <div className="text-xs sm:text-sm font-bold text-ink-primary truncate">
                 {displayName}
                 {epText}
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-[#94A3B8] truncate mt-0.5">
+              <div className="flex items-center gap-1.5 text-[11px] text-ink-muted truncate mt-0.5">
                 <span>{ROLE_LABELS[lang][p.role]}</span>
                 <span aria-hidden="true">·</span>
                 <span className="font-mono tabular-nums">{formatAgeLabel(p.age, lang)}</span>
                 {isPrimaryHeir && (
                   <>
                     <span aria-hidden="true">·</span>
-                    <span className="text-[#F59E0B] font-semibold">
+                    <span className="text-accent-amber font-semibold">
                       {isFa ? 'وارث اول' : 'Primary Heir'}
                     </span>
                   </>
@@ -493,24 +493,24 @@ export function FamilyPanel({
             <span
               className={`text-[11px] font-mono tabular-nums font-bold ${
                 isEnemy
-                  ? 'text-rose-500'
+                  ? 'text-accent-crimson'
                   : pct >= 70
-                    ? 'text-emerald-500'
+                    ? 'text-accent-emerald'
                     : pct >= 45
-                      ? 'text-amber-500'
-                      : 'text-rose-400'
+                      ? 'text-accent-amber'
+                      : 'text-accent-crimson'
               }`}
             >
               {pct}%
             </span>
-            <div className="w-7 h-7 rounded-lg bg-[#131D2B] border border-[#1E2D40] flex items-center justify-center text-[#94A3B8] group-hover:text-[#F59E0B] transition-colors">
+            <div className="w-7 h-7 rounded-lg bg-surface-secondary border border-border-subtle flex items-center justify-center text-ink-muted group-hover:text-accent-amber transition-colors">
               {isFa ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </div>
           </div>
         </div>
 
         {/* Sleek Animated Mini Bond / Hostility Strip */}
-        <div className="h-1 w-full rounded-full bg-[#0B1118] overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-surface-canvas overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
@@ -575,14 +575,14 @@ export function FamilyPanel({
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative p-3.5 rounded-2xl bg-gradient-to-r from-[#241B11] via-[#131D2B] to-[#0F1722] border border-[#F59E0B]/45 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden"
+            className="relative p-3.5 rounded-2xl bg-gradient-to-r from-surface-amber-tint via-surface-secondary to-surface-elevated border border-gold-500/45 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden"
           >
             <NorseCornerOrnament accent="amber" />
             <div className="space-y-0.5 min-w-0">
-              <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+              <div className="text-xs sm:text-sm font-bold text-ink-primary whitespace-normal break-words">
                 {isFa ? 'بدون همسر رسمی در تالار' : 'Unmarried — Seek a Spouse'}
               </div>
-              <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+              <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
                 {isFa
                   ? 'با پیوند زناشویی، وارثان قانونی برای ادامه دودمان خود پرورش دهید.'
                   : 'Court a worthy partner to raise heirs and secure your dynasty’s future.'}
@@ -592,7 +592,7 @@ export function FamilyPanel({
               type="button"
               disabled={state.realm.silver < 15}
               onClick={() => onFamilyAction('court_spouse')}
-              className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E2D40] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+              className="min-h-[40px] px-3.5 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 text-xs font-extrabold inline-flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-colors"
             >
               <HeartHandshake className="w-4 h-4 shrink-0" />
               <span>{isFa ? 'خواستگاری و ازدواج (۱۵ نقره)' : 'Court & Marry (15 Silver)'}</span>
@@ -601,7 +601,7 @@ export function FamilyPanel({
         )}
 
         {householdList.length === 0 ? (
-          <div className="p-3 rounded-xl bg-[#131D2B]/75 border border-[#1E2D40] text-xs text-[#94A3B8]">
+          <div className="p-3 rounded-xl bg-surface-secondary/75 border border-border-subtle text-xs text-ink-muted">
             {isFa
               ? 'هنوز همسر یا فرزندی در خانه ندارید.'
               : 'No spouse or children in your household yet.'}
@@ -625,7 +625,7 @@ export function FamilyPanel({
         )}
 
         {kinList.length === 0 ? (
-          <div className="p-3 rounded-xl bg-[#131D2B]/75 border border-[#1E2D40] text-xs text-[#94A3B8]">
+          <div className="p-3 rounded-xl bg-surface-secondary/75 border border-border-subtle text-xs text-ink-muted">
             {isFa
               ? 'خویشاوند خونی زنده‌ای در کنار شما نیست.'
               : 'No living parents, siblings, or extended kin right now.'}
@@ -649,7 +649,7 @@ export function FamilyPanel({
         )}
 
         {alliesList.length === 0 ? (
-          <div className="p-3 rounded-xl bg-[#131D2B]/75 border border-[#1E2D40] text-xs text-[#94A3B8]">
+          <div className="p-3 rounded-xl bg-surface-secondary/75 border border-border-subtle text-xs text-ink-muted">
             {isFa
               ? 'هنوز خواهر یا برادر قسم‌خورده‌ای ندارید.'
               : 'No sworn shield-companions yet.'}
@@ -673,7 +673,7 @@ export function FamilyPanel({
         )}
 
         {enemiesList.length === 0 ? (
-          <div className="p-3 rounded-xl bg-[#131D2B]/75 border border-[#1E2D40] text-xs text-[#94A3B8]">
+          <div className="p-3 rounded-xl bg-surface-secondary/75 border border-border-subtle text-xs text-ink-muted">
             {isFa
               ? 'در حال حاضر هیچ دشمن خونی یا رقیب سرسختی ندارید.'
               : 'Your hall currently stands free of active rivals and blood feuds.'}
@@ -697,7 +697,7 @@ export function FamilyPanel({
         )}
 
         {valhallaItems.length === 0 ? (
-          <div className="p-3 rounded-xl bg-[#131D2B]/75 border border-[#1E2D40] text-xs text-[#94A3B8]">
+          <div className="p-3 rounded-xl bg-surface-secondary/75 border border-border-subtle text-xs text-ink-muted">
             {isFa
               ? 'هنوز هیچ‌یک از نیاکان یا خویشاوندان به تالار والهالا نپیوسته‌اند.'
               : 'No departed rulers or fallen kin have entered Valhalla’s halls yet.'}
@@ -722,7 +722,7 @@ export function FamilyPanel({
                         setValhallaNavDirection(1);
                         setSelectedValhallaKey(key);
                       }}
-                      className="w-full p-2.5 rounded-xl bg-[#101926] hover:bg-[#131D2B] border border-[#233246] hover:border-[#F59E0B]/50 flex items-center justify-between gap-2.5 text-start transition-colors cursor-pointer"
+                      className="w-full p-2.5 rounded-xl bg-surface-card hover:bg-surface-secondary border border-border-subtle hover:border-gold-500/50 flex items-center justify-between gap-2.5 text-start transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="opacity-85 grayscale-[30%] shrink-0">
@@ -736,17 +736,17 @@ export function FamilyPanel({
                           />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] truncate">
+                          <div className="text-xs sm:text-sm font-bold text-ink-primary truncate">
                             {formatPersonName(anc.fullName.replace(/"/g, ''), lang)}
                           </div>
-                          <div className="text-[11px] text-[#F59E0B] truncate mt-0.5">
+                          <div className="text-[11px] text-accent-amber truncate mt-0.5">
                             {isFa
                               ? `فرمانروای نسل ${anc.generation} · ${anc.birthYear}–${anc.deathYear}`
                               : `Gen ${anc.generation} Ruler · ${anc.birthYear}–${anc.deathYear}`}
                           </div>
                         </div>
                       </div>
-                      <div className="w-7 h-7 rounded-lg bg-[#131D2B] border border-[#1E2D40] flex items-center justify-center text-[#94A3B8] shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-surface-secondary border border-border-subtle flex items-center justify-center text-ink-muted shrink-0">
                         {isFa ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </div>
                     </motion.button>
@@ -768,7 +768,7 @@ export function FamilyPanel({
                       setValhallaNavDirection(1);
                       setSelectedValhallaKey(key);
                     }}
-                    className="w-full p-2.5 rounded-xl bg-[#101926] hover:bg-[#131D2B] border border-[#1E2D40] hover:border-[#64748B] flex items-center justify-between gap-2.5 text-start transition-colors cursor-pointer"
+                    className="w-full p-2.5 rounded-xl bg-surface-card hover:bg-surface-secondary border border-border-subtle hover:border-border-strong flex items-center justify-between gap-2.5 text-start transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div className="opacity-75 grayscale-[45%] shrink-0">
@@ -782,17 +782,17 @@ export function FamilyPanel({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs sm:text-sm font-bold text-[#CBD5E1] truncate">
+                        <div className="text-xs sm:text-sm font-bold text-ink-secondary truncate">
                           {formatPersonName(d.name, lang)}
                         </div>
-                        <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                        <div className="text-[11px] text-ink-muted truncate mt-0.5">
                           {isFa
                             ? `${ROLE_LABELS.fa[d.role]} مرحوم · ${formatAgeLabel(d.age, 'fa')}`
                             : `Late ${ROLE_LABELS.en[d.role]} · ${formatAgeLabel(d.age, 'en')}`}
                         </div>
                       </div>
                     </div>
-                    <div className="w-7 h-7 rounded-lg bg-[#131D2B] border border-[#1E2D40] flex items-center justify-center text-[#94A3B8] shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-surface-secondary border border-border-subtle flex items-center justify-center text-ink-muted shrink-0">
                       {isFa ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </div>
                   </motion.button>
@@ -804,16 +804,16 @@ export function FamilyPanel({
               <button
                 type="button"
                 onClick={() => setShowAllValhalla((v) => !v)}
-                className="w-full min-h-[40px] px-4 py-2 rounded-xl bg-[#131D2B] hover:bg-[#192638] border border-[#233246] text-xs font-semibold text-[#CBD5E1] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="w-full min-h-[40px] px-4 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-xs font-semibold text-ink-secondary inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
               >
                 {showAllValhalla ? (
                   <>
-                    <ChevronUp className="w-4 h-4 text-[#38BDF8]" />
+                    <ChevronUp className="w-4 h-4 text-accent-ice" />
                     <span>{isFa ? 'نمایش کمتر' : 'Show Fewer'}</span>
                   </>
                 ) : (
                   <>
-                    <ChevronDown className="w-4 h-4 text-[#38BDF8]" />
+                    <ChevronDown className="w-4 h-4 text-accent-ice" />
                     <span>
                       {isFa
                         ? `نمایش تمام ${valhallaItems.length} درگذشته در والهالا`
@@ -890,12 +890,12 @@ export function FamilyPanel({
         ).length;
 
         const auraRingColor = isEnemy
-          ? 'ring-rose-500/50 shadow-[0_0_24px_rgba(244,63,94,0.35)]'
+          ? 'ring-blood-500/50 shadow-[0_0_24px_rgba(244,63,94,0.35)]'
           : isSpouse || isPrimaryHeir
-            ? 'ring-[#F59E0B]/60 shadow-[0_0_24px_rgba(245,158,11,0.35)]'
+            ? 'ring-gold-500/60 shadow-[0_0_24px_rgba(245,158,11,0.35)]'
             : isAlly
-              ? 'ring-emerald-400/55 shadow-[0_0_24px_rgba(52,211,153,0.32)]'
-              : 'ring-[#38BDF8]/50 shadow-[0_0_24px_rgba(56,189,248,0.28)]';
+              ? 'ring-status-emerald/55 shadow-[0_0_24px_rgba(52,211,153,0.32)]'
+              : 'ring-status-ice/50 shadow-[0_0_24px_rgba(56,189,248,0.28)]';
 
         const triggerInteraction = (
           interaction: FamilyInteractionType,
@@ -1227,7 +1227,7 @@ export function FamilyPanel({
                   <motion.span
                     animate={{ scale: [1, 1.15, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -top-1.5 -end-1.5 w-5 h-5 rounded-full bg-[#F59E0B] text-[#0B1118] flex items-center justify-center shadow"
+                    className="absolute -top-1.5 -end-1.5 w-5 h-5 rounded-full bg-gold-500 text-nordic-950 flex items-center justify-center shadow"
                   >
                     <Crown className="w-3 h-3" />
                   </motion.span>
@@ -1237,7 +1237,7 @@ export function FamilyPanel({
             footer={
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                 <div className="flex items-center gap-3 shrink-0">
-                  <div className="inline-flex items-center gap-1.5 font-mono tabular-nums text-[#F59E0B] font-bold">
+                  <div className="inline-flex items-center gap-1.5 font-mono tabular-nums text-accent-amber font-bold">
                     <Coins className="w-3.5 h-3.5" />
                     <span>
                       {isFa
@@ -1245,10 +1245,10 @@ export function FamilyPanel({
                         : `Treasury: ${state.realm.silver} Silver`}
                     </span>
                   </div>
-                  <span className="text-[#64748B]" aria-hidden="true">
+                  <span className="text-ink-muted" aria-hidden="true">
                     ·
                   </span>
-                  <span className="text-[#94A3B8] font-mono tabular-nums">
+                  <span className="text-ink-muted font-mono tabular-nums">
                     {isFa
                       ? `تعاملات امسال: ${usedWithThisPersonCount}`
                       : `Actions this year: ${usedWithThisPersonCount}`}
@@ -1261,7 +1261,7 @@ export function FamilyPanel({
                     <button
                       type="button"
                       onClick={() => switchPersonInModal(1)}
-                      className="w-fit max-w-full min-h-[36px] px-3 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#38BDF8]/60 text-xs font-bold text-[#F1F5F9] inline-flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+                      className="w-fit max-w-full min-h-[36px] px-3 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-status-ice/60 text-xs font-bold text-ink-primary inline-flex items-center gap-2 cursor-pointer transition-all active:scale-95"
                     >
                       <div className="shrink-0">
                         <VikingPortrait
@@ -1275,9 +1275,9 @@ export function FamilyPanel({
                       </div>
                       <span className="whitespace-nowrap">{nextPersonName}</span>
                       {isFa ? (
-                        <ChevronLeft className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronLeft className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       )}
                     </button>
                   </div>
@@ -1288,12 +1288,12 @@ export function FamilyPanel({
                     <button
                       type="button"
                       onClick={() => switchPersonInModal(-1)}
-                      className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#38BDF8]/60 text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                      className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-status-ice/60 text-xs font-bold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                     >
                       {isFa ? (
-                        <ChevronRight className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       ) : (
-                        <ChevronLeft className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronLeft className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       )}
                       <div className="shrink-0">
                         <VikingPortrait
@@ -1311,7 +1311,7 @@ export function FamilyPanel({
                     <button
                       type="button"
                       onClick={() => switchPersonInModal(1)}
-                      className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#38BDF8]/60 text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                      className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-status-ice/60 text-xs font-bold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                     >
                       <span className="whitespace-nowrap">{nextPersonName}</span>
                       <div className="shrink-0">
@@ -1325,9 +1325,9 @@ export function FamilyPanel({
                         />
                       </div>
                       {isFa ? (
-                        <ChevronLeft className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronLeft className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                       )}
                     </button>
                   </div>
@@ -1347,7 +1347,7 @@ export function FamilyPanel({
                 {/* ========================================================= */}
                 {/* HERO CHARACTER SUMMARY & DIALOGUE CARD                    */}
                 {/* ========================================================= */}
-                <div className="relative p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3 overflow-hidden">
+                <div className="relative p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3 overflow-hidden">
                   <NorseCornerOrnament accent={isEnemy ? 'crimson' : isSpouse ? 'amber' : 'ice'} />
 
                   {/* Floating Action Reward Burst */}
@@ -1364,12 +1364,12 @@ export function FamilyPanel({
                         <span
                           className={`px-2.5 py-1 rounded-lg border text-[11px] font-extrabold shadow-sm ${
                             floatingBurst.tone === 'amber'
-                              ? 'bg-[#F59E0B]/20 border-[#F59E0B]/50 text-[#F59E0B]'
+                              ? 'bg-gold-500/20 border-gold-500/50 text-accent-amber'
                               : floatingBurst.tone === 'crimson'
-                                ? 'bg-rose-500/20 border-rose-500/50 text-rose-400'
+                                ? 'bg-blood-500/20 border-blood-500/50 text-accent-crimson'
                                 : floatingBurst.tone === 'violet'
-                                  ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
-                                  : 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                                  ? 'bg-status-violet/20 border-status-violet/50 text-accent-violet'
+                                  : 'bg-status-emerald/20 border-status-emerald/50 text-accent-emerald'
                           }`}
                         >
                           {floatingBurst.label}
@@ -1380,23 +1380,23 @@ export function FamilyPanel({
 
                   {/* Top Status Row: Location + Succession + Temperament */}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex flex-wrap items-center gap-2 text-[#CBD5E1]">
+                    <div className="flex flex-wrap items-center gap-2 text-ink-secondary">
                       <span className="inline-flex items-center gap-1 font-semibold">
-                        <MapPin className="w-3.5 h-3.5 text-[#38BDF8]" />
+                        <MapPin className="w-3.5 h-3.5 text-accent-ice" />
                         <span>{pLocName}</span>
                       </span>
-                      <span className="text-[#64748B]" aria-hidden="true">
+                      <span className="text-ink-muted" aria-hidden="true">
                         ·
                       </span>
-                      <span className="text-[#94A3B8]">
+                      <span className="text-ink-muted">
                         {isFa ? `متولد ${birthYear} میلادی` : `Born ${birthYear} AD`}
                       </span>
                       {isPrimaryHeir && (
                         <>
-                          <span className="text-[#64748B]" aria-hidden="true">
+                          <span className="text-ink-muted" aria-hidden="true">
                             ·
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[#F59E0B] font-bold">
+                          <span className="inline-flex items-center gap-1 text-accent-amber font-bold">
                             <Crown className="w-3.5 h-3.5" />
                             <span>{isFa ? 'وارث اول دودمان' : 'Primary Dynasty Heir'}</span>
                           </span>
@@ -1404,17 +1404,17 @@ export function FamilyPanel({
                       )}
                     </div>
 
-                    <span className="text-xs font-bold text-[#38BDF8]">{temperament}</span>
+                    <span className="text-xs font-bold text-accent-ice">{temperament}</span>
                   </div>
 
                   {/* 5-Segment Animated Relationship & Loyalty Meter */}
-                  <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-1.5">
+                  <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="inline-flex items-center gap-1.5 font-bold text-[#F1F5F9]">
+                      <span className="inline-flex items-center gap-1.5 font-bold text-ink-primary">
                         {isEnemy ? (
-                          <Swords className="w-3.5 h-3.5 text-rose-500" />
+                          <Swords className="w-3.5 h-3.5 text-accent-crimson" />
                         ) : (
-                          <Heart className="w-3.5 h-3.5 text-emerald-500" />
+                          <Heart className="w-3.5 h-3.5 text-accent-emerald" />
                         )}
                         <span>
                           {isEnemy
@@ -1433,12 +1433,12 @@ export function FamilyPanel({
                         transition={{ type: 'spring', stiffness: 360, damping: 18 }}
                         className={`font-mono tabular-nums font-extrabold ${
                           isEnemy
-                            ? 'text-rose-500'
+                            ? 'text-accent-crimson'
                             : pct >= 70
-                              ? 'text-emerald-500'
+                              ? 'text-accent-emerald'
                               : pct >= 45
-                                ? 'text-amber-500'
-                                : 'text-rose-400'
+                                ? 'text-accent-amber'
+                                : 'text-accent-crimson'
                         }`}
                       >
                         {pct}%
@@ -1449,16 +1449,16 @@ export function FamilyPanel({
                       {[1, 2, 3, 4, 5].map((seg) => {
                         const active = seg <= filledSegments;
                         const activeColor = isEnemy
-                          ? 'bg-rose-500'
+                          ? 'bg-blood-500'
                           : pct >= 70
-                            ? 'bg-emerald-500'
+                            ? 'bg-status-emerald'
                             : pct >= 45
-                              ? 'bg-amber-500'
-                              : 'bg-rose-500';
+                              ? 'bg-gold-500'
+                              : 'bg-blood-500';
                         return (
                           <div
                             key={seg}
-                            className="h-2 rounded-full bg-[#0B1118] overflow-hidden"
+                            className="h-2 rounded-full bg-surface-canvas overflow-hidden"
                           >
                             <motion.div
                               initial={{ width: 0 }}
@@ -1485,18 +1485,18 @@ export function FamilyPanel({
                     transition={{ duration: 0.2 }}
                     className={`p-3 rounded-xl border transition-colors ${
                       lastModalFeedback
-                        ? 'bg-emerald-500/10 border-emerald-500/40'
-                        : 'bg-[#101926] border-[#1E2D40]'
+                        ? 'bg-status-emerald/10 border-status-emerald/40'
+                        : 'bg-surface-card border-border-subtle'
                     }`}
                   >
                     {lastModalFeedback && (
-                      <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-500 mb-1">
+                      <div className="flex items-center gap-1.5 text-xs font-extrabold text-accent-emerald mb-1">
                         <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <span>{lastModalFeedback.message}</span>
                       </div>
                     )}
-                    <div className="flex items-start gap-2 text-xs text-[#CBD5E1] leading-relaxed">
-                      <Quote className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5 opacity-80" />
+                    <div className="flex items-start gap-2 text-xs text-ink-secondary leading-relaxed">
+                      <Quote className="w-4 h-4 text-accent-amber shrink-0 mt-0.5 opacity-80" />
                       <p className="italic">
                         {lastModalFeedback ? lastModalFeedback.quote : defaultDialogueQuote}
                       </p>
@@ -1507,14 +1507,14 @@ export function FamilyPanel({
                 {/* ========================================================= */}
                 {/* SEGMENTED MODAL TABS: 1. INTERACTIONS  |  2. DOSSIER      */}
                 {/* ========================================================= */}
-                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#101926] border border-[#1E2D40]">
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-surface-card border border-border-subtle">
                   <button
                     type="button"
                     onClick={() => setModalTab('interactions')}
                     className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                       modalTab === 'interactions'
-                        ? 'bg-[#F59E0B] text-[#0B1118] shadow-xs'
-                        : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                        ? 'bg-gold-500 text-nordic-950 shadow-xs'
+                        : 'text-ink-muted hover:text-ink-primary'
                     }`}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -1534,8 +1534,8 @@ export function FamilyPanel({
                     onClick={() => setModalTab('dossier')}
                     className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                       modalTab === 'dossier'
-                        ? 'bg-[#38BDF8] text-[#0B1118] shadow-xs'
-                        : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                        ? 'bg-status-ice text-nordic-950 shadow-xs'
+                        : 'text-ink-muted hover:text-ink-primary'
                     }`}
                   >
                     <UserCheck className="w-3.5 h-3.5" />
@@ -1562,14 +1562,14 @@ export function FamilyPanel({
 
                             const iconBoxTone =
                               opt.tone === 'amber'
-                                ? 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/35'
+                                ? 'bg-gold-500/15 text-accent-amber border-gold-500/35'
                                 : opt.tone === 'emerald'
-                                  ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/35'
+                                  ? 'bg-status-emerald/15 text-accent-emerald border-status-emerald/35'
                                   : opt.tone === 'violet'
-                                    ? 'bg-purple-500/15 text-purple-400 border-purple-500/35'
+                                    ? 'bg-status-violet/15 text-accent-violet border-status-violet/35'
                                     : opt.tone === 'crimson'
-                                      ? 'bg-rose-500/15 text-rose-500 border-rose-500/35'
-                                      : 'bg-[#38BDF8]/15 text-[#38BDF8] border-[#38BDF8]/35';
+                                      ? 'bg-blood-500/15 text-accent-crimson border-blood-500/35'
+                                      : 'bg-status-ice/15 text-accent-ice border-status-ice/35';
 
                             return (
                               <motion.button
@@ -1594,10 +1594,10 @@ export function FamilyPanel({
                                     opt.tone
                                   )
                                 }
-                                className={`p-3 rounded-xl bg-[#101926] hover:bg-[#131D2B] disabled:opacity-55 border ${
+                                className={`p-3 rounded-xl bg-surface-card hover:bg-surface-secondary disabled:opacity-55 border ${
                                   isUsed
-                                    ? 'border-emerald-500/45'
-                                    : 'border-[#1E2D40] hover:border-[#38BDF8]/65'
+                                    ? 'border-status-emerald/45'
+                                    : 'border-border-subtle hover:border-status-ice/65'
                                 } flex flex-col justify-between gap-2.5 text-start transition-colors cursor-pointer`}
                               >
                                 <div className="flex items-start gap-2.5 min-w-0">
@@ -1607,23 +1607,23 @@ export function FamilyPanel({
                                     {opt.icon}
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] leading-snug">
+                                    <div className="text-xs sm:text-sm font-bold text-ink-primary leading-snug">
                                       {opt.title}
                                     </div>
-                                    <p className="text-[11px] text-[#94A3B8] leading-relaxed mt-0.5">
+                                    <p className="text-[11px] text-ink-muted leading-relaxed mt-0.5">
                                       {opt.subtitle}
                                     </p>
                                   </div>
                                 </div>
 
-                                <div className="pt-2 border-t border-[#1E2D40]/80 flex items-center justify-between gap-2 w-full">
+                                <div className="pt-2 border-t border-border-subtle/80 flex items-center justify-between gap-2 w-full">
                                   <span
                                     className={`text-[11px] font-mono font-bold ${
                                       isUsed
-                                        ? 'text-emerald-500'
+                                        ? 'text-accent-emerald'
                                         : cantAfford
-                                          ? 'text-[#64748B]'
-                                          : 'text-[#F59E0B]'
+                                          ? 'text-ink-muted'
+                                          : 'text-accent-amber'
                                     }`}
                                   >
                                     {isUsed
@@ -1633,7 +1633,7 @@ export function FamilyPanel({
                                       : opt.effectLabel}
                                   </span>
                                   {!isUsed && (
-                                    <span className="text-[11px] font-bold text-[#38BDF8]">
+                                    <span className="text-[11px] font-bold text-accent-ice">
                                       {isFa ? 'انجام ←' : 'Perform →'}
                                     </span>
                                   )}
@@ -1655,7 +1655,7 @@ export function FamilyPanel({
                               <button
                                 type="button"
                                 onClick={() => setConfirmingDivorce(true)}
-                                className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#151118] hover:bg-[#22141B] border border-[#581C26] text-xs font-semibold text-[#CBD5E1] hover:text-[#FCA5A5] cursor-pointer transition-colors"
+                                className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-surface-violet-tint hover:bg-surface-crimson-tint border border-border-crimson-subtle text-xs font-semibold text-ink-secondary hover:text-accent-crimson cursor-pointer transition-colors"
                               >
                                 {isFa
                                   ? 'درخواست طلاق طبق قانون نورس…'
@@ -1667,17 +1667,17 @@ export function FamilyPanel({
                                 animate={{ opacity: 1, scale: 1 }}
                                 role="alertdialog"
                                 aria-label={isFa ? 'تأیید طلاق' : 'Confirm Divorce'}
-                                className="p-3.5 rounded-2xl bg-[#241016] border border-[#EF4444] flex flex-col overflow-hidden space-y-3"
+                                className="p-3.5 rounded-2xl bg-surface-crimson-tint border border-blood-500 flex flex-col overflow-hidden space-y-3"
                               >
                                 <div className="flex items-start gap-2.5">
-                                  <AlertTriangle className="w-5 h-5 text-[#F87171] shrink-0 mt-0.5" />
+                                  <AlertTriangle className="w-5 h-5 text-accent-crimson shrink-0 mt-0.5" />
                                   <div className="space-y-1 min-w-0">
-                                    <div className="text-xs sm:text-sm font-bold text-[#FFE4E6] whitespace-normal break-words">
+                                    <div className="text-xs sm:text-sm font-bold text-accent-crimson whitespace-normal break-words">
                                       {isFa
                                         ? `آیا از طلاق دادن «${pName}» مطمئن هستید؟`
                                         : `Divorce ${pName}?`}
                                     </div>
-                                    <p className="text-xs text-[#FECACA] whitespace-normal break-words leading-relaxed">
+                                    <p className="text-xs text-accent-crimson whitespace-normal break-words leading-relaxed">
                                       {isFa
                                         ? `بازپرداخت مهریه: ${divorceCost} نقره · کاهش شادی ۱۴- · ۴۰٪ احتمال آغاز کینه خونی با خاندان همسر.`
                                         : `Settlement cost: ${divorceCost} Silver · -14 Joy · 40% risk of sparking a Blood Feud with their kin.`}
@@ -1689,7 +1689,7 @@ export function FamilyPanel({
                                   <button
                                     type="button"
                                     onClick={() => setConfirmingDivorce(false)}
-                                    className="min-h-[40px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1C2A3E] border border-[#2C415C] text-xs font-bold text-[#F1F5F9] cursor-pointer transition-colors"
+                                    className="min-h-[40px] px-3 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-strong text-xs font-bold text-ink-primary cursor-pointer transition-colors"
                                   >
                                     {isFa ? 'انصراف' : 'Cancel'}
                                   </button>
@@ -1700,7 +1700,7 @@ export function FamilyPanel({
                                       onFamilyAction('divorce_spouse');
                                       closePersonSheet();
                                     }}
-                                    className="min-h-[40px] px-3 py-2 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] text-xs font-extrabold text-white cursor-pointer transition-colors"
+                                    className="min-h-[40px] px-3 py-2 rounded-xl bg-blood-600 hover:bg-blood-500 text-xs font-extrabold text-white cursor-pointer transition-colors"
                                   >
                                     {isFa
                                       ? `تأیید طلاق (${divorceCost} نقره)`
@@ -1716,7 +1716,7 @@ export function FamilyPanel({
                       /* Enemy / Blood Feud Options */
                       <div className="space-y-2.5">
                         {!isAdult ? (
-                          <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] text-xs text-[#94A3B8] leading-relaxed">
+                          <div className="p-3 rounded-xl bg-surface-card border border-border-subtle text-xs text-ink-muted leading-relaxed">
                             {isFa
                               ? 'پس از رسیدن به ۱۷ سالگی می‌توانید این کینه را با دوئل هولم‌گانگ، مذاکره یا خون‌بها یکسره کنید.'
                               : 'Reach age 17 to settle this feud by Holmgang duel, Wergild silver, or peace marriage.'}
@@ -1731,26 +1731,26 @@ export function FamilyPanel({
                                 onFamilyAction('holmgang_rival', p.id);
                                 closePersonSheet();
                               }}
-                              className="p-3 rounded-xl bg-[#241016] hover:bg-[#31121A] border border-[#EF4444] flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
+                              className="p-3 rounded-xl bg-surface-crimson-tint hover:bg-surface-crimson-tint border border-blood-500 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
                             >
                               <div className="flex items-start gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-lg bg-blood-500/20 text-accent-crimson border border-blood-500/40 flex items-center justify-center shrink-0 mt-0.5">
                                   <Swords className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                                  <div className="text-xs sm:text-sm font-bold text-ink-primary">
                                     {isFa
                                       ? 'دوئل تن‌به‌تن (هولم‌گانگ)'
                                       : 'Challenge to Holmgang Duel'}
                                   </div>
-                                  <p className="text-[11px] text-[#CBD5E1] mt-0.5">
+                                  <p className="text-[11px] text-ink-secondary mt-0.5">
                                     {isFa
                                       ? 'نبرد مستقیم در حلقه مقدس برای پایان دادن به دشمنی و کسب شهرت'
                                       : 'Single combat in the staked ring to settle the feud for good'}
                                   </p>
                                 </div>
                               </div>
-                              <div className="pt-2 border-t border-rose-500/30 flex items-center justify-between text-[11px] font-bold text-rose-400">
+                              <div className="pt-2 border-t border-blood-500/30 flex items-center justify-between text-[11px] font-bold text-accent-crimson">
                                 <span>{isFa ? 'نبرد مرگ و زندگی · +شهرت' : 'High Stakes · +Fame'}</span>
                                 <span>{isFa ? 'ورود به نبرد ←' : 'Fight →'}</span>
                               </div>
@@ -1776,26 +1776,26 @@ export function FamilyPanel({
                                   'ice'
                                 )
                               }
-                              className="p-3 rounded-xl bg-[#101926] hover:bg-[#131D2B] disabled:opacity-50 border border-[#1E2D40] hover:border-[#38BDF8]/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
+                              className="p-3 rounded-xl bg-surface-card hover:bg-surface-secondary disabled:opacity-50 border border-border-subtle hover:border-status-ice/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
                             >
                               <div className="flex items-start gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/35 flex items-center justify-center shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-lg bg-status-ice/15 text-accent-ice border border-status-ice/35 flex items-center justify-center shrink-0 mt-0.5">
                                   <Scale className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                                  <div className="text-xs sm:text-sm font-bold text-ink-primary">
                                     {isFa
                                       ? 'اعزام پیک صلح و مذاکره سیاسی'
                                       : 'Send Diplomatic Peace Envoy'}
                                   </div>
-                                  <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                                  <p className="text-[11px] text-ink-muted mt-0.5">
                                     {isFa
                                       ? 'کاهش خصومت با دیپلماسی (امکان تبدیل رقیب به هم‌پیمان)'
                                       : 'Reduce hostility via diplomacy; may reconcile them into an ally'}
                                   </p>
                                 </div>
                               </div>
-                              <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono font-bold text-[#F59E0B]">
+                              <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-[11px] font-mono font-bold text-accent-amber">
                                 <span>
                                   {famUsed[`${p.id}_send_envoy`]
                                     ? isFa
@@ -1806,7 +1806,7 @@ export function FamilyPanel({
                                       : '10 Silver · -Hostility'}
                                 </span>
                                 {!famUsed[`${p.id}_send_envoy`] && (
-                                  <span className="text-[#38BDF8]">{isFa ? 'ارسال ←' : 'Send →'}</span>
+                                  <span className="text-accent-ice">{isFa ? 'ارسال ←' : 'Send →'}</span>
                                 )}
                               </div>
                             </motion.button>
@@ -1829,26 +1829,26 @@ export function FamilyPanel({
                                   'amber'
                                 )
                               }
-                              className="p-3 rounded-xl bg-[#101926] hover:bg-[#131D2B] disabled:opacity-50 border border-[#1E2D40] hover:border-[#F59E0B]/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
+                              className="p-3 rounded-xl bg-surface-card hover:bg-surface-secondary disabled:opacity-50 border border-border-subtle hover:border-gold-500/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
                             >
                               <div className="flex items-start gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/35 flex items-center justify-center shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-lg bg-gold-500/15 text-accent-amber border border-gold-500/35 flex items-center justify-center shrink-0 mt-0.5">
                                   <Shield className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                                  <div className="text-xs sm:text-sm font-bold text-ink-primary">
                                     {isFa
                                       ? 'نمایش اقتدار و نهیب در شورا'
                                       : 'Show of Force at Assembly'}
                                   </div>
-                                  <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                                  <p className="text-[11px] text-ink-muted mt-0.5">
                                     {isFa
                                       ? 'ایستادگی با صلابت در برابر رقیب برای کسب شرافت و شهرت'
                                       : 'Stand firm against your rival before the freemen (+Honor, +Fame)'}
                                   </p>
                                 </div>
                               </div>
-                              <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono font-bold text-emerald-500">
+                              <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-[11px] font-mono font-bold text-accent-emerald">
                                 <span>
                                   {famUsed[`${p.id}_intimidate_foe`]
                                     ? isFa
@@ -1870,28 +1870,28 @@ export function FamilyPanel({
                                 onFamilyAction('pay_wergild', p.id);
                                 closePersonSheet();
                               }}
-                              className="p-3 rounded-xl bg-[#101926] hover:bg-[#131D2B] disabled:opacity-50 border border-[#1E2D40] hover:border-[#F59E0B]/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
+                              className="p-3 rounded-xl bg-surface-card hover:bg-surface-secondary disabled:opacity-50 border border-border-subtle hover:border-gold-500/60 flex flex-col justify-between gap-2.5 text-start cursor-pointer transition-colors"
                             >
                               <div className="flex items-start gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/35 flex items-center justify-center shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-lg bg-gold-500/15 text-accent-amber border border-gold-500/35 flex items-center justify-center shrink-0 mt-0.5">
                                   <Gift className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                                  <div className="text-xs sm:text-sm font-bold text-ink-primary">
                                     {isFa
                                       ? 'پرداخت خون‌بهای ورگیلد (صلح کامل)'
                                       : 'Pay Wergild Blood-Price'}
                                   </div>
-                                  <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                                  <p className="text-[11px] text-ink-muted mt-0.5">
                                     {isFa
                                       ? 'پایان فوری و رسمی دشمنی خونی طبق سنت حقوقی اسکاندیناوی'
                                       : 'End the blood feud immediately by paying traditional compensation'}
                                   </p>
                                 </div>
                               </div>
-                              <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono font-bold text-[#F59E0B]">
+                              <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-[11px] font-mono font-bold text-accent-amber">
                                 <span>{isFa ? '۳۰ نقره · پایان قطعی کینه' : '30 Silver · End Feud'}</span>
-                                <span className="text-[#38BDF8]">{isFa ? 'پرداخت ←' : 'Pay →'}</span>
+                                <span className="text-accent-ice">{isFa ? 'پرداخت ←' : 'Pay →'}</span>
                               </div>
                             </motion.button>
 
@@ -1903,26 +1903,26 @@ export function FamilyPanel({
                                 onClick={() =>
                                   triggerInteraction('peace_marry', '', '', '', 'emerald', true)
                                 }
-                                className="sm:col-span-2 p-3 rounded-xl bg-[#101926] hover:bg-[#131D2B] border border-[#38BDF8]/50 flex items-center justify-between gap-3 text-start cursor-pointer transition-colors"
+                                className="sm:col-span-2 p-3 rounded-xl bg-surface-card hover:bg-surface-secondary border border-status-ice/50 flex items-center justify-between gap-3 text-start cursor-pointer transition-colors"
                               >
                                 <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                                  <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/35 flex items-center justify-center shrink-0 mt-0.5">
+                                  <div className="w-8 h-8 rounded-lg bg-status-ice/15 text-accent-ice border border-status-ice/35 flex items-center justify-center shrink-0 mt-0.5">
                                     <HeartHandshake className="w-4 h-4" />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                                    <div className="text-xs sm:text-sm font-bold text-ink-primary">
                                       {isFa
                                         ? 'پیشنهاد وصلتِ صلح و پایان دشمنی خونی'
                                         : 'Propose Peace-Weaving Marriage'}
                                     </div>
-                                    <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                                    <p className="text-[11px] text-ink-muted mt-0.5">
                                       {isFa
                                         ? 'تبدیل کینه خونی به پیوند زناشویی و افزایش ثبات قلمرو (+۱۲ شادی، +۱۰ ثبات)'
                                         : 'Turn blood feud into a marital alliance (+12 Joy, +10 Stability)'}
                                     </p>
                                   </div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-lg bg-[#38BDF8]/15 border border-[#38BDF8]/35 text-[#38BDF8] text-[11px] font-bold shrink-0">
+                                <span className="px-2.5 py-1 rounded-lg bg-status-ice/15 border border-status-ice/35 text-accent-ice text-[11px] font-bold shrink-0">
                                   {isFa ? 'پیمان ازدواج' : 'Peace Union'}
                                 </span>
                               </motion.button>
@@ -1946,146 +1946,146 @@ export function FamilyPanel({
                   >
                     {/* 4 Graphical Animated Attribute Cards (2x2 Grid) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-2">
+                      <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F1F5F9]">
-                            <Heart className="w-3.5 h-3.5 text-teal-500" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-primary">
+                            <Heart className="w-3.5 h-3.5 text-accent-emerald" />
                             <span>{isFa ? 'سلامتی و بنیه بدنی' : 'Health & Vitality'}</span>
                           </span>
-                          <span className="text-xs font-mono font-extrabold text-teal-500">
+                          <span className="text-xs font-mono font-extrabold text-accent-emerald">
                             {detailedStats.health}%
                           </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-[#0B1118] overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${detailedStats.health}%` }}
                             transition={{ type: 'spring', stiffness: 130, damping: 20 }}
-                            className="h-full rounded-full bg-teal-500"
+                            className="h-full rounded-full bg-status-emerald"
                           />
                         </div>
-                        <div className="text-[11px] text-[#94A3B8]">
+                        <div className="text-[11px] text-ink-muted">
                           {getStatGradeLabel('health', detailedStats.health, isFa)}
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-2">
+                      <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F1F5F9]">
-                            <Swords className="w-3.5 h-3.5 text-rose-500" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-primary">
+                            <Swords className="w-3.5 h-3.5 text-accent-crimson" />
                             <span>{isFa ? 'قدرت رزمی و شجاعت' : 'Martial Prowess'}</span>
                           </span>
-                          <span className="text-xs font-mono font-extrabold text-rose-500">
+                          <span className="text-xs font-mono font-extrabold text-accent-crimson">
                             {detailedStats.martial}/99
                           </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-[#0B1118] overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${detailedStats.martial}%` }}
                             transition={{ type: 'spring', stiffness: 130, damping: 20, delay: 0.04 }}
-                            className="h-full rounded-full bg-rose-500"
+                            className="h-full rounded-full bg-blood-500"
                           />
                         </div>
-                        <div className="text-[11px] text-[#94A3B8]">
+                        <div className="text-[11px] text-ink-muted">
                           {getStatGradeLabel('martial', detailedStats.martial, isFa)}
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-2">
+                      <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F1F5F9]">
-                            <Brain className="w-3.5 h-3.5 text-amber-500" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-primary">
+                            <Brain className="w-3.5 h-3.5 text-accent-amber" />
                             <span>{isFa ? 'خرد، ذکاوت و تدبیر' : 'Wisdom & Cunning'}</span>
                           </span>
-                          <span className="text-xs font-mono font-extrabold text-amber-500">
+                          <span className="text-xs font-mono font-extrabold text-accent-amber">
                             {detailedStats.wisdom}/99
                           </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-[#0B1118] overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${detailedStats.wisdom}%` }}
                             transition={{ type: 'spring', stiffness: 130, damping: 20, delay: 0.08 }}
-                            className="h-full rounded-full bg-amber-500"
+                            className="h-full rounded-full bg-gold-500"
                           />
                         </div>
-                        <div className="text-[11px] text-[#94A3B8]">
+                        <div className="text-[11px] text-ink-muted">
                           {getStatGradeLabel('wisdom', detailedStats.wisdom, isFa)}
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-2">
+                      <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F1F5F9]">
-                            <Sparkles className="w-3.5 h-3.5 text-sky-500" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-primary">
+                            <Sparkles className="w-3.5 h-3.5 text-accent-ice" />
                             <span>{isFa ? 'کاریزما و نفوذ کلام' : 'Charisma & Presence'}</span>
                           </span>
-                          <span className="text-xs font-mono font-extrabold text-sky-500">
+                          <span className="text-xs font-mono font-extrabold text-accent-ice">
                             {detailedStats.charisma}/99
                           </span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-[#0B1118] overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${detailedStats.charisma}%` }}
                             transition={{ type: 'spring', stiffness: 130, damping: 20, delay: 0.12 }}
-                            className="h-full rounded-full bg-sky-500"
+                            className="h-full rounded-full bg-status-ice"
                           />
                         </div>
-                        <div className="text-[11px] text-[#94A3B8]">
+                        <div className="text-[11px] text-ink-muted">
                           {getStatGradeLabel('charisma', detailedStats.charisma, isFa)}
                         </div>
                       </div>
                     </div>
 
                     {/* 6-Cell Complete Identity Table */}
-                    <div className="p-3 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
-                      <div className="text-xs font-extrabold text-[#F59E0B]">
+                    <div className="p-3 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
+                      <div className="text-xs font-extrabold text-accent-amber">
                         {isFa ? 'شناسنامه و جایگاه در دودمان' : 'Dynasty Registry & Status'}
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'نسبت خاندانی' : 'Relation'}
                           </div>
-                          <div className="font-bold text-[#F1F5F9] mt-0.5">
+                          <div className="font-bold text-ink-primary mt-0.5">
                             {ROLE_LABELS[lang][p.role]}
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'سن و سال تولد' : 'Age & Birth'}
                           </div>
-                          <div className="font-bold text-[#F1F5F9] font-mono tabular-nums mt-0.5">
+                          <div className="font-bold text-ink-primary font-mono tabular-nums mt-0.5">
                             {isFa ? `${p.age} سال (${birthYear} م)` : `${p.age} yrs (${birthYear} AD)`}
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'طبقه اجتماعی' : 'Social Class'}
                           </div>
-                          <div className="font-bold text-[#F1F5F9] mt-0.5">
+                          <div className="font-bold text-ink-primary mt-0.5">
                             {CLASS_SHORT_LABELS_I18N[lang][p.socialClass]}
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'محل اقامت' : 'Residence'}
                           </div>
-                          <div className="font-bold text-[#F1F5F9] mt-0.5">{pLocName}</div>
+                          <div className="font-bold text-ink-primary mt-0.5">{pLocName}</div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'جایگاه وراثت' : 'Succession'}
                           </div>
                           <div
                             className={`font-bold mt-0.5 ${
                               isPrimaryHeir
-                                ? 'text-[#F59E0B]'
+                                ? 'text-accent-amber'
                                 : canBeDesignatedHeir
-                                  ? 'text-[#38BDF8]'
-                                  : 'text-[#94A3B8]'
+                                  ? 'text-accent-ice'
+                                  : 'text-ink-muted'
                             }`}
                           >
                             {isPrimaryHeir
@@ -2101,22 +2101,22 @@ export function FamilyPanel({
                                   : 'Non-Heir'}
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                          <div className="text-[10px] text-[#94A3B8]">
+                        <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                          <div className="text-[10px] text-ink-muted">
                             {isFa ? 'روحیه و خلق‌وخو' : 'Temperament'}
                           </div>
-                          <div className="font-bold text-[#38BDF8] mt-0.5">{temperament}</div>
+                          <div className="font-bold text-accent-ice mt-0.5">{temperament}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Detailed Personality Traits Cards */}
-                    <div className="p-3 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
-                      <div className="text-xs font-extrabold text-[#F59E0B]">
+                    <div className="p-3 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
+                      <div className="text-xs font-extrabold text-accent-amber">
                         {isFa ? 'ویژگی‌های اخلاقی و ذاتی' : 'Personality & Innate Traits'}
                       </div>
                       {p.traits.length === 0 ? (
-                        <p className="text-xs text-[#94A3B8]">
+                        <p className="text-xs text-ink-muted">
                           {isFa
                             ? 'هنوز ویژگی شخصیتی خاصی برای او ثبت نشده است.'
                             : 'No distinct traits recorded yet.'}
@@ -2136,11 +2136,11 @@ export function FamilyPanel({
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.18, delay: idx * 0.04 }}
-                                className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-1"
+                                className="p-2.5 rounded-xl bg-surface-card border border-border-subtle space-y-1"
                               >
-                                <div className="text-xs font-bold text-[#F59E0B]">{tName}</div>
+                                <div className="text-xs font-bold text-accent-amber">{tName}</div>
                                 {tDesc && (
-                                  <p className="text-[11px] text-[#94A3B8] leading-relaxed">{tDesc}</p>
+                                  <p className="text-[11px] text-ink-muted leading-relaxed">{tDesc}</p>
                                 )}
                               </motion.div>
                             );
@@ -2175,7 +2175,7 @@ export function FamilyPanel({
         const navFooter =
           valhallaItems.length > 1 ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <span className="text-[#94A3B8] shrink-0">
+              <span className="text-ink-muted shrink-0">
                 {isFa ? 'تالار جاودانگان والهالا' : 'Hall of Valhalla Memorial'}
               </span>
 
@@ -2184,13 +2184,13 @@ export function FamilyPanel({
                   <button
                     type="button"
                     onClick={() => switchValhallaInModal(1)}
-                    className="w-fit max-w-full min-h-[36px] px-3 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#F59E0B]/60 text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    className="w-fit max-w-full min-h-[36px] px-3 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-gold-500/60 text-xs font-bold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                   >
                     <span className="whitespace-nowrap">{nextValhallaName}</span>
                     {isFa ? (
-                      <ChevronLeft className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronLeft className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronRight className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     )}
                   </button>
                 </div>
@@ -2201,12 +2201,12 @@ export function FamilyPanel({
                   <button
                     type="button"
                     onClick={() => switchValhallaInModal(-1)}
-                    className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#F59E0B]/60 text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-gold-500/60 text-xs font-bold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                   >
                     {isFa ? (
-                      <ChevronRight className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronRight className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     ) : (
-                      <ChevronLeft className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronLeft className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     )}
                     <span className="whitespace-nowrap">{prevValhallaName}</span>
                   </button>
@@ -2214,13 +2214,13 @@ export function FamilyPanel({
                   <button
                     type="button"
                     onClick={() => switchValhallaInModal(1)}
-                    className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-[#101926] hover:bg-[#182638] border border-[#233246] hover:border-[#F59E0B]/60 text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    className="w-fit max-w-full min-h-[36px] px-2.5 py-1.5 rounded-xl bg-surface-card hover:bg-surface-interactive border border-border-subtle hover:border-gold-500/60 text-xs font-bold text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                   >
                     <span className="whitespace-nowrap">{nextValhallaName}</span>
                     {isFa ? (
-                      <ChevronLeft className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronLeft className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                      <ChevronRight className="w-3.5 h-3.5 text-accent-amber shrink-0" />
                     )}
                   </button>
                 </div>
@@ -2262,48 +2262,48 @@ export function FamilyPanel({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: (isFa ? 1 : -1) * valhallaNavDirection * 22 }}
                   transition={{ duration: 0.2, ease: 'easeOut' }}
-                  className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3"
+                  className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3"
                 >
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                      <div className="text-[10px] text-[#94A3B8]">
+                    <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                      <div className="text-[10px] text-ink-muted">
                         {isFa ? 'دوران زندگی' : 'Lifespan'}
                       </div>
-                      <div className="font-bold text-[#F1F5F9] font-mono mt-0.5">
+                      <div className="font-bold text-ink-primary font-mono mt-0.5">
                         {anc.birthYear}–{anc.deathYear} ({anc.ageAtDeath})
                       </div>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                      <div className="text-[10px] text-[#94A3B8]">
+                    <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                      <div className="text-[10px] text-ink-muted">
                         {isFa ? 'شهرت کسب‌شده' : 'Fame Earned'}
                       </div>
-                      <div className="font-bold text-[#F59E0B] font-mono mt-0.5">
+                      <div className="font-bold text-accent-amber font-mono mt-0.5">
                         {anc.fameEarned}
                       </div>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                      <div className="text-[10px] text-[#94A3B8]">{isFa ? 'آیین' : 'Faith'}</div>
-                      <div className="font-bold text-[#F1F5F9] mt-0.5">
+                    <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                      <div className="text-[10px] text-ink-muted">{isFa ? 'آیین' : 'Faith'}</div>
+                      <div className="font-bold text-ink-primary mt-0.5">
                         {RELIGION_LABELS[lang][anc.religion]}
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] text-xs space-y-1">
-                    <div className="text-[10px] text-[#94A3B8]">
+                  <div className="p-3 rounded-xl bg-surface-card border border-border-subtle text-xs space-y-1">
+                    <div className="text-[10px] text-ink-muted">
                       {isFa ? 'علت درگذشت' : 'Cause of Death'}
                     </div>
-                    <div className="font-bold text-rose-400">
+                    <div className="font-bold text-accent-crimson">
                       {isFa ? anc.causeOfDeathFa ?? anc.causeOfDeath : anc.causeOfDeath}
                     </div>
                   </div>
 
                   {(anc.obituaryProseFa || anc.obituaryProse) && (
-                    <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-1">
-                      <div className="text-[10px] font-bold text-[#F59E0B]">
+                    <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-1">
+                      <div className="text-[10px] font-bold text-accent-amber">
                         {isFa ? 'کتیبه سنگ رونیک نیاکان' : 'Runestone Epitaph'}
                       </div>
-                      <p className="text-xs text-[#CBD5E1] leading-relaxed">
+                      <p className="text-xs text-ink-secondary leading-relaxed">
                         {isFa ? anc.obituaryProseFa ?? anc.obituaryProse : anc.obituaryProse}
                       </p>
                     </div>
@@ -2347,37 +2347,37 @@ export function FamilyPanel({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: (isFa ? 1 : -1) * valhallaNavDirection * 22 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3 text-xs"
+                className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3 text-xs"
               >
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                    <div className="text-[10px] text-[#94A3B8]">{isFa ? 'نسبت' : 'Relation'}</div>
-                    <div className="font-bold text-[#F1F5F9] mt-0.5">
+                  <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                    <div className="text-[10px] text-ink-muted">{isFa ? 'نسبت' : 'Relation'}</div>
+                    <div className="font-bold text-ink-primary mt-0.5">
                       {ROLE_LABELS[lang][d.role]}
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                    <div className="text-[10px] text-[#94A3B8]">
+                  <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                    <div className="text-[10px] text-ink-muted">
                       {isFa ? 'سن در زمان مرگ' : 'Age at Death'}
                     </div>
-                    <div className="font-bold text-[#F1F5F9] font-mono mt-0.5">
+                    <div className="font-bold text-ink-primary font-mono mt-0.5">
                       {formatAgeLabel(d.age, lang)}
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40]">
-                    <div className="text-[10px] text-[#94A3B8]">
+                  <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle">
+                    <div className="text-[10px] text-ink-muted">
                       {isFa ? 'طبقه اجتماعی' : 'Social Class'}
                     </div>
-                    <div className="font-bold text-[#F1F5F9] mt-0.5">
+                    <div className="font-bold text-ink-primary mt-0.5">
                       {CLASS_SHORT_LABELS_I18N[lang][d.socialClass]}
                     </div>
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-[#101926] border border-[#1E2D40] space-y-1">
-                  <div className="text-[10px] text-[#94A3B8]">
+                <div className="p-3 rounded-xl bg-surface-card border border-border-subtle space-y-1">
+                  <div className="text-[10px] text-ink-muted">
                     {isFa ? 'علت درگذشت' : 'Cause of Death'}
                   </div>
-                  <div className="font-semibold text-rose-400">
+                  <div className="font-semibold text-accent-crimson">
                     {isFa
                       ? d.causeOfDeathFa ?? d.causeOfDeath ?? 'درگذشته'
                       : d.causeOfDeath ?? 'Passed away'}

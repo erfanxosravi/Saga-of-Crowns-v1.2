@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Calendar,
+  Check,
   Compass,
   Crown,
   Dices,
@@ -18,7 +19,11 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { SETTLEMENTS } from '../data/geography';
+import {
+  isSettlementActiveInYear,
+  resolveActiveSettlementId,
+  SETTLEMENTS,
+} from '../data/geography';
 import {
   ALL_TRAITS_MAP,
   FEMALE_NAMES_BY_REGION,
@@ -95,7 +100,7 @@ const HOMELANDS: HomelandDef[] = [
   {
     id: 'norway',
     regionGroup: 'Norway',
-    defaultBirthplace: 'nidaros',
+    defaultBirthplace: 'lade_hladir',
     nameEn: 'Norway (Fjords of the North)',
     nameFa: 'نروژ (آبدره‌ها و پادشاهان دریا)',
     introEn: 'Glacial fjords, iron-cold gales, and ancestral longship shipwrights.',
@@ -373,7 +378,7 @@ export function CharacterCreation({
   const [sagaMode, setSagaMode] = useState<boolean>(true);
 
   const [homelandId, setHomelandId] = useState<StartingHomeland>('norway');
-  const [birthplaceId, setBirthplaceId] = useState<string>('nidaros');
+  const [birthplaceId, setBirthplaceId] = useState<string>('lade_hladir');
   const [occupationId, setOccupationId] = useState<StartingOccupation>('farmer');
   const [religion, setReligion] = useState<Religion>(Religion.NorsePagan);
 
@@ -395,7 +400,13 @@ export function CharacterCreation({
 
   const selectedHomeland = HOMELANDS.find((h) => h.id === homelandId) ?? HOMELANDS[0];
   const selectedOcc = OCCUPATIONS.find((o) => o.id === occupationId) ?? OCCUPATIONS[2];
-  const settlementsInRegion = SETTLEMENTS.filter((s) => s.regionGroup === selectedHomeland.regionGroup);
+  const activeRegionSettlements = SETTLEMENTS.filter(
+    (s) => s.regionGroup === selectedHomeland.regionGroup && isSettlementActiveInYear(s, year)
+  );
+  const settlementsInRegion =
+    activeRegionSettlements.length > 0
+      ? activeRegionSettlements
+      : SETTLEMENTS.filter((s) => s.regionGroup === selectedHomeland.regionGroup);
 
   const rollName = (reg: RegionGroup, nextSex: Sex) => {
     const gPool = nextSex === Sex.Male ? MALE_NAMES_BY_REGION[reg] ?? MALE_NAMES_BY_REGION['Norway'] : FEMALE_NAMES_BY_REGION[reg] ?? FEMALE_NAMES_BY_REGION['Norway'];
@@ -418,7 +429,7 @@ export function CharacterCreation({
   const handleHomelandChange = (hId: StartingHomeland) => {
     setHomelandId(hId);
     const def = HOMELANDS.find((h) => h.id === hId) ?? HOMELANDS[0];
-    setBirthplaceId(def.defaultBirthplace);
+    setBirthplaceId(resolveActiveSettlementId(def.defaultBirthplace, year));
     rollName(def.regionGroup, sex);
   };
 
@@ -430,7 +441,7 @@ export function CharacterCreation({
     const shuffledTraits = [...SELECTABLE_TRAITS].sort(() => Math.random() - 0.5);
 
     setHomelandId(randomHome.id);
-    setBirthplaceId(randomHome.defaultBirthplace);
+    setBirthplaceId(resolveActiveSettlementId(randomHome.defaultBirthplace, randomEra.defaultYear));
     setOccupationId(randomOcc.id);
     setSex(randomSex);
     setSelectedEra(randomEra.id);
@@ -455,14 +466,21 @@ export function CharacterCreation({
   };
 
   const handleStart = () => {
+    const clampedYear = Math.max(793, Math.min(1066, year));
+    const resolvedBirthplace = resolveActiveSettlementId(
+      settlementsInRegion.some((s) => s.id === birthplaceId)
+        ? birthplaceId
+        : (settlementsInRegion[0]?.id ?? birthplaceId),
+      clampedYear
+    );
     const branchDef = LOTHBROK_BLOODLINE_BRANCHES.find((b) => b.id === bloodlineBranch);
     onStartNewGame({
       givenName: givenName.trim() || 'Sigurd',
       patronymic: patronymic.trim() || (ragnarBloodline ? 'Ragnarsson' : 'Hakonsson'),
       sex,
-      year: Math.max(793, Math.min(1066, year)),
+      year: clampedYear,
       startAge,
-      birthplaceId,
+      birthplaceId: resolvedBirthplace,
       socialClass: selectedOcc.socialClass,
       religion,
       traits: ragnarBloodline
@@ -513,7 +531,7 @@ export function CharacterCreation({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="relative z-10 h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-[#0B1118] text-[#F1F5F9]"
+      className="relative z-10 h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-surface-canvas text-ink-primary"
     >
       {!bgFailed && (
         <div className="pointer-events-none fixed inset-x-0 top-0 h-80 opacity-25 overflow-hidden">
@@ -524,7 +542,7 @@ export function CharacterCreation({
             onError={() => setBgFailed(true)}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B1118]/75 to-[#0B1118]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-surface-canvas/75 to-surface-canvas" />
         </div>
       )}
 
@@ -535,39 +553,39 @@ export function CharacterCreation({
           <button
             type="button"
             onClick={onOpenLoadModal}
-            className="min-h-[44px] px-3.5 rounded-xl bg-[#131D2B]/95 border border-[#233246] hover:border-[#F59E0B] text-xs font-medium text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+            className="min-h-[44px] px-3.5 rounded-xl bg-surface-secondary/95 border border-border-subtle hover:border-gold-500 text-xs font-medium text-ink-secondary hover:text-ink-primary inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
           >
-            <FolderOpen className="w-4 h-4 text-[#F59E0B]" />
+            <FolderOpen className="w-4 h-4 text-accent-amber" />
             <span>{isFa ? 'مدیریت ذخیره‌ها' : 'Save Files'}</span>
           </button>
 
           <button
             type="button"
             onClick={onOpenGuide}
-            className="min-h-[44px] px-3.5 rounded-xl bg-[#131D2B]/95 border border-[#233246] hover:border-[#38BDF8] text-xs font-medium text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+            className="min-h-[44px] px-3.5 rounded-xl bg-surface-secondary/95 border border-border-subtle hover:border-status-ice text-xs font-medium text-ink-primary inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
           >
-            <HelpCircle className="w-4 h-4 text-[#38BDF8]" />
+            <HelpCircle className="w-4 h-4 text-accent-ice" />
             <span>{isFa ? 'راهنمای سریع بازی' : 'How to Play'}</span>
           </button>
         </div>
 
         {/* Rebranded Game Title */}
         <div className="text-center space-y-1.5 pt-1">
-          <div className="text-xs font-mono tracking-widest text-[#38BDF8] flex items-center justify-center gap-2">
+          <div className="text-xs font-mono tracking-widest text-accent-ice flex items-center justify-center gap-2">
             <span>᛫</span>
             <span>{isFa ? 'حماسه‌ی تاج‌ها' : 'SAGA OF CROWNS'}</span>
             <span>᛫</span>
           </div>
-          <h1 className="font-saga text-4xl sm:text-5xl font-extrabold text-[#F1F5F9] tracking-tight">
+          <h1 className="font-saga text-4xl sm:text-5xl font-extrabold text-ink-primary tracking-tight">
             {isFa ? 'حماسه‌ی تاج‌ها' : 'Saga of Crowns'}
           </h1>
-          <p className="text-xs sm:text-sm text-[#F59E0B] font-semibold tracking-wide">
+          <p className="text-xs sm:text-sm text-accent-amber font-semibold tracking-wide">
             {isFa ? 'حماسه‌ای از خون، ایمان و اقتدار' : 'A Saga of Blood, Faith & Power'}
           </p>
-          <p className="text-[11px] text-[#94A3B8]">
+          <p className="text-[11px] text-ink-muted">
             {isFa
-              ? 'شخصیت خود را بساز، در اروپا و اقیانوس بجنگ، حکومت کن و میراث دودمانت را بساز · ۷۹۳ تا ۱۰۶۶ میلادی'
-              : 'Forge your ruler, conquer kingdoms across medieval Europe & pass your legacy to heirs · 793–1066 AD'}
+              ? 'شخصیت خود را بساز، در اروپا و اقیانوس بجنگ، حکومت کن و میراث دودمانت را بساز · ۷۹۳ تا ۱۰۶۶ میلادی (و ادامه آزاد دودمان پس از ۱۰۶۶)'
+              : 'Forge your ruler, conquer kingdoms across medieval Europe & pass your legacy to heirs · 793–1066 AD & Open-Ended Dynasty Beyond'}
           </p>
         </div>
 
@@ -576,7 +594,7 @@ export function CharacterCreation({
           <button
             type="button"
             onClick={onResumeSaved}
-            className="w-full min-h-[60px] px-4 py-3 rounded-xl bg-[#132235] border border-[#F59E0B] hover:bg-[#192C44] transition-colors flex items-center justify-between gap-3 cursor-pointer"
+            className="w-full min-h-[60px] px-4 py-3 rounded-xl bg-surface-secondary border border-gold-500 hover:bg-surface-interactive transition-colors flex items-center justify-between gap-3 cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0 text-start">
               <VikingPortrait
@@ -589,10 +607,10 @@ export function CharacterCreation({
                 size={44}
               />
               <div className="min-w-0 flex-1">
-                <div className="text-xs text-[#F59E0B] font-semibold">
+                <div className="text-xs text-accent-amber font-semibold">
                   {isFa ? 'ادامه بازی ذخیره‌شده' : 'Continue Current Life'}
                 </div>
-                <div className="font-saga text-base sm:text-lg font-bold text-[#F1F5F9] line-clamp-2 break-words leading-snug">
+                <div className="font-saga text-base sm:text-lg font-bold text-ink-primary line-clamp-2 break-words leading-snug">
                   {formatPersonName(
                     `${savedGame.character.givenName} ${savedGame.character.patronymic}`,
                     lang
@@ -602,19 +620,19 @@ export function CharacterCreation({
                 </div>
               </div>
             </div>
-            <RotateCcw className="w-5 h-5 text-[#F59E0B] shrink-0" />
+            <RotateCcw className="w-5 h-5 text-accent-amber shrink-0" />
           </button>
         )}
 
         {/* Mode Switcher */}
-        <div className="grid grid-cols-2 gap-1 p-1 bg-[#131D2B] border border-[#233246] rounded-xl">
+        <div className="grid grid-cols-2 gap-1 p-1 bg-surface-secondary border border-border-subtle rounded-xl">
           <button
             type="button"
             onClick={() => setMode('create')}
             className={`min-h-[44px] px-3 text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
               mode === 'create'
-                ? 'bg-[#F59E0B] text-[#0B1118]'
-                : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                ? 'bg-gold-500 text-nordic-950'
+                : 'text-ink-muted hover:text-ink-primary'
             }`}
           >
             {isFa ? 'شخصیت اختصاصی' : 'Custom Origin'}
@@ -624,8 +642,8 @@ export function CharacterCreation({
             onClick={() => setMode('presets')}
             className={`min-h-[44px] px-3 text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
               mode === 'presets'
-                ? 'bg-[#F59E0B] text-[#0B1118]'
-                : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                ? 'bg-gold-500 text-nordic-950'
+                : 'text-ink-muted hover:text-ink-primary'
             }`}
           >
             {isFa ? `شخصیت‌های تاریخی و خاندان راگنار (${PREMADE_CHARACTERS.length})` : `Historical & Lothbrok Leads (${PREMADE_CHARACTERS.length})`}
@@ -648,8 +666,8 @@ export function CharacterCreation({
                   onClick={() => handleStartPreset(pm)}
                   className={`w-full p-4 text-start rounded-xl border transition-colors flex items-center justify-between gap-4 cursor-pointer ${
                     isLothbrok
-                      ? 'bg-gradient-to-r from-[#261116] via-[#171622] to-[#131D2B] border-[#EF4444]/60 hover:border-[#F59E0B]'
-                      : 'bg-[#131D2B] border-[#233246] hover:border-[#F59E0B]'
+                      ? 'bg-gradient-to-r from-surface-crimson-tint via-surface-violet-tint to-surface-secondary border-blood-500/60 hover:border-gold-500'
+                      : 'bg-surface-secondary border-border-subtle hover:border-gold-500'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
@@ -663,21 +681,21 @@ export function CharacterCreation({
                     />
                     <div className="space-y-1.5 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-saga text-xl font-bold text-[#F1F5F9] break-words leading-snug">
+                        <span className="font-saga text-xl font-bold text-ink-primary break-words leading-snug">
                           {isFa
                             ? pmFa?.displayName ?? `${pm.name} ${pm.patronymic}`
                             : `${pm.name} ${pm.patronymic}${pm.epithet ? ` "${pm.epithet}"` : ''}`}
                         </span>
                         {pm.isLegendaryClaim && (
-                          <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/25 border border-[#EF4444]/60 text-[10px] font-mono font-bold text-[#FCA5A5] uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-md bg-blood-600/25 border border-blood-500/60 text-[10px] font-mono font-bold text-accent-crimson uppercase tracking-wider">
                             {isFa ? 'ادعای اسطوره‌ای · تبار راگنار' : 'LEGENDARY CLAIM · RAGNARSÆTTIN'}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-[#38BDF8] break-words leading-snug">
+                      <div className="text-xs text-accent-ice break-words leading-snug">
                         {isFa ? pmFa?.subtitle ?? pm.subtitle : pm.subtitle} · {placeName}
                       </div>
-                      <p className="text-xs text-[#CBD5E1] leading-relaxed">
+                      <p className="text-xs text-ink-secondary leading-relaxed">
                         {isFa ? pmFa?.context ?? pm.historicalContext : pm.historicalContext}
                       </p>
                       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -688,7 +706,7 @@ export function CharacterCreation({
                           return (
                             <span
                               key={tid}
-                              className="px-2 py-0.5 rounded-md bg-[#0B1118]/90 border border-[#283B52] text-[10px] font-semibold text-[#FBBF24]"
+                              className="px-2 py-0.5 rounded-md bg-surface-canvas/90 border border-border-subtle text-[10px] font-semibold text-accent-amber"
                             >
                               {tName}
                             </span>
@@ -700,7 +718,7 @@ export function CharacterCreation({
                           return (
                             <span
                               key={hid}
-                              className="px-2 py-0.5 rounded-md bg-[#3B181E] border border-[#F59E0B]/50 text-[10px] font-semibold text-[#FDE68A]"
+                              className="px-2 py-0.5 rounded-md bg-surface-crimson-tint border border-gold-500/50 text-[10px] font-semibold text-accent-amber-strong"
                             >
                               {isFa ? `میراث: ${hDef.nameFa}` : `Heirloom: ${hDef.nameEn}`}
                             </span>
@@ -709,7 +727,7 @@ export function CharacterCreation({
                       </div>
                     </div>
                   </div>
-                  <div className="w-11 h-11 rounded-xl bg-[#F59E0B] text-[#0B1118] flex items-center justify-center shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-gold-500 text-nordic-950 flex items-center justify-center shrink-0">
                     <Play className={`w-4 h-4 fill-current ${isFa ? 'rotate-180' : ''}`} />
                   </div>
                 </button>
@@ -717,7 +735,7 @@ export function CharacterCreation({
             })}
           </div>
         ) : (
-          <div className="p-4 sm:p-6 rounded-2xl bg-[#131D2B] border border-[#233246] flex flex-col overflow-hidden space-y-4 text-start">
+          <div className="p-4 sm:p-6 rounded-2xl bg-surface-secondary border border-border-subtle flex flex-col overflow-hidden space-y-4 text-start">
             {/* Live Portrait + Name & Sex Row */}
             <div className="flex items-center gap-3.5">
               <button
@@ -735,20 +753,20 @@ export function CharacterCreation({
                   seedId="creator_preview"
                   size={68}
                 />
-                <span className="absolute -bottom-1 inset-x-1 rounded bg-[#0B1118]/90 border border-[#38BDF8]/40 text-[9px] text-[#38BDF8] text-center py-0.5 font-semibold">
+                <span className="absolute -bottom-1 inset-x-1 rounded bg-surface-canvas/90 border border-status-ice/40 text-[9px] text-accent-ice text-center py-0.5 font-semibold">
                   {isFa ? 'تغییر چهره' : 'Restyle'}
                 </span>
               </button>
 
               <div className="flex-1 min-w-0 space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+                <div className="flex items-center justify-between text-xs text-ink-muted">
                   <span className="truncate">
                     {formatPersonName(`${givenName} ${patronymic}`, lang)}
                   </span>
                   <button
                     type="button"
                     onClick={handleRandomizeEverything}
-                    className="text-[#F59E0B] hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                    className="text-accent-amber hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     {isFa ? 'انتخاب تصادفی' : 'Randomize'}
@@ -761,17 +779,17 @@ export function CharacterCreation({
                     onChange={(e) => setGivenName(e.target.value)}
                     placeholder={isFa ? 'نام' : 'Name'}
                     aria-label="Given Name"
-                    className="flex-1 min-w-0 min-h-[42px] px-3 text-sm bg-[#0B1118] border border-[#283B52] rounded-lg text-[#F1F5F9] focus:outline-none focus:border-[#38BDF8]"
+                    className="flex-1 min-w-0 min-h-[42px] px-3 text-sm bg-surface-canvas border border-border-subtle rounded-lg text-ink-primary focus:outline-none focus:border-status-ice"
                   />
                   <button
                     type="button"
                     onClick={() => rollName(selectedHomeland.regionGroup, sex)}
                     title={isFa ? 'تولید نام تصادفی' : 'Roll Norse Name'}
-                    className="min-w-[42px] min-h-[42px] flex items-center justify-center bg-[#0B1118] border border-[#283B52] hover:border-[#38BDF8] rounded-lg text-[#38BDF8] cursor-pointer shrink-0"
+                    className="min-w-[42px] min-h-[42px] flex items-center justify-center bg-surface-canvas border border-border-subtle hover:border-status-ice rounded-lg text-accent-ice cursor-pointer shrink-0"
                   >
                     <Dices className="w-4 h-4" />
                   </button>
-                  <div className="flex p-1 bg-[#0B1118] border border-[#283B52] rounded-lg shrink-0">
+                  <div className="flex p-1 bg-surface-canvas border border-border-subtle rounded-lg shrink-0">
                     {([Sex.Male, Sex.Female] as const).map((s) => (
                       <button
                         key={s}
@@ -781,7 +799,7 @@ export function CharacterCreation({
                           rollName(selectedHomeland.regionGroup, s);
                         }}
                         className={`px-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                          sex === s ? 'bg-[#38BDF8] text-[#0B1118] font-bold' : 'text-[#94A3B8]'
+                          sex === s ? 'bg-status-ice text-nordic-950 font-bold' : 'text-ink-muted'
                         }`}
                       >
                         {s === Sex.Male ? (isFa ? 'مرد' : 'M') : isFa ? 'زن' : 'F'}
@@ -798,7 +816,7 @@ export function CharacterCreation({
               <NordicSelect
                 label={isFa ? 'سرزمین زادگاه و فرهنگ شروع' : 'Starting Homeland & Culture'}
                 value={homelandId}
-                icon={<Compass className="w-4 h-4 text-[#38BDF8]" />}
+                icon={<Compass className="w-4 h-4 text-accent-ice" />}
                 onChange={(val) => handleHomelandChange(val as StartingHomeland)}
                 options={HOMELANDS.map((h) => ({
                   value: h.id,
@@ -813,7 +831,7 @@ export function CharacterCreation({
               <NordicSelect
                 label={isFa ? 'بندرگاه یا پایتخت زادگاه' : 'Birth Settlement & Port'}
                 value={birthplaceId}
-                icon={<MapPin className="w-4 h-4 text-[#F59E0B]" />}
+                icon={<MapPin className="w-4 h-4 text-accent-amber" />}
                 onChange={(val) => setBirthplaceId(val)}
                 options={settlementsInRegion.map((s) => ({
                   value: s.id,
@@ -826,32 +844,79 @@ export function CharacterCreation({
 
               {/* Saga Mode — Living Legends Calendar (default ON) */}
               <div
-                className={`p-3.5 rounded-xl border transition-colors space-y-2 ${
+                className={`relative overflow-hidden p-3.5 sm:p-4 rounded-xl border transition-colors space-y-2.5 ${
                   sagaMode
-                    ? 'bg-gradient-to-r from-[#261B0D] via-[#171B26] to-[#111A27] border-[#F59E0B]/70'
-                    : 'bg-[#0B1118] border-[#233246]'
+                    ? 'bg-surface-amber-tint border-gold-500'
+                    : 'bg-surface-card border-border-subtle hover:border-gold-500/45'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
-                        {isFa
-                          ? 'حالت حماسه — تقویم افسانه‌های زنده (Saga Mode)'
-                          : 'Saga Mode — Living Legends Calendar'}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#F59E0B]/20 border border-[#F59E0B]/55 text-[10px] font-mono font-bold text-[#FDE68A] uppercase">
-                        {isFa ? 'تالار افسانه‌ها' : 'HALL OF LEGENDS'}
-                      </span>
+                {/* Slim leading accent bar (right edge in RTL, left edge in LTR) */}
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-2.5 bottom-2.5 start-0 rounded-e-full transition-all ${
+                    sagaMode ? 'w-1 bg-gold-500' : 'w-0.5 bg-border-subtle'
+                  }`}
+                />
+
+                <div className="flex items-start justify-between gap-3 ps-1.5">
+                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                    {/* Small Othala rune glyph box (distinguishable by shape & border) */}
+                    <div
+                      aria-hidden="true"
+                      className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                        sagaMode
+                          ? 'bg-gold-500/15 border-gold-500/50 text-accent-amber'
+                          : 'bg-surface-secondary border-border-subtle text-ink-muted'
+                      }`}
+                    >
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.65"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4"
+                      >
+                        <path d="M10 2.5L15.5 8L10 13.5L4.5 8L10 2.5Z" />
+                        <path d="M7.5 11L4.5 17.5M12.5 11L15.5 17.5" />
+                      </svg>
                     </div>
-                    <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
-                      {isFa
-                        ? 'زندگی شما هم‌زمان با راگنار لُدبروک، لاگرتا، فلوکی، برادر آلدوین، رولو و ارتش بزرگ پیش می‌رود (شروع پیشنهادی: ۸۳۸ میلادی). خبرها با تأخیر مسافت به تالارتان می‌رسند و در سفرها با خودِ افسانه‌ها روبه‌رو می‌شوید.'
-                        : 'Aligns your life with Ragnar Lothbrok, Lagertha, Floki, Brother Aldwin, Rollo & the Great Army (838 AD start). Distance-delayed news reaches your hall, and you can cross paths with living legends.'}
-                    </p>
+
+                    <div className="space-y-1 min-w-0 flex-1">
+                      {/* Kicker row on its own line so it never collides with "(Saga Mode)" */}
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold leading-snug">
+                        <span className={sagaMode ? 'text-accent-amber' : 'text-ink-muted'}>
+                          {isFa ? 'تالار افسانه‌ها' : 'Hall of Legends'}
+                        </span>
+                        <span aria-hidden="true" className="text-ink-muted">
+                          ·
+                        </span>
+                        <span className="font-mono tabular-nums text-ink-muted">
+                          {isFa ? '۸۳۸ میلادی' : '838 AD'}
+                        </span>
+                      </div>
+
+                      {/* Title with isolated <bdi> for Latin "(Saga Mode)" */}
+                      <div className="text-xs sm:text-sm font-bold text-ink-primary leading-snug break-words">
+                        {isFa ? (
+                          <>
+                            <span>حالت حماسه — تقویم افسانه‌های زنده </span>
+                            <span className="font-semibold text-ink-secondary whitespace-nowrap">
+                              (<bdi dir="ltr">Saga Mode</bdi>)
+                            </span>
+                          </>
+                        ) : (
+                          'Saga Mode — Living Legends Calendar'
+                        )}
+                      </div>
+                    </div>
                   </div>
+
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={sagaMode}
                     onClick={() => {
                       const nextVal = !sagaMode;
                       setSagaMode(nextVal);
@@ -863,44 +928,66 @@ export function CharacterCreation({
                         setYear(865);
                       }
                     }}
-                    className={`min-h-[38px] px-3 rounded-lg text-xs font-bold border transition-colors shrink-0 cursor-pointer ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                       sagaMode
-                        ? 'bg-[#F59E0B] border-[#FBBF24] text-[#0B1118]'
-                        : 'bg-[#131D2B] border-[#283B52] text-[#94A3B8] hover:text-[#F1F5F9]'
+                        ? 'bg-gold-500 hover:bg-gold-400 border-gold-500 text-nordic-950 shadow-xs'
+                        : 'bg-surface-secondary hover:bg-surface-interactive border-border-subtle hover:border-gold-500/50 text-ink-secondary hover:text-ink-primary'
                     }`}
                   >
-                    {sagaMode
-                      ? isFa
-                        ? 'فعال ✓ (۸۳۸ م)'
-                        : 'Active ✓ (838 AD)'
-                      : isFa
-                        ? 'غیرفعال'
-                        : 'Off'}
+                    {sagaMode ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 stroke-[2.75] shrink-0" aria-hidden="true" />
+                        <span className="whitespace-nowrap">
+                          {isFa ? 'فعال (۸۳۸ م)' : 'Active (838 AD)'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="w-3.5 h-3.5 rounded-full border-[1.75px] border-current opacity-65 shrink-0"
+                        />
+                        <span className="whitespace-nowrap">{isFa ? 'غیرفعال' : 'Off'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
+
+                <p className="ps-1.5 text-xs text-ink-secondary leading-[1.8] break-words">
+                  {isFa
+                    ? 'زندگی شما هم‌زمان با راگنار لُدبروک، لاگرتا، فلوکی، برادر آلدوین، رولو و ارتش بزرگ پیش می‌رود (شروع پیشنهادی: ۸۳۸ میلادی). خبرها با تأخیر مسافت به تالارتان می‌رسند و در سفرها با خودِ افسانه‌ها روبه‌رو می‌شوید.'
+                    : 'Aligns your life with Ragnar Lothbrok, Lagertha, Floki, Brother Aldwin, Rollo & the Great Army (838 AD start). Distance-delayed news reaches your hall, and you can cross paths with living legends.'}
+                </p>
               </div>
 
               {/* Ragnarsættin — Blood of Ragnar Optional Lineage Claim */}
               <div
                 className={`p-3.5 rounded-xl border transition-colors space-y-2.5 ${
                   ragnarBloodline
-                    ? 'bg-gradient-to-r from-[#2A1015] via-[#1B1420] to-[#121A28] border-[#EF4444]/70'
-                    : 'bg-[#0B1118] border-[#233246]'
+                    ? 'bg-surface-crimson-tint border-blood-500/70'
+                    : 'bg-surface-card border-border-subtle'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
-                        {isFa
-                          ? 'تبار راگنار لُدبروک (Ragnarsættin — Blood of Ragnar)'
-                          : 'Ragnarsættin — Blood of Ragnar'}
+                      <span className="text-xs sm:text-sm font-bold text-ink-primary">
+                        {isFa ? (
+                          <>
+                            <span>تبار راگنار لُدبروک </span>
+                            <span className="font-semibold text-ink-secondary whitespace-nowrap">
+                              (<bdi dir="ltr">Ragnarsættin — Blood of Ragnar</bdi>)
+                            </span>
+                          </>
+                        ) : (
+                          'Ragnarsættin — Blood of Ragnar'
+                        )}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/25 border border-[#EF4444]/60 text-[10px] font-mono font-bold text-[#FCA5A5] uppercase">
+                      <span className="px-2 py-0.5 rounded-md bg-blood-600/25 border border-blood-500/60 text-[10px] font-mono font-bold text-accent-crimson uppercase">
                         {isFa ? 'ادعای اسطوره‌ای' : 'LEGENDARY CLAIM'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
+                    <p className="text-[11px] text-ink-secondary leading-relaxed">
                       {isFa
                         ? 'موهبت «خونِ گرگ» (+۲۵٪ شهرت، +۲۰٪ غنیمت و +۱۲ قدرت رزم در یورش به انگلستان) در برابر بارِ «بدهی انتقام خون (هِفند)» و چرخه ۹ فصلی انتقام از چاه مارهای شاه ائلا.'
                         : 'Grants "Wolf-Blood" (+25% Fame, +20% Loot & +12 Combat in raids on England) at the cost of the "Debt of Vengeance" (Hefnd 0–100) meter and the 9-chapter Lothbrok Cycle.'}
@@ -917,8 +1004,8 @@ export function CharacterCreation({
                     }}
                     className={`min-h-[38px] px-3 rounded-lg text-xs font-bold border transition-colors shrink-0 cursor-pointer ${
                       ragnarBloodline
-                        ? 'bg-[#EF4444] border-[#F87171] text-white'
-                        : 'bg-[#131D2B] border-[#283B52] text-[#94A3B8] hover:text-[#F1F5F9]'
+                        ? 'bg-blood-500 border-blood-500 text-white'
+                        : 'bg-surface-secondary border-border-subtle text-ink-muted hover:text-ink-primary'
                     }`}
                   >
                     {ragnarBloodline
@@ -939,7 +1026,7 @@ export function CharacterCreation({
                         : 'Claimed Descent Branch (Ragnarsættin)'
                     }
                     value={bloodlineBranch}
-                    icon={<Swords className="w-4 h-4 text-[#F87171]" />}
+                    icon={<Swords className="w-4 h-4 text-accent-crimson" />}
                     onChange={(val) => setBloodlineBranch(val as RagnarBloodlineBranch)}
                     options={LOTHBROK_BLOODLINE_BRANCHES.map((b) => ({
                       value: b.id,
@@ -956,7 +1043,7 @@ export function CharacterCreation({
               <NordicSelect
                 label={isFa ? 'طبقه اجتماعی و پیشه شروع' : 'Starting Class & Occupation'}
                 value={occupationId}
-                icon={<Crown className="w-4 h-4 text-[#F59E0B]" />}
+                icon={<Crown className="w-4 h-4 text-accent-amber" />}
                 onChange={(val) => setOccupationId(val as StartingOccupation)}
                 options={OCCUPATIONS.map((occ) => ({
                   value: occ.id,
@@ -971,7 +1058,7 @@ export function CharacterCreation({
               <NordicSelect
                 label={isFa ? 'آیین و باور مذهبی' : 'Starting Faith & Religion'}
                 value={religion}
-                icon={<Flame className="w-4 h-4 text-[#38BDF8]" />}
+                icon={<Flame className="w-4 h-4 text-accent-ice" />}
                 onChange={(val) => setReligion(val as Religion)}
                 options={[
                   {
@@ -1009,7 +1096,7 @@ export function CharacterCreation({
               <NordicSelect
                 label={isFa ? 'دوره تاریخی شروع' : 'Historical Era'}
                 value={String(selectedEra)}
-                icon={<Calendar className="w-4 h-4 text-[#38BDF8]" />}
+                icon={<Calendar className="w-4 h-4 text-accent-ice" />}
                 onChange={(val) => {
                   const nextEra = Number(val) as 1 | 2 | 3 | 4;
                   setSelectedEra(nextEra);
@@ -1085,9 +1172,9 @@ export function CharacterCreation({
 
                 {/* Traits selector */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+                  <div className="flex items-center justify-between text-xs text-ink-muted">
                     <span>{isFa ? 'ویژگی‌های شخصیتی (۱ تا ۳ مورد)' : 'Personality Traits (1–3)'}</span>
-                    <span className="font-mono text-[#38BDF8]">{selectedTraits.length}/3</span>
+                    <span className="font-mono text-accent-ice">{selectedTraits.length}/3</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {SELECTABLE_TRAITS.map((t) => {
@@ -1100,8 +1187,8 @@ export function CharacterCreation({
                           onClick={() => handleToggleTrait(t.id)}
                           className={`min-h-[44px] px-3 py-1.5 text-xs rounded-lg border transition-colors cursor-pointer ${
                             isSel
-                              ? 'bg-[#38BDF8] border-[#38BDF8] text-[#0B1118] font-bold shadow-xs'
-                              : 'bg-[#0B1118] border-[#283B52] text-[#CBD5E1] hover:border-[#38BDF8]/60'
+                              ? 'bg-status-ice border-status-ice text-nordic-950 font-bold shadow-xs'
+                              : 'bg-surface-canvas border-border-subtle text-ink-secondary hover:border-status-ice/60'
                           }`}
                         >
                           {isFa ? tFa?.name ?? t.name : t.name}
@@ -1113,14 +1200,14 @@ export function CharacterCreation({
 
                 {/* Seed Input */}
                 <div className="space-y-1">
-                  <label className="text-xs text-[#94A3B8]">
+                  <label className="text-xs text-ink-muted">
                     {isFa ? 'کد بذر جهان (Seed)' : 'World Seed String'}
                   </label>
                   <input
                     type="text"
                     value={seedString}
                     onChange={(e) => setSeedString(e.target.value)}
-                    className="w-full min-h-[42px] px-3 text-xs font-mono bg-[#0B1118] border border-[#283B52] rounded-lg text-[#F1F5F9] focus:outline-none focus:border-[#38BDF8]"
+                    className="w-full min-h-[42px] px-3 text-xs font-mono bg-surface-canvas border border-border-subtle rounded-lg text-ink-primary focus:outline-none focus:border-status-ice"
                   />
                 </div>
               </div>
@@ -1130,7 +1217,7 @@ export function CharacterCreation({
             <button
               type="button"
               onClick={handleStart}
-              className="w-full min-h-[52px] sm:min-h-[56px] px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#F59E0B] hover:brightness-110 active:scale-[0.99] text-[#0B1118] font-saga text-lg sm:text-xl font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#F59E0B]/20 transition-all"
+              className="w-full min-h-[52px] sm:min-h-[56px] px-6 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 hover:brightness-110 active:scale-[0.99] text-nordic-950 font-saga text-lg sm:text-xl font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#F59E0B]/20 transition-all"
             >
               <Swords className="w-5 h-5 shrink-0" />
               <span>

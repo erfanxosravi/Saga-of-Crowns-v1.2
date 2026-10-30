@@ -565,7 +565,7 @@ export const PREMADE_CHARACTERS: PremadeCharacter[] = [
     year: 872,
     age: 19,
     sex: Sex.Male,
-    birthplaceId: 'nidaros',
+    birthplaceId: 'lade_hladir',
     socialClass: SocialClass.HersirKin,
     religion: Religion.NorsePagan,
     traits: ['brave', 'seafarer', 'oath_keeper'],
@@ -821,7 +821,7 @@ export const PREMADE_CHARACTERS: PremadeCharacter[] = [
     year: 840,
     age: 26,
     sex: Sex.Female,
-    birthplaceId: 'nidaros',
+    birthplaceId: 'lade_hladir',
     socialClass: SocialClass.JarlKin,
     religion: Religion.NorsePagan,
     traits: ['wolf_blood', 'shieldmaiden_of_hladgerd', 'oath_keeper'],
@@ -880,10 +880,10 @@ export const WIN_GOALS: WinGoal[] = [
     id: 'king_norway',
     title: 'Konungr of Norway',
     norseSubtitle: 'Nóregs Konungr',
-    description: 'Attain rank of Konungr, hold Nidaros and Kaupang, and command 120+ Hird warriors.',
+    description: 'Attain rank of Konungr, hold the Trøndelag seat (Lade or Nidaros) and Kaupang, and command 120+ Hird warriors.',
     checkCompleted: (s) =>
       TITLE_LADDER.indexOf(s.character.title) >= TITLE_LADDER.indexOf(TitleRank.Konungr) &&
-      s.realm.holdings.some((h) => h.settlementId === 'nidaros') &&
+      s.realm.holdings.some((h) => h.settlementId === 'nidaros' || h.settlementId === 'lade_hladir') &&
       s.realm.holdings.some((h) => h.settlementId === 'kaupang') &&
       s.realm.hirdWarriors >= 120,
     progressLabel: (s) =>

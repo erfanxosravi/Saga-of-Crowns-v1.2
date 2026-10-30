@@ -23,16 +23,16 @@ interface NordicSelectProps<T extends string = string> {
 function getBadgeToneClass(tone: NordicSelectOption['badgeTone']): string {
   switch (tone) {
     case 'gold':
-      return 'text-[#FBBF24]';
+      return 'text-accent-amber';
     case 'ice':
-      return 'text-[#38BDF8]';
+      return 'text-accent-ice';
     case 'danger':
-      return 'text-[#F87171]';
+      return 'text-accent-crimson';
     case 'emerald':
-      return 'text-[#34D399]';
+      return 'text-accent-emerald';
     case 'muted':
     default:
-      return 'text-[#94A3B8]';
+      return 'text-ink-muted';
   }
 }
 
@@ -136,7 +136,7 @@ export function NordicSelect<T extends string = string>({
 
   return (
     <div ref={containerRef} className={`relative ${isOpen ? 'z-50' : 'z-10'} space-y-1.5`}>
-      {label && <label className="block text-xs font-medium text-[#94A3B8] px-0.5">{label}</label>}
+      {label && <label className="block text-xs font-medium text-ink-muted px-0.5">{label}</label>}
 
       <button
         ref={buttonRef}
@@ -146,20 +146,20 @@ export function NordicSelect<T extends string = string>({
         aria-expanded={isOpen}
         aria-label={ariaLabel ?? label}
         onClick={handleToggleOpen}
-        className={`w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border text-start flex items-center justify-between gap-2.5 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+        className={`w-full min-h-[48px] px-3.5 py-2.5 rounded-xl border text-start flex items-center justify-between gap-2.5 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
           isOpen
-            ? 'bg-[#131F30] border-[#F59E0B] text-[#F1F5F9]'
-            : 'bg-[#0B1118] border-[#24354C] hover:border-[#38BDF8]/70 text-[#F1F5F9]'
+            ? 'bg-surface-secondary border-gold-500 text-ink-primary'
+            : 'bg-surface-canvas border-border-subtle hover:border-status-ice/70 text-ink-primary'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {icon && <span className="shrink-0">{icon}</span>}
           <div className="min-w-0 flex-1">
-            <div className="text-xs sm:text-sm font-semibold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+            <div className="text-xs sm:text-sm font-semibold text-ink-primary whitespace-normal break-words leading-snug">
               {selectedOption?.label}
             </div>
             {selectedOption?.sublabel && (
-              <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-snug mt-0.5">
+              <div className="text-xs text-ink-muted whitespace-normal break-words leading-snug mt-0.5">
                 {selectedOption.sublabel}
               </div>
             )}
@@ -178,7 +178,7 @@ export function NordicSelect<T extends string = string>({
           )}
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-200 motion-reduce:transition-none ${
-              isOpen ? 'rotate-180 text-[#F59E0B]' : 'text-[#94A3B8]'
+              isOpen ? 'rotate-180 text-accent-amber' : 'text-ink-muted'
             }`}
           />
         </div>
@@ -199,7 +199,7 @@ export function NordicSelect<T extends string = string>({
               width: `${menuStyle.width}px`,
               maxHeight: `${menuStyle.maxHeight}px`,
             }}
-            className="z-[120] overflow-y-auto rounded-xl bg-[#0D1520] border border-[#2C415C] shadow-[0_18px_42px_rgba(0,0,0,0.92)] p-1.5 space-y-1"
+            className="z-[120] overflow-y-auto rounded-xl bg-surface-elevated border border-border-strong shadow-[0_18px_42px_rgba(0,0,0,0.92)] p-1.5 space-y-1"
           >
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -215,8 +215,8 @@ export function NordicSelect<T extends string = string>({
                   }}
                   className={`w-full min-h-[44px] px-3 py-2.5 rounded-lg text-start flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-[#192A3E] text-[#F1F5F9]'
-                      : 'hover:bg-[#142030] text-[#CBD5E1] hover:text-[#F1F5F9]'
+                      ? 'bg-surface-interactive text-ink-primary'
+                      : 'hover:bg-surface-secondary text-ink-secondary hover:text-ink-primary'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
@@ -224,7 +224,7 @@ export function NordicSelect<T extends string = string>({
                       {opt.label}
                     </div>
                     {opt.sublabel && (
-                      <div className="text-xs text-[#94A3B8] leading-snug mt-0.5 break-words">
+                      <div className="text-xs text-ink-muted leading-snug mt-0.5 break-words">
                         {opt.sublabel}
                       </div>
                     )}
@@ -240,7 +240,7 @@ export function NordicSelect<T extends string = string>({
                         {opt.badge}
                       </span>
                     )}
-                    {isSelected && <Check className="w-4 h-4 text-[#F59E0B] shrink-0" />}
+                    {isSelected && <Check className="w-4 h-4 text-accent-amber shrink-0" />}
                   </div>
                 </button>
               );
@@ -285,35 +285,35 @@ export function NordicAccordion({
 
   const iconBgClass =
     accent === 'gold'
-      ? 'bg-[#F59E0B]/15 text-[#F59E0B]'
+      ? 'bg-gold-500/15 text-accent-amber'
       : accent === 'crimson'
-        ? 'bg-[#EF4444]/15 text-[#EF4444]'
+        ? 'bg-blood-500/15 text-accent-crimson'
         : accent === 'emerald'
-          ? 'bg-[#34D399]/15 text-[#34D399]'
+          ? 'bg-status-emerald/15 text-accent-emerald'
           : accent === 'ice'
-            ? 'bg-[#38BDF8]/15 text-[#38BDF8]'
-            : 'bg-[#1A2738] text-[#94A3B8]';
+            ? 'bg-status-ice/15 text-accent-ice'
+            : 'bg-surface-interactive text-ink-muted';
 
   const activeBorderClass =
     accent === 'gold'
-      ? 'border-[#F59E0B]/60'
+      ? 'border-gold-500/60'
       : accent === 'crimson'
-        ? 'border-[#EF4444]/60'
+        ? 'border-blood-500/60'
         : accent === 'emerald'
-          ? 'border-[#34D399]/60'
-          : 'border-[#38BDF8]/60';
+          ? 'border-status-emerald/60'
+          : 'border-status-ice/60';
 
   return (
     <div
-      className={`flex flex-col rounded-xl bg-[#131D2B] border transition-colors ${
-        isOpen ? activeBorderClass : 'border-[#233246] hover:border-[#2F445E]'
+      className={`flex flex-col rounded-xl bg-surface-secondary border transition-colors ${
+        isOpen ? activeBorderClass : 'border-border-subtle hover:border-border-strong'
       }`}
     >
       <button
         type="button"
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="w-full min-h-[60px] px-4 py-3 flex items-center justify-between gap-3 text-start hover:bg-[#172334]/70 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
+        className="w-full min-h-[60px] px-4 py-3 flex items-center justify-between gap-3 text-start hover:bg-surface-secondary/70 rounded-xl transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70"
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {icon && (
@@ -324,11 +324,11 @@ export function NordicAccordion({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="text-sm sm:text-[15px] font-semibold text-[#F1F5F9] leading-snug break-words">
+            <div className="text-sm sm:text-[15px] font-semibold text-ink-primary leading-snug break-words">
               {title}
             </div>
             {subtitle && (
-              <div className="text-xs text-[#94A3B8] leading-snug mt-0.5 break-words">
+              <div className="text-xs text-ink-muted leading-snug mt-0.5 break-words">
                 {subtitle}
               </div>
             )}
@@ -339,7 +339,7 @@ export function NordicAccordion({
           {statusNode}
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-200 motion-reduce:transition-none ${
-              isOpen ? 'rotate-180 text-[#F59E0B]' : 'text-[#94A3B8]'
+              isOpen ? 'rotate-180 text-accent-amber' : 'text-ink-muted'
             }`}
           />
         </div>
@@ -351,7 +351,7 @@ export function NordicAccordion({
         }`}
       >
         <div className={allowOverflow ? 'overflow-visible' : 'overflow-hidden'}>
-          <div className="px-4 pb-4 pt-3 border-t border-[#1E2D40] bg-[#0D1520]/85 rounded-b-xl">
+          <div className="px-4 pb-4 pt-3 border-t border-border-subtle bg-surface-elevated/85 rounded-b-xl">
             {children}
           </div>
         </div>

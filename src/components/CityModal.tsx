@@ -111,7 +111,7 @@ function LiveAnimatedNumber({
   return (
     <span
       className={`font-mono tabular-nums transition-colors duration-200 ${
-        highlight ? 'text-[#F59E0B]' : ''
+        highlight ? 'text-accent-amber' : ''
       }`}
     >
       {text}
@@ -127,9 +127,9 @@ function getUnrestStatus(unrest: number, lang: Language) {
       level: 'critical' as const,
       label: ui.statusCritical,
       sentence: ui.unrestSentenceCritical,
-      dotClass: 'bg-rose-500',
-      barClass: 'bg-rose-500',
-      textClass: 'text-rose-400',
+      dotClass: 'bg-blood-500',
+      barClass: 'bg-blood-500',
+      textClass: 'text-accent-crimson',
     };
   }
   if (unrest >= 40) {
@@ -137,18 +137,18 @@ function getUnrestStatus(unrest: number, lang: Language) {
       level: 'uneasy' as const,
       label: ui.statusUneasy,
       sentence: ui.unrestSentenceUneasy,
-      dotClass: 'bg-[#F59E0B]',
-      barClass: 'bg-[#F59E0B]',
-      textClass: 'text-[#F59E0B]',
+      dotClass: 'bg-gold-500',
+      barClass: 'bg-gold-500',
+      textClass: 'text-accent-amber',
     };
   }
   return {
     level: 'calm' as const,
     label: ui.statusCalm,
     sentence: ui.unrestSentenceCalm,
-    dotClass: 'bg-emerald-500',
-    barClass: 'bg-emerald-500',
-    textClass: 'text-emerald-400',
+    dotClass: 'bg-status-emerald',
+    barClass: 'bg-status-emerald',
+    textClass: 'text-accent-emerald',
   };
 }
 
@@ -360,7 +360,7 @@ export function CityModal({
       aria-modal="true"
       aria-labelledby="city-modal-title"
       aria-describedby="city-modal-subtitle"
-      className="fixed inset-0 z-[130] max-h-dvh overflow-hidden bg-[#05080D]/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-2 sm:p-4 text-[#F1F5F9]"
+      className="fixed inset-0 z-[130] max-h-dvh overflow-hidden bg-surface-backdrop backdrop-blur-[2px] flex items-end sm:items-center justify-center p-2 sm:p-4 text-ink-primary"
     >
       <motion.div
         ref={cityModalCardRef}
@@ -372,36 +372,36 @@ export function CityModal({
         onClick={(e) => e.stopPropagation()}
         onPointerDown={handleModalPointerDown}
         onPointerUp={handleModalPointerUp}
-        className="relative w-full max-w-lg h-[88dvh] max-h-[88dvh] sm:h-auto sm:max-h-[86dvh] flex flex-col overflow-hidden rounded-[20px] bg-[#0F1722] border border-[#233246] shadow-[0_18px_50px_rgba(0,0,0,0.45)] text-start"
+        className="relative w-full max-w-lg h-[88dvh] max-h-[88dvh] sm:h-auto sm:max-h-[86dvh] flex flex-col overflow-hidden rounded-[20px] bg-surface-elevated border border-border-subtle shadow-[0_18px_50px_rgba(0,0,0,0.45)] text-start"
       >
         {/* STICKY HEADER */}
-        <div className="sticky top-0 z-20 shrink-0 bg-[#121C2B] pt-3.5 px-4 pb-2.5 space-y-2.5">
+        <div className="sticky top-0 z-20 shrink-0 bg-surface-secondary pt-3.5 px-4 pb-2.5 space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-baseline gap-2">
                 <h3
                   id="city-modal-title"
-                  className="font-saga text-[20px] font-semibold text-[#F1F5F9] leading-snug"
+                  className="font-saga text-[20px] font-semibold text-ink-primary leading-snug"
                 >
                   {sName}
                 </h3>
                 {sRegion && (
-                  <span className="text-xs font-normal text-[#94A3B8]">({sRegion})</span>
+                  <span className="text-xs font-normal text-ink-muted">({sRegion})</span>
                 )}
               </div>
 
               {/* Jarl Line (Persian transliteration + <bdi> Latin original) */}
               <div
                 id="city-modal-subtitle"
-                className="text-xs font-normal text-[#94A3B8] mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug"
+                className="text-xs font-normal text-ink-muted mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug"
               >
                 {h.appointedJarl ? (
                   <>
-                    <span className="text-[#CBD5E1] font-semibold">
+                    <span className="text-ink-secondary font-semibold">
                       {ui.jarlPrefix}: {jarlFaName}
                     </span>
                     {isFa && (
-                      <bdi dir="ltr" className="text-xs text-[#64748B] font-mono">
+                      <bdi dir="ltr" className="text-xs text-ink-muted font-mono">
                         ({h.appointedJarl})
                       </bdi>
                     )}
@@ -418,7 +418,7 @@ export function CityModal({
               type="button"
               onClick={() => onClose(false)}
               aria-label={ui.modalClose}
-              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle flex items-center justify-center text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
             >
               <X className="w-5 h-5" />
             </button>
@@ -432,7 +432,7 @@ export function CityModal({
                 disabled={totalCount <= 1}
                 onClick={() => onStepCity(-1)}
                 aria-label={ui.modalPrevCity}
-                className="w-9 h-9 rounded-lg bg-[#111A26] hover:bg-[#162232] border border-[#233246] flex items-center justify-center text-[#CBD5E1] disabled:opacity-35 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                className="w-9 h-9 rounded-lg bg-surface-card hover:bg-surface-secondary border border-border-subtle flex items-center justify-center text-ink-secondary disabled:opacity-35 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
               >
                 {isFa ? (
                   <ChevronRight className="w-4 h-4" />
@@ -443,7 +443,7 @@ export function CityModal({
 
               <span
                 aria-live="polite"
-                className="px-2.5 py-1 rounded-lg bg-[#111A26] border border-[#233246] text-xs font-mono tabular-nums text-[#94A3B8]"
+                className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-xs font-mono tabular-nums text-ink-muted"
               >
                 {num(currentIndex + 1)} / {num(totalCount)}
               </span>
@@ -453,7 +453,7 @@ export function CityModal({
                 disabled={totalCount <= 1}
                 onClick={() => onStepCity(1)}
                 aria-label={ui.modalNextCity}
-                className="w-9 h-9 rounded-lg bg-[#111A26] hover:bg-[#162232] border border-[#233246] flex items-center justify-center text-[#CBD5E1] disabled:opacity-35 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                className="w-9 h-9 rounded-lg bg-surface-card hover:bg-surface-secondary border border-border-subtle flex items-center justify-center text-ink-secondary disabled:opacity-35 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
               >
                 {isFa ? (
                   <ChevronLeft className="w-4 h-4" />
@@ -464,18 +464,18 @@ export function CityModal({
             </div>
 
             {/* Live Silver & Active Hird Indicator */}
-            <div className="inline-flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-[#111A26] border border-[#233246] text-xs">
-              <span className="inline-flex items-center gap-1 text-[#CBD5E1]">
-                <Coins className="w-3.5 h-3.5 text-[#94A3B8]" />
+            <div className="inline-flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-xs">
+              <span className="inline-flex items-center gap-1 text-ink-secondary">
+                <Coins className="w-3.5 h-3.5 text-ink-muted" />
                 <LiveAnimatedNumber
                   value={state.realm.silver}
                   lang={lang}
                   reducedMotion={prefersReducedMotion}
                 />
               </span>
-              <span className="text-[#64748B]">·</span>
-              <span className="inline-flex items-center gap-1 text-[#CBD5E1]">
-                <Swords className="w-3.5 h-3.5 text-[#94A3B8]" />
+              <span className="text-ink-muted">·</span>
+              <span className="inline-flex items-center gap-1 text-ink-secondary">
+                <Swords className="w-3.5 h-3.5 text-ink-muted" />
                 <LiveAnimatedNumber
                   value={state.realm.hirdWarriors}
                   lang={lang}
@@ -490,7 +490,7 @@ export function CityModal({
             role="tablist"
             aria-label={isFa ? 'بخش‌های شهر' : 'City Tabs'}
             onKeyDown={handleTabKeyDown}
-            className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[#111A26] border border-[#233246]"
+            className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface-card border border-border-subtle"
           >
             <button
               id="city-tab-overview"
@@ -499,10 +499,10 @@ export function CityModal({
               aria-selected={cityModalTab === 'overview'}
               aria-controls="city-panel-overview"
               onClick={() => setCityModalTab('overview')}
-              className={`min-h-[40px] px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              className={`min-h-[40px] px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                 cityModalTab === 'overview'
-                  ? 'bg-[#162232] text-[#F1F5F9] border border-[#233246]'
-                  : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                  ? 'bg-surface-secondary text-ink-primary border border-border-subtle'
+                  : 'text-ink-muted hover:text-ink-primary'
               }`}
             >
               <span>{ui.modalTabOverview}</span>
@@ -515,14 +515,14 @@ export function CityModal({
               aria-selected={cityModalTab === 'buildings'}
               aria-controls="city-panel-buildings"
               onClick={() => setCityModalTab('buildings')}
-              className={`min-h-[40px] px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              className={`min-h-[40px] px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                 cityModalTab === 'buildings'
-                  ? 'bg-[#162232] text-[#F1F5F9] border border-[#233246]'
-                  : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+                  ? 'bg-surface-secondary text-ink-primary border border-border-subtle'
+                  : 'text-ink-muted hover:text-ink-primary'
               }`}
             >
               <span>{ui.modalTabBuildings}</span>
-              <span className="px-1.5 py-0.5 rounded text-xs font-mono tabular-nums bg-[#111A26] text-[#94A3B8]">
+              <span className="px-1.5 py-0.5 rounded text-xs font-mono tabular-nums bg-surface-card text-ink-muted">
                 {num(h.buildings.length)}/{num(allBuildingKeys.length)}
               </span>
             </button>
@@ -530,7 +530,7 @@ export function CityModal({
         </div>
 
         {/* Single Subtle Knotwork Divider Under Header */}
-        <RuneDivider className="px-4 py-1 bg-[#121C2B]" />
+        <RuneDivider className="px-4 py-1 bg-surface-secondary" />
 
         {/* SCROLLABLE MODAL BODY */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
@@ -539,9 +539,9 @@ export function CityModal({
             <div
               role="status"
               aria-live="polite"
-              className="px-3.5 py-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex items-center gap-2 text-xs font-semibold text-[#F1F5F9]"
+              className="px-3.5 py-2.5 rounded-xl bg-surface-card border border-border-subtle flex items-center gap-2 text-xs font-semibold text-ink-primary"
             >
-              <span className="w-5 h-5 rounded-full bg-[#162232] text-emerald-400 flex items-center justify-center shrink-0">
+              <span className="w-5 h-5 rounded-full bg-surface-secondary text-accent-emerald flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5" />
               </span>
               <span>{feedbackToast}</span>
@@ -559,10 +559,10 @@ export function CityModal({
               className="space-y-4"
             >
               {/* 1. Calm Stat Strip with Thin Dividers: Farms · Garrison · Population · Noble Factions */}
-              <div className="rounded-xl bg-[#111A26] border border-[#233246] grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x rtl:sm:divide-x-reverse divide-[#1E2D40] overflow-hidden">
+              <div className="rounded-xl bg-surface-card border border-border-subtle grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x rtl:sm:divide-x-reverse divide-border-subtle overflow-hidden">
                 <div className="p-2.5 text-center">
-                  <div className="text-xs font-normal text-[#94A3B8]">{ui.statFarms}</div>
-                  <div className="text-[15px] font-semibold text-[#F1F5F9] mt-0.5">
+                  <div className="text-xs font-normal text-ink-muted">{ui.statFarms}</div>
+                  <div className="text-[15px] font-semibold text-ink-primary mt-0.5">
                     <LiveAnimatedNumber
                       value={h.farms}
                       lang={lang}
@@ -572,10 +572,10 @@ export function CityModal({
                 </div>
 
                 <div className="p-2.5 text-center">
-                  <div className="text-xs font-normal text-[#94A3B8]">{ui.sortGarrison}</div>
+                  <div className="text-xs font-normal text-ink-muted">{ui.sortGarrison}</div>
                   <div
                     className={`text-[15px] font-semibold mt-0.5 ${
-                      garrison <= 2 ? 'text-[#F59E0B]' : 'text-[#F1F5F9]'
+                      garrison <= 2 ? 'text-accent-amber' : 'text-ink-primary'
                     }`}
                   >
                     <LiveAnimatedNumber
@@ -587,8 +587,8 @@ export function CityModal({
                 </div>
 
                 <div className="p-2.5 text-center">
-                  <div className="text-xs font-normal text-[#94A3B8]">{ui.stripNorsePop}</div>
-                  <div className="text-[15px] font-semibold text-[#F1F5F9] mt-0.5">
+                  <div className="text-xs font-normal text-ink-muted">{ui.stripNorsePop}</div>
+                  <div className="text-[15px] font-semibold text-ink-primary mt-0.5">
                     <LiveAnimatedNumber
                       value={h.norsePopulationShare ?? 65}
                       lang={lang}
@@ -599,14 +599,14 @@ export function CityModal({
                 </div>
 
                 <div className="p-2.5 text-center">
-                  <div className="text-xs font-normal text-[#94A3B8]">{ui.stripFactions}</div>
-                  <div className="text-[15px] font-semibold text-[#F1F5F9] mt-0.5">
+                  <div className="text-xs font-normal text-ink-muted">{ui.stripFactions}</div>
+                  <div className="text-[15px] font-semibold text-ink-primary mt-0.5">
                     <LiveAnimatedNumber
                       value={h.hostagesCount ?? 0}
                       lang={lang}
                       reducedMotion={prefersReducedMotion}
                     />{' '}
-                    <span className="text-xs font-normal text-[#94A3B8]">
+                    <span className="text-xs font-normal text-ink-muted">
                       {ui.hostagesLabel}
                     </span>
                   </div>
@@ -614,9 +614,9 @@ export function CityModal({
               </div>
 
               {/* 2. Unrest Meter with One-Line Status in Words */}
-              <div className="p-3.5 rounded-xl bg-[#111A26] border border-[#233246] space-y-2">
+              <div className="p-3.5 rounded-xl bg-surface-card border border-border-subtle space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-[#CBD5E1] flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-ink-secondary flex items-center gap-1.5">
                     <span
                       className={`w-2.5 h-2.5 rounded-full ${status.dotClass} shrink-0`}
                       aria-hidden="true"
@@ -636,27 +636,27 @@ export function CityModal({
                   </span>
                 </div>
 
-                <div className="w-full h-2 rounded-full bg-[#182638] overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-surface-interactive overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${status.barClass}`}
                     style={{ width: `${Math.min(100, unrest)}%` }}
                   />
                 </div>
 
-                <p className="text-xs font-normal text-[#94A3B8] leading-relaxed">
+                <p className="text-xs font-normal text-ink-muted leading-relaxed">
                   {status.sentence}
                 </p>
               </div>
 
               {/* 3. Garrison Stepper (Large 44x44px − / + targets) */}
               {onStationGarrison && (
-                <div className="p-3.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-wrap items-center justify-between gap-3">
+                <div className="p-3.5 rounded-xl bg-surface-card border border-border-subtle flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-[#F1F5F9] flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-[#CBD5E1] shrink-0" />
+                    <div className="text-sm font-semibold text-ink-primary flex items-center gap-1.5">
+                      <Shield className="w-4 h-4 text-ink-secondary shrink-0" />
                       <span>{ui.garrisonStepperTitle}</span>
                     </div>
-                    <div className="text-xs font-normal text-[#94A3B8] mt-0.5 leading-relaxed">
+                    <div className="text-xs font-normal text-ink-muted mt-0.5 leading-relaxed">
                       {garrison <= 0
                         ? ui.garrisonEmptyReason
                         : state.realm.hirdWarriors < 2
@@ -674,20 +674,20 @@ export function CityModal({
                         onTriggerToast(ui.toastGarrisonRemoved(sName));
                       }}
                       aria-label={isFa ? 'کاهش ۲ نگهبان از پادگان' : 'Remove 2 guards'}
-                      className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-[#F1F5F9] flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                      className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-ink-primary flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
 
                     <div className="min-w-[54px] text-center">
-                      <div className="text-[15px] font-semibold text-[#F1F5F9]">
+                      <div className="text-[15px] font-semibold text-ink-primary">
                         <LiveAnimatedNumber
                           value={garrison}
                           lang={lang}
                           reducedMotion={prefersReducedMotion}
                         />
                       </div>
-                      <div className="text-xs font-normal text-[#94A3B8]">
+                      <div className="text-xs font-normal text-ink-muted">
                         {ui.garrisonShort}
                       </div>
                     </div>
@@ -700,7 +700,7 @@ export function CityModal({
                         onTriggerToast(ui.toastGarrisonAdded(sName));
                       }}
                       aria-label={isFa ? 'افزودن ۲ نگهبان به پادگان' : 'Add 2 guards'}
-                      className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-[#F1F5F9] flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                      className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-ink-primary flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -719,24 +719,24 @@ export function CityModal({
                       onSendSettlers(h.settlementId);
                       onTriggerToast(ui.toastSettlersSent(sName));
                     }}
-                    className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                    className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                       missingSettlerSilver === 0
-                        ? 'bg-[#111A26] hover:bg-[#162232] border-[#233246] text-[#F1F5F9] cursor-pointer'
-                        : 'bg-[#111A26] border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                        ? 'bg-surface-card hover:bg-surface-secondary border-border-subtle text-ink-primary cursor-pointer'
+                        : 'bg-surface-card border-border-subtle text-ink-muted cursor-not-allowed'
                     }`}
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold flex items-center gap-1.5 leading-snug">
-                        <Users className="w-4 h-4 text-[#CBD5E1] shrink-0" />
+                        <Users className="w-4 h-4 text-ink-secondary shrink-0" />
                         <span>{ui.actionSendSettlers}</span>
                       </div>
                       {missingSettlerSilver > 0 && (
-                        <div className="text-xs font-normal text-[#94A3B8] mt-0.5">
+                        <div className="text-xs font-normal text-ink-muted mt-0.5">
                           {ui.needMoreSilver(missingSettlerSilver)}
                         </div>
                       )}
                     </div>
-                    <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-[#162232] text-[#CBD5E1] shrink-0">
+                    <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-surface-secondary text-ink-secondary shrink-0">
                       {num(28)} {ui.chipSilver}
                     </span>
                   </button>
@@ -747,18 +747,23 @@ export function CityModal({
                   (h.appointedJarl ? (
                     <div
                       aria-disabled="true"
-                      className="min-h-[48px] px-3 py-2 rounded-xl bg-[#111A26] border border-[#1E2D40] flex items-center justify-between gap-2 select-none"
+                      className="min-h-[48px] px-3 py-2 rounded-xl bg-surface-card border border-border-subtle flex items-center justify-between gap-2 select-none"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-normal text-[#94A3B8] flex items-center gap-1.5 leading-snug">
-                          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="text-sm font-normal text-ink-muted flex items-center gap-1.5 leading-snug">
+                          <Check className="w-4 h-4 text-accent-emerald shrink-0" />
                           <span>{ui.jarlAppointedDone}</span>
                         </div>
-                        <div className="text-xs font-normal text-[#64748B] mt-0.5">
-                          {jarlFaName}
+                        <div className="text-xs font-normal text-ink-muted mt-0.5 flex flex-wrap items-center gap-1">
+                          <span>{jarlFaName}</span>
+                          {isFa && h.appointedJarl && jarlFaName !== h.appointedJarl && (
+                            <bdi dir="ltr" className="text-[11px] font-mono">
+                              ({h.appointedJarl})
+                            </bdi>
+                          )}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-md text-xs font-normal bg-[#162232] text-[#94A3B8] shrink-0">
+                      <span className="px-2 py-0.5 rounded-md text-xs font-normal bg-surface-secondary text-ink-muted shrink-0">
                         ✓
                       </span>
                     </div>
@@ -770,24 +775,24 @@ export function CityModal({
                         onAppointJarl(h.settlementId);
                         onTriggerToast(ui.toastJarlAppointed(sName));
                       }}
-                      className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                      className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                         missingJarlSilver === 0
-                          ? 'bg-[#111A26] hover:bg-[#162232] border-[#233246] text-[#F1F5F9] cursor-pointer'
-                          : 'bg-[#111A26] border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                          ? 'bg-surface-card hover:bg-surface-secondary border-border-subtle text-ink-primary cursor-pointer'
+                          : 'bg-surface-card border-border-subtle text-ink-muted cursor-not-allowed'
                       }`}
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-semibold flex items-center gap-1.5 leading-snug">
-                          <Crown className="w-4 h-4 text-[#CBD5E1] shrink-0" />
+                          <Crown className="w-4 h-4 text-ink-secondary shrink-0" />
                           <span>{ui.actionAppointJarl}</span>
                         </div>
                         {missingJarlSilver > 0 && (
-                          <div className="text-xs font-normal text-[#94A3B8] mt-0.5">
+                          <div className="text-xs font-normal text-ink-muted mt-0.5">
                             {ui.needMoreSilver(missingJarlSilver)}
                           </div>
                         )}
                       </div>
-                      <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-[#162232] text-[#CBD5E1] shrink-0">
+                      <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-surface-secondary text-ink-secondary shrink-0">
                         {num(20)} {ui.chipSilver}
                       </span>
                     </button>
@@ -802,24 +807,24 @@ export function CityModal({
                       onTakeHostages(h.settlementId);
                       onTriggerToast(ui.toastHostagesTaken(sName));
                     }}
-                    className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                    className={`min-h-[48px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                       canTakeHostages
-                        ? 'bg-[#111A26] hover:bg-[#162232] border-[#233246] text-[#F1F5F9] cursor-pointer'
-                        : 'bg-[#111A26] border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                        ? 'bg-surface-card hover:bg-surface-secondary border-border-subtle text-ink-primary cursor-pointer'
+                        : 'bg-surface-card border-border-subtle text-ink-muted cursor-not-allowed'
                     }`}
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold flex items-center gap-1.5 leading-snug">
-                        <Shield className="w-4 h-4 text-[#CBD5E1] shrink-0" />
+                        <Shield className="w-4 h-4 text-ink-secondary shrink-0" />
                         <span>{ui.actionTakeHostage}</span>
                       </div>
                       {!canTakeHostages && (
-                        <div className="text-xs font-normal text-[#94A3B8] mt-0.5">
+                        <div className="text-xs font-normal text-ink-muted mt-0.5">
                           {ui.needGuardsForHostage}
                         </div>
                       )}
                     </div>
-                    <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-[#162232] text-[#CBD5E1] shrink-0">
+                    <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-surface-secondary text-ink-secondary shrink-0">
                       {ui.chipGuardsReq}
                     </span>
                   </button>
@@ -829,15 +834,15 @@ export function CityModal({
                 <button
                   type="button"
                   onClick={() => setCityModalTab('buildings')}
-                  className="min-h-[48px] px-3 py-2 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] text-[#F1F5F9] flex items-center justify-between gap-2 text-start cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                  className="min-h-[48px] px-3 py-2 rounded-xl bg-surface-card hover:bg-surface-secondary border border-border-subtle text-ink-primary flex items-center justify-between gap-2 text-start cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-semibold flex items-center gap-1.5 leading-snug">
-                      <Hammer className="w-4 h-4 text-[#CBD5E1] shrink-0" />
+                      <Hammer className="w-4 h-4 text-ink-secondary shrink-0" />
                       <span>{ui.actionBuildHere}</span>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-[#162232] text-[#CBD5E1] shrink-0">
+                  <span className="px-2 py-0.5 rounded-md text-xs font-mono font-semibold tabular-nums bg-surface-secondary text-ink-secondary shrink-0">
                     {num(h.buildings.length)}/{num(allBuildingKeys.length)} {ui.chipStructures}
                   </span>
                 </button>
@@ -845,7 +850,7 @@ export function CityModal({
 
               {/* Friendly Note When Zero Immediate Governance Actions Are Available */}
               {noImmediateGovernancePossible && (
-                <div className="px-3 py-2 rounded-xl bg-[#111A26] border border-[#233246] text-xs font-normal text-[#94A3B8] leading-relaxed">
+                <div className="px-3 py-2 rounded-xl bg-surface-card border border-border-subtle text-xs font-normal text-ink-muted leading-relaxed">
                   {ui.zeroActionsNote}
                 </div>
               )}
@@ -856,18 +861,18 @@ export function CityModal({
                   type="button"
                   aria-expanded={moreActionsOpen}
                   onClick={() => setMoreActionsOpen((v) => !v)}
-                  className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] text-xs font-semibold text-[#CBD5E1] inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                  className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-card hover:bg-surface-secondary border border-border-subtle text-xs font-semibold text-ink-secondary inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                 >
                   <MoreHorizontal className="w-4 h-4" />
                   <span>{moreActionsOpen ? ui.hideMoreActionsBtn : ui.moreActionsBtn}</span>
                 </button>
 
                 {moreActionsOpen && (
-                  <div className="mt-2 p-3.5 rounded-xl bg-[#111A26] border border-[#233246] space-y-3">
+                  <div className="mt-2 p-3.5 rounded-xl bg-surface-card border border-border-subtle space-y-3">
                     {/* Tribute Burden Selector */}
                     {onSetTributeBurden && (
                       <div className="space-y-1.5">
-                        <div className="text-xs font-semibold text-[#CBD5E1]">
+                        <div className="text-xs font-semibold text-ink-secondary">
                           {ui.tributeSectionTitle}
                         </div>
                         <div className="grid grid-cols-5 gap-1">
@@ -909,10 +914,10 @@ export function CityModal({
                                   onSetTributeBurden(h.settlementId, tb);
                                   onTriggerToast(ui.toastTributeChanged(sName));
                                 }}
-                                className={`min-h-[40px] px-1.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                                className={`min-h-[40px] px-1.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                                   active
-                                    ? 'bg-[#182638] text-[#F1F5F9] border border-[#233246]'
-                                    : 'bg-[#162232] text-[#94A3B8] hover:text-[#F1F5F9]'
+                                    ? 'bg-surface-interactive text-ink-primary border border-border-subtle'
+                                    : 'bg-surface-secondary text-ink-muted hover:text-ink-primary'
                                 }`}
                               >
                                 {label}
@@ -925,12 +930,12 @@ export function CityModal({
 
                     {/* Religious Tolerance Toggle */}
                     {onToggleTolerance && (
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between gap-2">
+                      <div className="pt-2 border-t border-border-subtle flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="text-xs font-semibold text-[#CBD5E1]">
+                          <div className="text-xs font-semibold text-ink-secondary">
                             {ui.toleranceSectionTitle}
                           </div>
-                          <div className="text-xs font-normal text-[#94A3B8] mt-0.5">
+                          <div className="text-xs font-normal text-ink-muted mt-0.5">
                             {h.religiousTolerance ? ui.toleranceActive : ui.toleranceStrict}
                           </div>
                         </div>
@@ -940,7 +945,7 @@ export function CityModal({
                             onToggleTolerance(h.settlementId);
                             onTriggerToast(ui.toastToleranceToggled(sName));
                           }}
-                          className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-xs font-semibold text-[#F1F5F9] cursor-pointer shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                          className="min-h-[44px] px-3 py-1.5 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-xs font-semibold text-ink-primary cursor-pointer shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                         >
                           {ui.toggleToleranceBtn}
                         </button>
@@ -949,19 +954,19 @@ export function CityModal({
 
                     {/* Harsh Crackdown / Mass Reprisal */}
                     {onExecutePlot && (
-                      <div className="pt-2 border-t border-[#1E2D40]">
+                      <div className="pt-2 border-t border-border-subtle">
                         <button
                           type="button"
                           disabled={state.realm.hirdWarriors < 15}
                           onClick={() => onExecutePlot('mass_reprisal', h.settlementId)}
-                          className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#162232] hover:bg-rose-950/40 border border-[#233246] text-xs font-semibold text-rose-300 flex items-center justify-between gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed transition-colors"
+                          className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-surface-secondary hover:bg-surface-crimson-tint border border-border-subtle text-xs font-semibold text-accent-crimson flex items-center justify-between gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed transition-colors"
                         >
                           <span className="inline-flex items-center gap-1.5">
-                            <Flame className="w-4 h-4 text-rose-400 shrink-0" />
+                            <Flame className="w-4 h-4 text-accent-crimson shrink-0" />
                             <span>{ui.reprisalBtn}</span>
                           </span>
                           {state.realm.hirdWarriors < 15 && (
-                            <span className="text-xs font-normal text-[#94A3B8]">
+                            <span className="text-xs font-normal text-ink-muted">
                               {ui.reprisalNeedWarriors}
                             </span>
                           )}
@@ -985,16 +990,16 @@ export function CityModal({
               className="space-y-3.5"
             >
               {/* Yearly Quota Bar */}
-              <div className="px-3.5 py-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex items-center justify-between gap-2">
-                <span className="text-xs font-normal text-[#CBD5E1]">
+              <div className="px-3.5 py-2.5 rounded-xl bg-surface-card border border-border-subtle flex items-center justify-between gap-2">
+                <span className="text-xs font-normal text-ink-secondary">
                   {ui.buildQuotaAvailable}
                 </span>
                 {builtThisYear && (
                   <span
                     aria-disabled="true"
-                    className="px-2.5 py-1 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                    className="px-2.5 py-1 rounded-full bg-surface-secondary border border-border-subtle text-xs font-normal text-ink-muted inline-flex items-center gap-1.5 select-none"
                   >
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-accent-emerald" />
                     <span>{ui.doneThisSeason}</span>
                   </span>
                 )}
@@ -1002,13 +1007,13 @@ export function CityModal({
 
               {/* Friendly Empty Suggestion if City Has No Buildings Yet */}
               {h.buildings.length === 0 && (
-                <div className="p-3.5 rounded-xl bg-[#111A26] border border-[#233246] text-xs font-normal text-[#CBD5E1] leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-normal text-ink-secondary leading-relaxed">
                   {ui.emptyBuildingsNote}
                 </div>
               )}
 
               {/* Clean Rows of Constructible & Existing Buildings Separated by Thin Dividers */}
-              <div className="rounded-2xl bg-[#111A26] border border-[#233246] divide-y divide-[#1E2D40] overflow-hidden">
+              <div className="rounded-2xl bg-surface-card border border-border-subtle divide-y divide-border-subtle overflow-hidden">
                 {allBuildingKeys.map((bKey) => {
                   const bDef = BUILDINGS_CATALOG[bKey];
                   const bFa = BUILDINGS_FA[bKey];
@@ -1031,16 +1036,16 @@ export function CityModal({
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[15px] font-semibold text-[#F1F5F9]">
+                          <span className="text-[15px] font-semibold text-ink-primary">
                             {bName}
                           </span>
                           {!built && (
-                            <span className="px-2 py-0.5 rounded-md bg-[#162232] text-xs font-mono font-semibold tabular-nums text-[#CBD5E1]">
+                            <span className="px-2 py-0.5 rounded-md bg-surface-secondary text-xs font-mono font-semibold tabular-nums text-ink-secondary">
                               {num(bDef.costSilver)} {ui.chipSilver}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs font-normal text-[#94A3B8] leading-relaxed">
+                        <p className="text-xs font-normal text-ink-muted leading-relaxed">
                           {bDesc}
                         </p>
                       </div>
@@ -1050,25 +1055,25 @@ export function CityModal({
                         {built ? (
                           <span
                             aria-disabled="true"
-                            className="min-h-[40px] px-3 py-1.5 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                            className="min-h-[40px] px-3 py-1.5 rounded-full bg-surface-secondary border border-border-subtle text-xs font-normal text-ink-muted inline-flex items-center gap-1.5 select-none"
                           >
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <Check className="w-3.5 h-3.5 text-accent-emerald" />
                             <span>{ui.builtPermanent}</span>
                           </span>
                         ) : builtThisYear ? (
                           <span
                             aria-disabled="true"
-                            className="min-h-[40px] px-3 py-1.5 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                            className="min-h-[40px] px-3 py-1.5 rounded-full bg-surface-secondary border border-border-subtle text-xs font-normal text-ink-muted inline-flex items-center gap-1.5 select-none"
                           >
-                            <Check className="w-3.5 h-3.5 text-[#94A3B8]" />
+                            <Check className="w-3.5 h-3.5 text-ink-muted" />
                             <span>{ui.doneThisSeason}</span>
                           </span>
                         ) : wrongFaith ? (
-                          <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                          <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-surface-secondary text-xs font-normal text-ink-muted inline-flex items-center">
                             {ui.needDifferentFaith}
                           </span>
                         ) : missingSilver > 0 ? (
-                          <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                          <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-surface-secondary text-xs font-normal text-ink-muted inline-flex items-center">
                             {ui.needMoreSilver(missingSilver)}
                           </span>
                         ) : (
@@ -1079,9 +1084,9 @@ export function CityModal({
                               onBuildHoldingStructure(h.settlementId, bKey);
                               onTriggerToast(ui.toastBuiltStructure(bName, sName));
                             }}
-                            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-[#F1F5F9] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-ink-primary text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                           >
-                            <Hammer className="w-4 h-4 text-[#CBD5E1]" />
+                            <Hammer className="w-4 h-4 text-ink-secondary" />
                             <span>
                               {isFa
                                 ? `احداث (${num(bDef.costSilver)} نقره)`
@@ -1099,7 +1104,7 @@ export function CityModal({
         </div>
 
         {/* STICKY FOOTER: EXACTLY ONE FILLED ORANGE PRIMARY ACTION */}
-        <div className="sticky bottom-0 z-20 shrink-0 border-t border-[#1E2D40] bg-[#121C2B] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="sticky bottom-0 z-20 shrink-0 border-t border-border-subtle bg-surface-secondary px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {garrison <= 2 && onStationGarrison ? (
             <button
               type="button"
@@ -1108,10 +1113,10 @@ export function CityModal({
                 onStationGarrison(h.settlementId, 2);
                 onTriggerToast(ui.toastGarrisonAdded(sName));
               }}
-              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                 state.realm.hirdWarriors >= 2
-                  ? 'bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] cursor-pointer'
-                  : 'bg-[#162232] border border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                  ? 'bg-gold-500 hover:bg-gold-400 text-nordic-950 cursor-pointer'
+                  : 'bg-surface-secondary border border-border-subtle text-ink-muted cursor-not-allowed'
               }`}
             >
               <span className="inline-flex items-center gap-2">
@@ -1130,10 +1135,10 @@ export function CityModal({
                 onSendSettlers(h.settlementId);
                 onTriggerToast(ui.toastSettlersSent(sName));
               }}
-              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                 missingSettlerSilver === 0
-                  ? 'bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] cursor-pointer'
-                  : 'bg-[#162232] border border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                  ? 'bg-gold-500 hover:bg-gold-400 text-nordic-950 cursor-pointer'
+                  : 'bg-surface-secondary border border-border-subtle text-ink-muted cursor-not-allowed'
               }`}
             >
               <span className="inline-flex items-center gap-2">
@@ -1150,7 +1155,7 @@ export function CityModal({
             <button
               type="button"
               onClick={() => setCityModalTab('buildings')}
-              className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+              className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-nordic-950 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
             >
               <Hammer className="w-4 h-4 shrink-0" />
               <span>{ui.primaryOpenBuildings}</span>
@@ -1158,17 +1163,17 @@ export function CityModal({
           ) : !recommendedBuildingKey || !recommendedBuildingDef ? (
             <div
               aria-disabled="true"
-              className="w-full min-h-[44px] px-4 py-2 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] flex items-center justify-center gap-1.5 select-none"
+              className="w-full min-h-[44px] px-4 py-2 rounded-full bg-surface-secondary border border-border-subtle text-xs font-normal text-ink-muted flex items-center justify-center gap-1.5 select-none"
             >
-              <Check className="w-4 h-4 text-emerald-400" />
+              <Check className="w-4 h-4 text-accent-emerald" />
               <span>{ui.primaryAllBuilt}</span>
             </div>
           ) : builtThisYear ? (
             <div
               aria-disabled="true"
-              className="w-full min-h-[44px] px-4 py-2 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] flex items-center justify-center gap-1.5 select-none"
+              className="w-full min-h-[44px] px-4 py-2 rounded-full bg-surface-secondary border border-border-subtle text-xs font-normal text-ink-muted flex items-center justify-center gap-1.5 select-none"
             >
-              <Check className="w-4 h-4 text-[#94A3B8]" />
+              <Check className="w-4 h-4 text-ink-muted" />
               <span>{ui.doneThisSeason}</span>
             </div>
           ) : (
@@ -1181,10 +1186,10 @@ export function CityModal({
                   ui.toastBuiltStructure(recommendedBuildingName, sName)
                 );
               }}
-              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              className={`w-full min-h-[46px] px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
                 recommendedMissingSilver === 0
-                  ? 'bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] cursor-pointer'
-                  : 'bg-[#162232] border border-[#233246] text-[#94A3B8] cursor-not-allowed'
+                  ? 'bg-gold-500 hover:bg-gold-400 text-nordic-950 cursor-pointer'
+                  : 'bg-surface-secondary border border-border-subtle text-ink-muted cursor-not-allowed'
               }`}
             >
               <span className="inline-flex items-center gap-2">

@@ -406,6 +406,7 @@ export interface Settlement {
   defaultStatus?: SettlementStatus;
   factionColor?: string;
   foundedYear?: number;
+  abandonedYear?: number;
   isRiverPort?: boolean;
   riverName?: string;
   baseWealth: number;

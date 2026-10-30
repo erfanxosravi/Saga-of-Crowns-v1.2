@@ -279,6 +279,102 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     raidPowerBonus: 7,
     englishFameBonus: 5,
   },
+  {
+    id: 'rollo_rouen_armring',
+    nameEn: "Rollo's Seine-Warden Torque",
+    nameFa: 'طوق نقره و طلای رولو (نگهبان رود سن)',
+    norseName: 'Hringr Göngu-Hrólfs',
+    type: 'garment',
+    rune: 'ᚱ',
+    loreEn:
+      'A heavy braided neck-torque of Frankish silver and Norse gold forged at Rouen when Göngu-Hrólfr bound his river-captains to guard the Seine estuary.',
+    loreFa:
+      'طوقی سنگین و بافته‌شده از نقره فرانکی و طلای نورس که گونگو-هرولف (رولو) در روآن برای هم‌پیمانان خود در نگهبانی از دهانه رود سن ضرب کرد.',
+    effectsLabelEn: '+10 Diplomacy · +8 Combat · +10 Raid Power',
+    effectsLabelFa: '+10 دیپلماسی · +8 مهارت رزم · +10 قدرت یورش',
+    raidPowerBonus: 10,
+    englishFameBonus: 7,
+  },
+  {
+    id: 'hvitserk_eastern_blade',
+    nameEn: "Hvitserk's Eastern River-Sabre",
+    nameFa: 'شمشیر خاوری هویتسرک پیراهن‌سپید',
+    norseName: 'Austr-Sax Hvítserks',
+    type: 'weapon',
+    rune: 'ᛋ',
+    loreEn:
+      'A slightly curved crucible-steel blade with a silver-wired grip won on the portages of Garðaríki and borne by Hvitserk in the vanguard of every river storming.',
+    loreFa:
+      'شمشیری از پولاد جوهرنمود با قبضه نقره‌پیچ که هویتسرک پیراهن‌سپید در گذرگاه‌های رودهای شرق به دست آورد و در خط مقدم نبردها می‌افراشت.',
+    effectsLabelEn: '+12 Combat · +8 Honor · +11 Raid Power',
+    effectsLabelFa: '+12 مهارت رزم · +8 شرافت · +11 قدرت یورش',
+    raidPowerBonus: 11,
+    englishFameBonus: 7,
+  },
+  {
+    id: 'ecbert_bretwalda_signet',
+    nameEn: "King Ecgberht's Bretwalda Ring",
+    nameFa: 'انگشتری و نشان برتوالدای شاه اکبرت',
+    norseName: 'Konungshringr Egberhts',
+    type: 'garment',
+    rune: 'ᛟ',
+    loreEn:
+      'A Carolingian-style gold signet ring inlaid with nielloed West Saxon wyverns, worn by King Ecgberht after breaking Mercian dominance at Ellandun.',
+    loreFa:
+      'انگشتری زرین به سبک کارولنژی با سیاه‌قلمِ اژدهای وسکس که شاه اکبرت پس از پیروزی در الاندون و کسب عنوان برتوالدا بر دست داشت.',
+    effectsLabelEn: '+10 Law · +8 Diplomacy · +6 Raid Power',
+    effectsLabelFa: '+10 قانون‌دانی · +8 دیپلماسی · +6 قدرت یورش',
+    raidPowerBonus: 6,
+    englishFameBonus: 9,
+  },
+  {
+    id: 'aella_york_crown_brooch',
+    nameEn: 'Northumbrian Boar-Clasp of Eoforwic',
+    nameFa: 'سنجاق سلطنتی گراز یورک (غنیمت شاه ائلا)',
+    norseName: 'Jórvíkur-Sylgja Ellu',
+    type: 'garment',
+    rune: 'ᛇ',
+    loreEn:
+      'A heavy gilded shoulder-clasp embossed with the boar of Eoforwic, taken from King Ælla’s royal treasury inside the Roman walls of York.',
+    loreFa:
+      'سنجاق شنل زرکوب با نقش گراز باستانی شهر یورک که از خزانه شاه ائلا در درون دیوارهای رومی یورویک به غنیمت گرفته شد.',
+    effectsLabelEn: '+8 Cunning · +8 Raid Power · +10 English Renown',
+    effectsLabelFa: '+8 ذکاوت · +8 قدرت یورش · +10 شهرت در انگلستان',
+    raidPowerBonus: 8,
+    englishFameBonus: 10,
+  },
+  {
+    id: 'alfred_gold_aestel',
+    nameEn: "King Alfred's Gold Jewel-Pointer (Æstel)",
+    nameFa: 'نشانگر زرین و میناکاری‌شده شاه آلفرد کبیر (اَستل)',
+    norseName: 'Gull-Æstel Álfráðs',
+    type: 'horn',
+    rune: 'ᛗ',
+    loreEn:
+      'A filigree gold and rock-crystal manuscript pointer inscribed “AELFRED MEC HEHT GEWYRCAN” (Alfred ordered me made), gifted in solemn truce by the scholar-king of Wessex.',
+    loreFa:
+      'نشانگر کتاب از طلای ملیله‌کاری و بلور کوهی با کتیبه «آلفرد فرمان ساخت مرا داد» که پادشاه دانش‌پرور وسکس در پیمان صلح اهدا کرد.',
+    effectsLabelEn: '+12 Diplomacy · +10 Law · +8 English Renown',
+    effectsLabelFa: '+12 دیپلماسی · +10 قانون‌دانی · +8 آوازه در انگلستان',
+    raidPowerBonus: 6,
+    englishFameBonus: 8,
+  },
+  {
+    id: 'guthrum_wedmore_cross_torque',
+    nameEn: "Guthrum-Æthelstan's Wedmore Peace-Torque",
+    nameFa: 'طوق دوگانه گوتورم-اتلستن (یادگار پیمان ودمور)',
+    norseName: 'Friðbaugr Gorms Enska',
+    type: 'garment',
+    rune: 'ᚷ',
+    loreEn:
+      'A hacked silver Viking arm-ring fused with a Saxon baptismal cross, struck by King Guthrum after taking the name Æthelstan to seal the Danelaw frontier.',
+    loreFa:
+      'بازوبند نقره وایکینگی پیوندخورده با صلیب تعمیدی ساکسون که شاه گوتورم پس از پذیرش نام «اتلستن» و تثبیت مرز دانلا به یادگار ساخت.',
+    effectsLabelEn: '+10 Trade · +8 Diplomacy · +8 Raid Power',
+    effectsLabelFa: '+10 تجارت · +8 دیپلماسی · +8 قدرت یورش',
+    raidPowerBonus: 8,
+    englishFameBonus: 9,
+  },
 ];
 
 export const SAGA_HEIRLOOMS_MAP: Record<string, SagaHeirloomDef> = SAGA_HEIRLOOMS.reduce<

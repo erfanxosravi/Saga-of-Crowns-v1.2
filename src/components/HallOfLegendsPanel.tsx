@@ -9,6 +9,7 @@ import {
   Feather,
   Flame,
   Handshake,
+  Lock,
   MapPin,
   ScrollText,
   Search,
@@ -171,35 +172,35 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
   };
 
   const getStatusDotColor = (status: LegendHistoricalStatus) => {
-    if (status === 'DOCUMENTED') return 'bg-[#15803D]';
-    if (status === 'CONTESTED') return 'bg-[#B45309]';
-    return 'bg-[#7C3AED]';
+    if (status === 'DOCUMENTED') return 'bg-status-emerald';
+    if (status === 'CONTESTED') return 'bg-gold-500';
+    return 'bg-status-violet';
   };
 
   const getStatusTextColor = (status: LegendHistoricalStatus) => {
-    if (status === 'DOCUMENTED') return 'text-[#166534]';
-    if (status === 'CONTESTED') return 'text-[#9A3412]';
-    return 'text-[#6D28D9]';
+    if (status === 'DOCUMENTED') return 'text-accent-emerald';
+    if (status === 'CONTESTED') return 'text-accent-amber';
+    return 'text-accent-violet';
   };
 
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="flex flex-col space-y-3.5 text-[#1E1B18] bg-[#F8F4EC] rounded-2xl p-3.5 sm:p-4 border border-[#D8CEBE]"
+      className="flex flex-col space-y-3.5 text-ink-primary bg-surface-card rounded-2xl p-3.5 sm:p-4 border border-border-subtle"
     >
       {/* Top Quiet Saga Ledger Header */}
-      <div className="flex flex-col gap-2.5 border-b border-[#DED5C6] pb-3">
+      <div className="flex flex-col gap-2.5 border-b border-border-subtle pb-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs text-[#6B6052]">
-              <Feather className="w-3.5 h-3.5 text-[#C8641B] shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-ink-muted">
+              <Feather className="w-3.5 h-3.5 text-accent-amber shrink-0" />
               <span>
                 {isFa
                   ? `تقویم افسانه‌های زنده · سال ${formatNum(state.year, true)} میلادی`
                   : `Living Legends Calendar · ${formatYearLabel(state.year, lang)}`}
               </span>
               <span aria-hidden="true">·</span>
-              <span className="font-semibold text-[#C8641B]">
+              <span className="font-semibold text-accent-amber">
                 {state.sagaMode
                   ? isFa
                     ? 'حالت حماسه فعال'
@@ -209,10 +210,10 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                     : 'Historical Archive'}
               </span>
             </div>
-            <h2 className="font-saga text-xl sm:text-2xl font-bold text-[#1E1B18] mt-0.5">
+            <h2 className="font-saga text-xl sm:text-2xl font-bold text-ink-primary mt-0.5">
               {isFa ? 'تالار افسانه‌ها و خبر از سرزمین‌ها' : 'The Hall of Legends'}
             </h2>
-            <p className="text-xs text-[#5C5346] leading-relaxed mt-0.5">
+            <p className="text-xs text-ink-secondary leading-relaxed mt-0.5">
               {isFa
                 ? 'زندگی تو هم‌زمان با راگنار لُدبروک، لاگرتا، هرافنا-فلوکی و فرمانروایان سده نهم جریان دارد؛ اخبار آنان به تناسب فاصله جغرافیایی با کشتی‌ها و اسکالدها به تالارت می‌رسد.'
                 : 'Your life unfolds alongside Ragnar Lothbrok, Lagertha, Hrafna-Flóki, and the rulers of the 9th century. Word of their deeds travels across the sea by trader and skald.'}
@@ -222,49 +223,49 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
 
         {/* 3 Compact Summary Metrics + Pay Skald/Trader Action */}
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <div className="bg-[#EFE9DC] border border-[#DED5C6] rounded-xl px-2.5 py-2">
-            <div className="text-[11px] text-[#6B6052]">
+          <div className="bg-surface-secondary border border-border-subtle rounded-xl px-2.5 py-2">
+            <div className="text-[11px] text-ink-muted">
               {isFa ? 'افسانه‌های زنده در این سال' : 'Living in This Year'}
             </div>
-            <div className="text-base sm:text-lg font-bold tabular-nums text-[#1E1B18]">
+            <div className="text-base sm:text-lg font-bold tabular-nums text-ink-primary">
               {formatNum(aliveCount, isFa)}{' '}
-              <span className="text-xs font-normal text-[#6B6052]">
+              <span className="text-xs font-normal text-ink-muted">
                 / {formatNum(LEGENDS_REGISTRY.length, isFa)}
               </span>
             </div>
           </div>
 
-          <div className="bg-[#EFE9DC] border border-[#DED5C6] rounded-xl px-2.5 py-2">
-            <div className="text-[11px] text-[#6B6052]">
+          <div className="bg-surface-secondary border border-border-subtle rounded-xl px-2.5 py-2">
+            <div className="text-[11px] text-ink-muted">
               {isFa ? 'اخبار رسیده‌شده به تالار' : 'Known Saga Beats'}
             </div>
-            <div className="text-base sm:text-lg font-bold tabular-nums text-[#1E1B18]">
+            <div className="text-base sm:text-lg font-bold tabular-nums text-ink-primary">
               {formatNum(deliveredIds.length, isFa)}
             </div>
           </div>
 
-          <div className="bg-[#EFE9DC] border border-[#DED5C6] rounded-xl px-2.5 py-2">
-            <div className="text-[11px] text-[#6B6052]">
+          <div className="bg-surface-secondary border border-border-subtle rounded-xl px-2.5 py-2">
+            <div className="text-[11px] text-ink-muted">
               {isFa ? 'سوگندها و کینه‌های شما' : 'Sworn Oaths & Feuds'}
             </div>
-            <div className="text-base sm:text-lg font-bold tabular-nums text-[#C8641B]">
+            <div className="text-base sm:text-lg font-bold tabular-nums text-accent-amber">
               {formatNum(totalOathsAndFeuds, isFa)}
             </div>
           </div>
         </div>
 
         {/* Intelligence Gather Bar ("Pay Trader or Skald for Word") */}
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#EFE9DC] border border-[#D8CEBE] rounded-xl p-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-secondary border border-border-subtle rounded-xl p-2.5">
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold text-[#1E1B18] flex items-center gap-1.5">
-              <Compass className="w-4 h-4 text-[#C8641B] shrink-0" />
+            <div className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
+              <Compass className="w-4 h-4 text-accent-amber shrink-0" />
               <span>
                 {isFa
                   ? 'پرس‌وجو از اسکالدها و ناخدایان تجاری در بندر'
                   : 'Inquire of Harbor Skalds & Knarr-Masters'}
               </span>
             </div>
-            <div className="text-[11px] text-[#5C5346] mt-0.5">
+            <div className="text-[11px] text-ink-secondary mt-0.5">
               {pendingRumorsCount > 0
                 ? isFa
                   ? `${formatNum(pendingRumorsCount, true)} خبر دوردست یا شایعه در راه است — با پرداخت نقره فوراً روایت موثق را دریافت کنید.`
@@ -281,22 +282,30 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
             onClick={onPayForLegendNews}
             className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors shrink-0 ${
               canAffordIntel
-                ? 'bg-[#C8641B] hover:bg-[#B25614] text-white cursor-pointer shadow-xs'
-                : 'bg-[#DED5C6] text-[#8C8070] cursor-not-allowed'
+                ? 'bg-cta-copper hover:bg-cta-copper-hover text-cta-ink-light cursor-pointer shadow-xs'
+                : 'bg-surface-disabled text-ink-disabled border border-dashed border-border-subtle cursor-not-allowed'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            {canAffordIntel ? (
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 shrink-0 opacity-80" />
+            )}
             <span>
-              {isFa
-                ? `دریافت خبر موثق (${formatNum(PAY_LEGEND_INTEL_COST, true)} نقره)`
-                : `Pay Skald for Word (${PAY_LEGEND_INTEL_COST} Silver)`}
+              {canAffordIntel
+                ? isFa
+                  ? `دریافت خبر موثق (${formatNum(PAY_LEGEND_INTEL_COST, true)} نقره)`
+                  : `Pay Skald for Word (${PAY_LEGEND_INTEL_COST} Silver)`
+                : isFa
+                  ? `نیازمند ${formatNum(PAY_LEGEND_INTEL_COST, true)} نقره · دریافت خبر`
+                  : `Need ${PAY_LEGEND_INTEL_COST} Silver · Pay Skald`}
             </span>
           </button>
         </div>
       </div>
 
       {/* Historical Grounding Legend Bar (Unboxed metadata explanation) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#5C5346] px-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-secondary px-1">
         <div className="flex flex-wrap items-center gap-3">
           {(['DOCUMENTED', 'CONTESTED', 'LEGENDARY'] as LegendHistoricalStatus[]).map((st) => (
             <button
@@ -319,7 +328,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
           <button
             type="button"
             onClick={() => setStatusFilter('ALL')}
-            className="text-[11px] text-[#C8641B] underline cursor-pointer"
+            className="text-[11px] text-accent-amber underline cursor-pointer"
           >
             {isFa ? 'نمایش همه وضعیت‌ها' : 'Reset status filter'}
           </button>
@@ -328,7 +337,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
 
       {/* Segmented Scope Filter + Search */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex items-center bg-[#EAE2D3] p-1 rounded-xl border border-[#D8CEBE] overflow-x-auto">
+        <div className="flex items-center bg-surface-secondary p-1 rounded-xl border border-border-subtle overflow-x-auto">
           {(
             [
               { id: 'all', en: 'All Roster', fa: 'همه چهره‌ها' },
@@ -345,8 +354,8 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                 onClick={() => setScopeFilter(tab.id)}
                 className={`min-h-[36px] px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                   active
-                    ? 'bg-[#C8641B] text-white shadow-xs'
-                    : 'text-[#5C5346] hover:text-[#1E1B18]'
+                    ? 'bg-cta-copper text-cta-ink-light shadow-xs'
+                    : 'text-ink-secondary hover:text-ink-primary'
                 }`}
               >
                 {isFa ? tab.fa : tab.en}
@@ -356,7 +365,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
         </div>
 
         <div className="relative flex-1 min-w-[180px]">
-          <Search className="w-3.5 h-3.5 text-[#7A6F60] absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-ink-muted absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
@@ -366,15 +375,15 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                 ? 'جستجوی نام افسانه، لقب یا شهر...'
                 : 'Search legend name, epithet, or port...'
             }
-            className="w-full min-h-[38px] ps-8 pe-3 py-1.5 rounded-xl bg-[#EFE9DC] border border-[#D8CEBE] text-xs text-[#1E1B18] placeholder:text-[#8C8070] focus:outline-none focus:border-[#C8641B]"
+            className="w-full min-h-[38px] ps-8 pe-3 py-1.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-gold-500"
           />
         </div>
       </div>
 
       {/* Legends List / Grid */}
-      <div className="divide-y divide-[#DED5C6] border-t border-b border-[#DED5C6]">
+      <div className="divide-y divide-border-subtle border-t border-b border-border-subtle">
         {filteredLegends.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#6B6052]">
+          <div className="py-8 text-center text-xs text-ink-muted">
             {isFa
               ? 'هیچ چهره‌ای با این فیلتر یافت نشد.'
               : 'No legends match the current filter.'}
@@ -404,16 +413,16 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   setSelectedLegendId(legend.id);
                   setDetailTab('timeline');
                 }}
-                className="w-full py-3 px-2 hover:bg-[#EFE9DC]/80 transition-colors flex items-start gap-3 text-start cursor-pointer group"
+                className="w-full py-3 px-2 hover:bg-surface-secondary transition-colors flex items-start gap-3 text-start cursor-pointer group"
               >
                 {/* Portrait */}
                 <div
                   className={`relative shrink-0 rounded-xl overflow-hidden border ${
                     known.lifeStatus === 'dead'
-                      ? 'border-[#B8AEA0] grayscale opacity-80'
+                      ? 'border-border-strong grayscale opacity-80'
                       : legend.phase === 1
-                        ? 'border-[#C8641B]'
-                        : 'border-[#D8CEBE]'
+                        ? 'border-gold-500'
+                        : 'border-border-subtle'
                   }`}
                 >
                   <VikingPortrait
@@ -430,7 +439,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                 {/* Main Info */}
                 <div className="min-w-0 flex-1">
                   {/* Top metadata kicker (unboxed text with typographic separators) */}
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#6B6052]">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-muted">
                     <span className={`w-2 h-2 rounded-full ${getStatusDotColor(legend.statusTag)}`} />
                     <span className={`font-bold ${getStatusTextColor(legend.statusTag)}`}>
                       {isFa
@@ -440,34 +449,34 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                     <span aria-hidden="true">·</span>
                     <span>{isFa ? lifeLabelFa : lifeLabelEn}</span>
                     <span aria-hidden="true">·</span>
-                    <span className="inline-flex items-center gap-0.5 text-[#5C5346]">
-                      <MapPin className="w-3 h-3 text-[#C8641B]" />
+                    <span className="inline-flex items-center gap-0.5 text-ink-secondary">
+                      <MapPin className="w-3 h-3 text-accent-amber" />
                       {locName}
                     </span>
                   </div>
 
                   {/* Name & Epithet */}
                   <div className="flex flex-wrap items-baseline gap-1.5 mt-0.5">
-                    <span className="font-saga text-base sm:text-lg font-bold text-[#1E1B18] group-hover:text-[#C8641B] transition-colors">
+                    <span className="font-saga text-base sm:text-lg font-bold text-ink-primary group-hover:text-accent-amber transition-colors">
                       {isFa ? legend.nameFa : legend.name}
                     </span>
-                    <bdi className="text-[11px] text-[#7A6F60] font-mono">
+                    <bdi className="text-[11px] text-ink-muted font-mono">
                       ({legend.norseName})
                     </bdi>
                   </div>
 
-                  <div className="text-xs text-[#5C5346] font-medium">
+                  <div className="text-xs text-ink-secondary font-medium">
                     {isFa ? legend.epithetFa : legend.epithet} ·{' '}
-                    <span className="text-[#C8641B] font-semibold">
+                    <span className="text-accent-amber font-semibold">
                       {ordstirr.label}
                     </span>
                   </div>
 
                   {/* Last Known Word Snippet */}
-                  <div className="text-[11px] text-[#6B6052] line-clamp-1 mt-1">
+                  <div className="text-[11px] text-ink-muted line-clamp-1 mt-1">
                     {latestBeat ? (
                       <>
-                        <span className="font-mono font-semibold text-[#1E1B18]">
+                        <span className="font-mono font-semibold text-ink-primary">
                           [{formatNum(latestBeat.year, isFa)}]
                         </span>{' '}
                         {isFa ? latestBeat.titleFa : latestBeat.title}
@@ -488,10 +497,10 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       <span
                         className={`font-mono font-bold ${
                           standingRec.standing > 0
-                            ? 'text-[#15803D]'
+                            ? 'text-accent-emerald'
                             : standingRec.standing < 0
-                              ? 'text-[#B91C1C]'
-                              : 'text-[#6B6052]'
+                              ? 'text-accent-crimson'
+                              : 'text-ink-muted'
                         }`}
                       >
                         {isFa ? 'جایگاه:' : 'Standing:'}{' '}
@@ -502,7 +511,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       {standingRec.oaths.length > 0 && (
                         <>
                           <span aria-hidden="true">·</span>
-                          <span className="text-[#166534] font-semibold">
+                          <span className="text-accent-emerald font-semibold">
                             {formatNum(standingRec.oaths.length, isFa)}{' '}
                             {isFa ? 'سوگند هم‌پیمانی' : 'Oath(s)'}
                           </span>
@@ -511,7 +520,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       {standingRec.feuds.length > 0 && (
                         <>
                           <span aria-hidden="true">·</span>
-                          <span className="text-[#B91C1C] font-semibold">
+                          <span className="text-accent-crimson font-semibold">
                             {formatNum(standingRec.feuds.length, isFa)}{' '}
                             {isFa ? 'کینه خونی' : 'Feud(s)'}
                           </span>
@@ -522,7 +531,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                 </div>
 
                 {/* Open Chevron */}
-                <div className="self-center text-[#8C8070] group-hover:text-[#C8641B] transition-colors shrink-0">
+                <div className="self-center text-ink-muted group-hover:text-accent-amber transition-colors shrink-0">
                   {rtl ? (
                     <ChevronLeft className="w-4 h-4" />
                   ) : (
@@ -538,7 +547,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
       {/* LEGEND DETAIL MODAL (Layered Dialog in Quiet Saga Ledger Style) */}
       {selectedItem && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/65 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-surface-backdrop backdrop-blur-[2px]"
           onClick={() => setSelectedLegendId(null)}
         >
           <div
@@ -547,21 +556,21 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
             aria-label={isFa ? selectedItem.legend.nameFa : selectedItem.legend.name}
             dir={rtl ? 'rtl' : 'ltr'}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl max-h-[88dvh] bg-[#F8F4EC] text-[#1E1B18] rounded-[20px] border border-[#D8CEBE] shadow-2xl flex flex-col overflow-hidden"
+            className="w-full max-w-xl max-h-[88dvh] bg-surface-card text-ink-primary rounded-[20px] border border-border-subtle shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Sticky Modal Header */}
-            <div className="px-4 py-3 bg-[#EFE9DC] border-b border-[#D8CEBE] flex items-center justify-between gap-2 shrink-0">
+            <div className="px-4 py-3 bg-surface-secondary border-b border-border-subtle flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleCycleSelected(-1)}
                   disabled={filteredLegends.length <= 1}
                   aria-label={isFa ? 'چهره قبلی' : 'Previous legend'}
-                  className="w-8 h-8 rounded-lg border border-[#D8CEBE] bg-[#F8F4EC] hover:border-[#C8641B] flex items-center justify-center text-[#1E1B18] disabled:opacity-40 cursor-pointer"
+                  className="w-8 h-8 rounded-lg border border-border-subtle bg-surface-card hover:border-gold-500 flex items-center justify-center text-ink-primary disabled:opacity-40 cursor-pointer"
                 >
                   {rtl ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                 </button>
-                <span className="text-xs font-mono tabular-nums text-[#6B6052] px-1">
+                <span className="text-xs font-mono tabular-nums text-ink-muted px-1">
                   {formatNum(selectedIndex + 1, isFa)} /{' '}
                   {formatNum(filteredLegends.length, isFa)}
                 </span>
@@ -570,7 +579,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   onClick={() => handleCycleSelected(1)}
                   disabled={filteredLegends.length <= 1}
                   aria-label={isFa ? 'چهره بعدی' : 'Next legend'}
-                  className="w-8 h-8 rounded-lg border border-[#D8CEBE] bg-[#F8F4EC] hover:border-[#C8641B] flex items-center justify-center text-[#1E1B18] disabled:opacity-40 cursor-pointer"
+                  className="w-8 h-8 rounded-lg border border-border-subtle bg-surface-card hover:border-gold-500 flex items-center justify-center text-ink-primary disabled:opacity-40 cursor-pointer"
                 >
                   {rtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
@@ -580,16 +589,16 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                 type="button"
                 onClick={() => setSelectedLegendId(null)}
                 aria-label={isFa ? 'بستن' : 'Close'}
-                className="w-8 h-8 rounded-lg border border-[#D8CEBE] bg-[#F8F4EC] hover:border-[#C8641B] flex items-center justify-center text-[#1E1B18] cursor-pointer"
+                className="w-8 h-8 rounded-lg border border-border-subtle bg-surface-card hover:border-gold-500 flex items-center justify-center text-ink-primary cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Identity Banner */}
-            <div className="p-4 border-b border-[#DED5C6] bg-[#F4EFE4] shrink-0">
+            <div className="p-4 border-b border-border-subtle bg-surface-canvas shrink-0">
               <div className="flex items-start gap-3.5">
-                <div className="rounded-xl overflow-hidden border border-[#C8641B] shrink-0">
+                <div className="rounded-xl overflow-hidden border border-gold-500 shrink-0">
                   <VikingPortrait
                     sex={selectedItem.legend.sex}
                     age={selectedItem.ageInYear}
@@ -601,7 +610,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#6B6052]">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-muted">
                     <span
                       className={`w-2 h-2 rounded-full ${getStatusDotColor(
                         selectedItem.legend.statusTag
@@ -624,22 +633,22 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                     <span>{selectedItem.locName}</span>
                   </div>
 
-                  <h3 className="font-saga text-xl font-bold text-[#1E1B18] mt-0.5">
+                  <h3 className="font-saga text-xl font-bold text-ink-primary mt-0.5">
                     {isFa ? selectedItem.legend.nameFa : selectedItem.legend.name}{' '}
-                    <bdi className="text-xs font-mono font-normal text-[#6B6052]">
+                    <bdi className="text-xs font-mono font-normal text-ink-muted">
                       ({selectedItem.legend.norseName})
                     </bdi>
                   </h3>
 
-                  <div className="text-xs text-[#5C5346]">
+                  <div className="text-xs text-ink-secondary">
                     {isFa ? selectedItem.legend.roleFa : selectedItem.legend.role}
                   </div>
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-bold text-[#C8641B]">
+                    <span className="font-bold text-accent-amber">
                       {isFa ? 'آوازه (Orðstírr):' : 'Orðstírr:'} {selectedItem.ordstirr.label}
                     </span>
-                    <bdi className="text-[11px] font-mono text-[#7A6F60]">
+                    <bdi className="text-[11px] font-mono text-ink-muted">
                       [{selectedItem.ordstirr.norse}]
                     </bdi>
                   </div>
@@ -647,11 +656,11 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
               </div>
 
               {/* Bio & Historical Source Note */}
-              <p className="text-xs text-[#3A342B] leading-relaxed mt-3">
+              <p className="text-xs text-ink-secondary leading-relaxed mt-3">
                 {isFa ? selectedItem.legend.bioFa : selectedItem.legend.bioEn}
               </p>
-              <div className="mt-2 pt-2 border-t border-[#DED5C6] text-[11px] text-[#6B6052]">
-                <span className="font-bold text-[#1E1B18]">
+              <div className="mt-2 pt-2 border-t border-border-subtle text-[11px] text-ink-muted">
+                <span className="font-bold text-ink-primary">
                   {isFa ? 'منابع تاریخی و حماسی: ' : 'Chronicle & Saga Sources: '}
                 </span>
                 {isFa
@@ -661,7 +670,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
             </div>
 
             {/* In-Modal Segmented Tabs */}
-            <div className="px-4 py-2 bg-[#EFE9DC] border-b border-[#DED5C6] flex items-center gap-1.5 shrink-0">
+            <div className="px-4 py-2 bg-surface-secondary border-b border-border-subtle flex items-center gap-1.5 shrink-0">
               {(
                 [
                   {
@@ -687,8 +696,8 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   onClick={() => setDetailTab(t.id)}
                   className={`flex-1 min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                     detailTab === t.id
-                      ? 'bg-[#C8641B] text-white'
-                      : 'text-[#5C5346] hover:text-[#1E1B18]'
+                      ? 'bg-cta-copper text-cta-ink-light'
+                      : 'text-ink-secondary hover:text-ink-primary'
                   }`}
                 >
                   {isFa ? t.fa : t.en}
@@ -701,13 +710,13 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
               {detailTab === 'timeline' && (
                 <>
                   {selectedItem.known.knownBeats.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-[#6B6052]">
+                    <div className="py-8 text-center text-xs text-ink-muted">
                       {isFa
                         ? 'هنوز هیچ خبری از کارنامه این شخصیت به تالار شما نرسیده است.'
                         : 'No word of this figure’s deeds has reached your hall yet.'}
                     </div>
                   ) : (
-                    <div className="divide-y divide-[#DED5C6]">
+                    <div className="divide-y divide-border-subtle">
                       {selectedItem.known.knownBeats
                         .slice(0, visibleBeatsLimit)
                         .map((beat) => {
@@ -720,8 +729,8 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                           const isDiverged = legendState.divergedBeatIds.includes(beat.id);
                           return (
                             <div key={beat.id} className="py-3 first:pt-0 last:pb-0 space-y-1">
-                              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#6B6052]">
-                                <span className="font-mono font-bold text-[#C8641B]">
+                              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-muted">
+                                <span className="font-mono font-bold text-accent-amber">
                                   {formatNum(beat.year, isFa)} {isFa ? 'م' : 'AD'}
                                 </span>
                                 <span aria-hidden="true">·</span>
@@ -731,7 +740,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                                 {beat.isCanonicalAnchor && (
                                   <>
                                     <span aria-hidden="true">·</span>
-                                    <span className="font-bold text-[#166534]">
+                                    <span className="font-bold text-accent-emerald">
                                       {isFa ? 'نقطه عطف تاریخی' : 'Canonical Anchor'}
                                     </span>
                                   </>
@@ -739,7 +748,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                                 {isDiverged && (
                                   <>
                                     <span aria-hidden="true">·</span>
-                                    <span className="font-bold text-[#9A3412]">
+                                    <span className="font-bold text-accent-amber-strong">
                                       {isFa
                                         ? 'اسکالدها روایت دیگری می‌گویند'
                                         : 'The skalds tell it differently'}
@@ -748,16 +757,16 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                                 )}
                               </div>
 
-                              <div className="font-bold text-sm text-[#1E1B18]">
+                              <div className="font-bold text-sm text-ink-primary">
                                 {isFa ? beat.titleFa : beat.title}
                               </div>
 
-                              <p className="text-xs text-[#3A342B] leading-relaxed">
+                              <p className="text-xs text-ink-secondary leading-relaxed">
                                 {isFa ? beat.textFa : beat.text}
                               </p>
 
                               {(beat.skaldVerse || beat.skaldVerseFa) && (
-                                <blockquote className="mt-1.5 ps-3 border-s-2 border-[#C8641B] italic text-xs text-[#5C5346]">
+                                <blockquote className="mt-1.5 ps-3 border-s-2 border-gold-500 italic text-xs text-ink-secondary">
                                   {isFa ? beat.skaldVerseFa ?? beat.skaldVerse : beat.skaldVerse}
                                 </blockquote>
                               )}
@@ -771,14 +780,14 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => setVisibleBeatsLimit((v) => v + 8)}
-                      className="w-full py-2 rounded-xl border border-[#D8CEBE] bg-[#EFE9DC] text-xs font-bold text-[#1E1B18] cursor-pointer"
+                      className="w-full py-2 rounded-xl border border-border-subtle bg-surface-secondary text-xs font-bold text-ink-primary cursor-pointer"
                     >
                       {isFa ? 'نمایش رویدادهای بیشتر' : 'Show More Beats'}
                     </button>
                   )}
 
                   {selectedItem.known.unheardFutureBeatsCount > 0 && (
-                    <div className="p-3 rounded-xl bg-[#EFE9DC] border border-[#DED5C6] text-xs text-[#6B6052]">
+                    <div className="p-3 rounded-xl bg-surface-secondary border border-border-subtle text-xs text-ink-muted">
                       {isFa
                         ? `مهِ زمان و مسافت: ${formatNum(selectedItem.known.unheardFutureBeatsCount, true)} فصل دیگر از سرنوشت این افسانه هنوز رخ نداده یا خبرش به بندر شما نرسیده است.`
                         : `Fog of Time & Sea: ${selectedItem.known.unheardFutureBeatsCount} further chapter(s) of this legend’s life have either not yet come to pass or their word is still at sea.`}
@@ -790,9 +799,9 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
               {detailTab === 'ledger' && (
                 <div className="space-y-4">
                   {/* Standing Meter */}
-                  <div className="p-3 rounded-xl bg-[#EFE9DC] border border-[#DED5C6] space-y-2">
+                  <div className="p-3 rounded-xl bg-surface-secondary border border-border-subtle space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#1E1B18]">
+                      <span className="font-bold text-ink-primary">
                         {isFa
                           ? 'جایگاه و رابطه خاندان شما با این افسانه'
                           : 'Your Dynasty’s Standing'}
@@ -800,10 +809,10 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       <span
                         className={`font-mono font-bold ${
                           selectedItem.standingRec.standing > 0
-                            ? 'text-[#15803D]'
+                            ? 'text-accent-emerald'
                             : selectedItem.standingRec.standing < 0
-                              ? 'text-[#B91C1C]'
-                              : 'text-[#6B6052]'
+                              ? 'text-accent-crimson'
+                              : 'text-ink-muted'
                         }`}
                       >
                         {selectedItem.standingRec.standing > 0
@@ -812,12 +821,12 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                         / {formatNum(100, isFa)}
                       </span>
                     </div>
-                    <div className="w-full h-2.5 rounded-full bg-[#D8CEBE] overflow-hidden">
+                    <div className="w-full h-2.5 rounded-full bg-surface-interactive overflow-hidden">
                       <div
                         className={`h-full transition-all ${
                           selectedItem.standingRec.standing >= 0
-                            ? 'bg-[#15803D]'
-                            : 'bg-[#B91C1C]'
+                            ? 'bg-status-emerald'
+                            : 'bg-status-crimson'
                         }`}
                         style={{
                           width: `${Math.min(
@@ -832,15 +841,15 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   {/* Signature Heirloom if any */}
                   {selectedItem.legend.heirloomId &&
                     SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId] && (
-                      <div className="p-3 rounded-xl bg-[#EFE9DC] border border-[#D8CEBE] space-y-1">
+                      <div className="p-3 rounded-xl bg-surface-secondary border border-border-subtle space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-[#C8641B]">
+                          <span className="font-bold text-accent-amber">
                             {isFa ? 'میراث و یادگار ویژه:' : 'Signature Heirloom:'}{' '}
                             {isFa
                               ? SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].nameFa
                               : SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].nameEn}
                           </span>
-                          <span className="text-[11px] font-bold text-[#166534]">
+                          <span className="text-[11px] font-bold text-accent-emerald">
                             {(state.heirlooms ?? []).includes(selectedItem.legend.heirloomId)
                               ? isFa
                                 ? 'در خزانه خاندان شما ✓'
@@ -850,7 +859,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                                 : 'Earned via Encounter'}
                           </span>
                         </div>
-                        <p className="text-xs text-[#5C5346]">
+                        <p className="text-xs text-ink-secondary">
                           {isFa
                             ? SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].loreFa
                             : SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].loreEn}
@@ -860,12 +869,12 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
 
                   {/* Sworn Oaths */}
                   <div className="space-y-1.5">
-                    <h4 className="text-xs font-bold text-[#166534] flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-accent-emerald flex items-center gap-1.5">
                       <Handshake className="w-4 h-4" />
                       <span>{isFa ? 'سوگندهای هم‌پیمانی' : 'Sworn Oaths'}</span>
                     </h4>
                     {selectedItem.standingRec.oaths.length === 0 ? (
-                      <div className="text-xs text-[#6B6052]">
+                      <div className="text-xs text-ink-muted">
                         {isFa
                           ? 'هنوز سوگندی میان شما و این افسانه بسته نشده است.'
                           : 'No oaths sworn with this legend yet.'}
@@ -874,9 +883,9 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       selectedItem.standingRec.oaths.map((o) => (
                         <div
                           key={o.id}
-                          className="p-2.5 rounded-xl bg-[#EFE9DC] border border-[#D8CEBE] text-xs"
+                          className="p-2.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs"
                         >
-                          <span className="font-mono font-bold text-[#C8641B]">
+                          <span className="font-mono font-bold text-accent-amber">
                             [{formatNum(o.year, isFa)}]
                           </span>{' '}
                           {isFa ? o.textFa : o.text}
@@ -887,12 +896,12 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
 
                   {/* Blood-Feuds & Grudges */}
                   <div className="space-y-1.5">
-                    <h4 className="text-xs font-bold text-[#B91C1C] flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-accent-crimson flex items-center gap-1.5">
                       <Swords className="w-4 h-4" />
                       <span>{isFa ? 'کینه‌ها و دشمنی‌ها' : 'Feuds & Grudges'}</span>
                     </h4>
                     {selectedItem.standingRec.feuds.length === 0 ? (
-                      <div className="text-xs text-[#6B6052]">
+                      <div className="text-xs text-ink-muted">
                         {isFa
                           ? 'هیچ دشمنی یا کینه‌ای ثبت نشده است.'
                           : 'No blood-feuds recorded with this legend.'}
@@ -901,9 +910,9 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                       selectedItem.standingRec.feuds.map((f) => (
                         <div
                           key={f.id}
-                          className="p-2.5 rounded-xl bg-[#EFE9DC] border border-[#D8CEBE] text-xs"
+                          className="p-2.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs"
                         >
-                          <span className="font-mono font-bold text-[#B91C1C]">
+                          <span className="font-mono font-bold text-accent-crimson">
                             [{formatNum(f.year, isFa)}]
                           </span>{' '}
                           {isFa ? f.textFa : f.text}
@@ -915,16 +924,16 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   {/* Gifts & Memorials */}
                   {selectedItem.standingRec.gifts.length > 0 && (
                     <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-[#C8641B] flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-accent-amber flex items-center gap-1.5">
                         <Crown className="w-4 h-4" />
                         <span>{isFa ? 'هدایا و یادبودها' : 'Gifts & Memorials'}</span>
                       </h4>
                       {selectedItem.standingRec.gifts.map((g) => (
                         <div
                           key={g.id}
-                          className="p-2.5 rounded-xl bg-[#EFE9DC] border border-[#D8CEBE] text-xs"
+                          className="p-2.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs"
                         >
-                          <span className="font-mono font-bold text-[#C8641B]">
+                          <span className="font-mono font-bold text-accent-amber">
                             [{formatNum(g.year, isFa)}]
                           </span>{' '}
                           {isFa ? g.textFa : g.text}
@@ -936,7 +945,7 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
               )}
 
               {detailTab === 'kin' && (
-                <div className="divide-y divide-[#DED5C6]">
+                <div className="divide-y divide-border-subtle">
                   {selectedItem.legend.relationships.map((rel) => {
                     const targetLeg = LEGENDS_BY_ID[rel.legendId];
                     if (!targetLeg) return null;
@@ -948,22 +957,22 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                           setSelectedLegendId(targetLeg.id);
                           setDetailTab('timeline');
                         }}
-                        className="w-full py-2.5 px-2 hover:bg-[#EFE9DC] transition-colors flex items-center justify-between gap-3 text-start cursor-pointer"
+                        className="w-full py-2.5 px-2 hover:bg-surface-secondary transition-colors flex items-center justify-between gap-3 text-start cursor-pointer"
                       >
                         <div>
-                          <div className="text-sm font-bold text-[#1E1B18]">
+                          <div className="text-sm font-bold text-ink-primary">
                             {isFa ? targetLeg.nameFa : targetLeg.name}
                           </div>
-                          <div className="text-xs text-[#C8641B] font-medium">
+                          <div className="text-xs text-accent-amber font-medium">
                             {isFa ? rel.roleFa : rel.roleEn}
                           </div>
                           {(rel.noteEn || rel.noteFa) && (
-                            <div className="text-[11px] text-[#6B6052] mt-0.5">
+                            <div className="text-[11px] text-ink-muted mt-0.5">
                               {isFa ? rel.noteFa ?? rel.noteEn : rel.noteEn}
                             </div>
                           )}
                         </div>
-                        <div className="text-xs text-[#6B6052] shrink-0">
+                        <div className="text-xs text-ink-muted shrink-0">
                           {rtl ? (
                             <ChevronLeft className="w-4 h-4" />
                           ) : (

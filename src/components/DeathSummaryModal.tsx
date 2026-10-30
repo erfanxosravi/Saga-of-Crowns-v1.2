@@ -12,6 +12,7 @@ import { evaluateLifeReportTitle } from '../data/deathsAndAchievements';
 import { formatPersonName } from '../i18n/gameDataFa';
 import { EPITHET_FA, formatAgeLabel, isRtl, ROLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
+import { useModalA11y } from '../utils/useModalA11y';
 import { SagaSharePosterModal } from './SagaSharePosterModal';
 import { VikingPortrait } from './VikingPortrait';
 
@@ -33,6 +34,20 @@ export function DeathSummaryModal({
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
 
   const death = state.pendingDeath;
+  const primaryHeirForEsc = death?.eligibleHeirs[0] ?? null;
+  const modalRef = useModalA11y<HTMLDivElement>({
+    isOpen: Boolean(death) && !isPosterModalOpen,
+    onClose: () => {
+      if (primaryHeirForEsc) {
+        onContinueWithHeir(primaryHeirForEsc.id);
+      } else if (onQuickNewLife) {
+        onQuickNewLife();
+      } else {
+        onEndDynastyAndRestart();
+      }
+    },
+  });
+
   if (!death) return null;
 
   const lang = state.settings.language;
@@ -65,17 +80,20 @@ export function DeathSummaryModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/88 backdrop-blur-xs p-2.5 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-surface-backdrop backdrop-blur-xs p-2.5 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="death-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[94dvh] sm:max-h-[min(92dvh,760px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#F59E0B]/55 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.82)] text-start">
+      <div
+        ref={modalRef}
+        className="w-full max-w-xl max-h-[94dvh] sm:max-h-[min(92dvh,760px)] flex flex-col overflow-hidden bg-surface-elevated border border-gold-500/55 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.82)] text-start"
+      >
         {/* Top Report Header */}
-        <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 bg-[#121C2B] border-b border-[#1E2D40] space-y-2.5">
+        <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 bg-surface-secondary border-b border-border-subtle space-y-2.5">
           {/* Top Kicker Row: Death Age/Year + Legacy Score */}
-          <div className="flex items-center justify-between gap-2 border-b border-[#1E2D40]/80 pb-2">
-            <div className="text-xs font-mono font-semibold text-[#F87171] inline-flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center justify-between gap-2 border-b border-border-subtle/80 pb-2">
+            <div className="text-xs font-mono font-semibold text-accent-crimson inline-flex items-center gap-1.5 min-w-0">
               <Skull className="w-3.5 h-3.5 shrink-0" />
               <span className="whitespace-normal break-words">
                 {isFa
@@ -84,11 +102,11 @@ export function DeathSummaryModal({
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#162232] border border-[#24354C] shrink-0">
-              <span className="text-[11px] text-[#94A3B8]">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-surface-secondary border border-border-subtle shrink-0">
+              <span className="text-[11px] text-ink-muted">
                 {isFa ? 'امتیاز کل:' : 'Score:'}
               </span>
-              <span className="text-sm sm:text-base font-mono font-bold tabular-nums text-[#F59E0B]">
+              <span className="text-sm sm:text-base font-mono font-bold tabular-nums text-accent-amber">
                 {death.legacyScore.toLocaleString()}
               </span>
             </div>
@@ -109,12 +127,12 @@ export function DeathSummaryModal({
             <div className="min-w-0 flex-1 space-y-1">
               <h2
                 id="death-modal-title"
-                className="font-saga text-lg sm:text-2xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug"
+                className="font-saga text-lg sm:text-2xl font-bold text-ink-primary whitespace-normal break-words leading-snug"
               >
                 {fullName}
                 {epText}
               </h2>
-              <div className="text-xs text-[#F59E0B] font-semibold whitespace-normal break-words leading-snug">
+              <div className="text-xs text-accent-amber font-semibold whitespace-normal break-words leading-snug">
                 {isFa ? `لقب کارنامه: ${lifeTitle}` : `Earned Title: ${lifeTitle}`}
               </div>
             </div>
@@ -124,41 +142,41 @@ export function DeathSummaryModal({
         {/* Scrollable Middle Body: Cause of Death + 4 Metrics + Share Poster Studio */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-3.5 space-y-3">
           {/* Complete Cause of Death + Closing Line */}
-          <div className="p-3.5 sm:p-4 rounded-xl bg-[#131D2B] border border-[#24354C] space-y-2">
-            <div className="text-[11px] font-bold text-[#F87171]">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-surface-secondary border border-border-subtle space-y-2">
+            <div className="text-[11px] font-bold text-accent-crimson">
               {isFa ? 'سرانجام و علت پایان زندگی:' : 'Cause of Death:'}
             </div>
-            <p className="text-xs sm:text-sm font-medium text-[#F1F5F9] whitespace-normal break-words leading-relaxed">
+            <p className="text-xs sm:text-sm font-medium text-ink-primary whitespace-normal break-words leading-relaxed">
               {causeText}
             </p>
-            <p className="font-saga text-sm sm:text-base font-bold text-[#F59E0B] whitespace-normal break-words pt-0.5">
+            <p className="font-saga text-sm sm:text-base font-bold text-accent-amber whitespace-normal break-words pt-0.5">
               « {closingLine} »
             </p>
           </div>
 
           {/* Compact 4-Column Report Metrics */}
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
-              <div className="text-[11px] text-[#94A3B8]">{isFa ? 'غارت‌ها' : 'Raids'}</div>
-              <div className="text-sm font-mono font-bold text-[#F1F5F9] tabular-nums mt-0.5">
+            <div className="p-2 rounded-xl bg-surface-secondary border border-border-subtle">
+              <div className="text-[11px] text-ink-muted">{isFa ? 'غارت‌ها' : 'Raids'}</div>
+              <div className="text-sm font-mono font-bold text-ink-primary tabular-nums mt-0.5">
                 {c.raidsLed}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
-              <div className="text-[11px] text-[#94A3B8]">{isFa ? 'نقره' : 'Silver'}</div>
-              <div className="text-sm font-mono font-bold text-[#F59E0B] tabular-nums mt-0.5">
+            <div className="p-2 rounded-xl bg-surface-secondary border border-border-subtle">
+              <div className="text-[11px] text-ink-muted">{isFa ? 'نقره' : 'Silver'}</div>
+              <div className="text-sm font-mono font-bold text-accent-amber tabular-nums mt-0.5">
                 {state.realm.silver}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
-              <div className="text-[11px] text-[#94A3B8]">{isFa ? 'مزارع' : 'Farms'}</div>
-              <div className="text-sm font-mono font-bold text-[#34D399] tabular-nums mt-0.5">
+            <div className="p-2 rounded-xl bg-surface-secondary border border-border-subtle">
+              <div className="text-[11px] text-ink-muted">{isFa ? 'مزارع' : 'Farms'}</div>
+              <div className="text-sm font-mono font-bold text-accent-emerald tabular-nums mt-0.5">
                 {state.realm.landFarms}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
-              <div className="text-[11px] text-[#94A3B8]">{isFa ? 'فرزندان' : 'Kids'}</div>
-              <div className="text-sm font-mono font-bold text-[#38BDF8] tabular-nums mt-0.5">
+            <div className="p-2 rounded-xl bg-surface-secondary border border-border-subtle">
+              <div className="text-[11px] text-ink-muted">{isFa ? 'فرزندان' : 'Kids'}</div>
+              <div className="text-sm font-mono font-bold text-accent-ice tabular-nums mt-0.5">
                 {childrenCount}
               </div>
             </div>
@@ -169,7 +187,7 @@ export function DeathSummaryModal({
             <button
               type="button"
               onClick={() => setIsPosterModalOpen(true)}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#18293E] to-[#132134] hover:brightness-110 border border-[#F59E0B]/60 text-xs font-bold text-[#F59E0B] inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm"
+              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-surface-amber-tint hover:bg-surface-interactive border border-gold-500/60 text-xs font-bold text-accent-amber inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm"
             >
               <Sparkles className="w-4 h-4 shrink-0" />
               <span className="whitespace-normal break-words">
@@ -183,7 +201,7 @@ export function DeathSummaryModal({
             <button
               type="button"
               onClick={() => setShowFullSaga((v) => !v)}
-              className="min-h-[44px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#233246] text-xs font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[44px] px-3 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-xs font-semibold text-ink-secondary hover:text-ink-primary inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>{isFa ? 'متن کامل حماسه زندگی' : 'Full Saga Obituary'}</span>
               {showFullSaga ? (
@@ -195,15 +213,15 @@ export function DeathSummaryModal({
           </div>
 
           {showFullSaga && (
-            <div className="p-3.5 rounded-xl bg-[#131D2B] border border-[#233246] text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs sm:text-sm text-ink-secondary whitespace-normal break-words leading-relaxed">
               {isFa ? death.obituaryProseFa ?? death.obituaryProse : death.obituaryProse}
             </div>
           )}
 
           {/* Other Heirs Accordion List */}
           {primaryHeir && otherHeirs.length > 0 && showOtherHeirs && (
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#24354C] space-y-1.5">
-              <div className="text-[11px] font-bold text-[#94A3B8] px-1">
+            <div className="p-2.5 rounded-xl bg-surface-secondary border border-border-subtle space-y-1.5">
+              <div className="text-[11px] font-bold text-ink-muted px-1">
                 {isFa ? 'سایر وارثان خاندان:' : 'Other Eligible Heirs:'}
               </div>
               {otherHeirs.map((heir) => (
@@ -211,13 +229,13 @@ export function DeathSummaryModal({
                   key={heir.id}
                   type="button"
                   onClick={() => onContinueWithHeir(heir.id)}
-                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#162232] hover:bg-[#1A273A] border border-[#24354C] flex items-center justify-between gap-2 text-xs text-[#F1F5F9] cursor-pointer transition-colors"
+                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle flex items-center justify-between gap-2 text-xs text-ink-primary cursor-pointer transition-colors"
                 >
                   <span className="font-semibold whitespace-normal break-words text-start">
                     {formatPersonName(heir.name, lang)} · {ROLE_LABELS[lang][heir.role]} ·{' '}
                     {formatAgeLabel(Math.max(6, heir.age), lang)}
                   </span>
-                  <span className="text-[#F59E0B] font-bold whitespace-nowrap shrink-0">
+                  <span className="text-accent-amber font-bold whitespace-nowrap shrink-0">
                     {isFa ? 'انتخاب ←' : 'Play →'}
                   </span>
                 </button>
@@ -227,13 +245,13 @@ export function DeathSummaryModal({
         </div>
 
         {/* Sticky Footer: Heir Continuation & New Life Actions */}
-        <div className="shrink-0 px-4 sm:px-5 py-3 bg-[#121C2B] border-t border-[#1E2D40] space-y-2">
+        <div className="shrink-0 px-4 sm:px-5 py-3 bg-surface-secondary border-t border-border-subtle space-y-2">
           {primaryHeir ? (
             <>
               <button
                 type="button"
                 onClick={() => onContinueWithHeir(primaryHeir.id)}
-                className="w-full min-h-[52px] px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] font-bold text-xs sm:text-sm shadow-lg flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
+                className="w-full min-h-[52px] px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-nordic-950 font-bold text-xs sm:text-sm shadow-lg flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
               >
                 <span className="inline-flex items-center gap-2 min-w-0 text-start">
                   <Crown className="w-5 h-5 shrink-0" />
@@ -243,7 +261,7 @@ export function DeathSummaryModal({
                       : `Continue as ${primaryHeir.name} (${ROLE_LABELS.en[primaryHeir.role]} · ${formatAgeLabel(Math.max(6, primaryHeir.age), 'en')})`}
                   </span>
                 </span>
-                <span className="text-xs font-extrabold whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-[#0B1118]/15">
+                <span className="text-xs font-extrabold whitespace-nowrap shrink-0 px-2 py-1 rounded-lg bg-surface-canvas/15">
                   {isFa ? 'نسل بعد ←' : 'Next Gen →'}
                 </span>
               </button>
@@ -253,7 +271,7 @@ export function DeathSummaryModal({
                   <button
                     type="button"
                     onClick={() => setShowOtherHeirs((v) => !v)}
-                    className="text-xs font-medium text-[#94A3B8] hover:text-[#38BDF8] inline-flex items-center gap-1 cursor-pointer py-0.5"
+                    className="text-xs font-medium text-ink-muted hover:text-accent-ice inline-flex items-center gap-1 cursor-pointer py-0.5"
                   >
                     <span>
                       {isFa
@@ -270,7 +288,7 @@ export function DeathSummaryModal({
               )}
             </>
           ) : (
-            <div className="p-2.5 rounded-xl bg-[#162232] border border-[#24354C] text-xs text-[#F87171] text-center">
+            <div className="p-2.5 rounded-xl bg-surface-secondary border border-border-subtle text-xs text-accent-crimson text-center">
               {isFa
                 ? 'هیچ وارث زنده‌ای باقی نمانده است؛ یک زندگی جدید را آغاز کنید!'
                 : 'No living heirs remain — start a fresh Viking life!'}
@@ -282,7 +300,7 @@ export function DeathSummaryModal({
               <button
                 type="button"
                 onClick={onQuickNewLife}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] text-[#0B1118] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-status-ice hover:bg-status-ice text-nordic-950 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Sparkles className="w-4 h-4 shrink-0" />
                 <span>
@@ -294,7 +312,7 @@ export function DeathSummaryModal({
             <button
               type="button"
               onClick={onEndDynastyAndRestart}
-              className={`min-h-[44px] px-3.5 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1B293D] border border-[#24354C] text-xs font-semibold text-[#CBD5E1] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-xl bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-xs font-semibold text-ink-secondary inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
                 onQuickNewLife ? '' : 'sm:col-span-2'
               }`}
             >

@@ -38,6 +38,7 @@ import {
   ThemeMode,
   TitleRank,
 } from '../types/game';
+import { useModalA11y } from '../utils/useModalA11y';
 import { NordicAccordion, NordicSelect, NordicSelectOption } from './NordicControls';
 
 interface SettingsSaveModalProps {
@@ -67,6 +68,11 @@ export function SettingsSaveModal({
   const [slotsOpen, setSlotsOpen] = useState<boolean>(true);
   const [prefsOpen, setPrefsOpen] = useState<boolean>(true);
   const [exportOpen, setExportOpen] = useState<boolean>(false);
+
+  const modalRef = useModalA11y<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
 
   if (!isOpen) return null;
 
@@ -243,25 +249,26 @@ export function SettingsSaveModal({
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-black/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-surface-backdrop backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[min(88dvh,720px)] flex flex-col overflow-hidden bg-[#0E1622] border border-[#24354C] rounded-2xl text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
+        ref={modalRef}
+        className="w-full max-w-xl max-h-[min(88dvh,720px)] flex flex-col overflow-hidden bg-surface-elevated border border-border-subtle rounded-2xl text-start shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">
-          <h2 id="settings-modal-title" className="font-saga text-lg sm:text-2xl font-bold text-[#F1F5F9] min-w-0 whitespace-normal break-words leading-snug">
+        <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border-subtle bg-surface-secondary flex items-center justify-between gap-3">
+          <h2 id="settings-modal-title" className="font-saga text-lg sm:text-2xl font-bold text-ink-primary min-w-0 whitespace-normal break-words leading-snug">
             {isFa ? 'ذخیره بازی و تنظیمات' : 'Saves & Game Settings'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={isFa ? 'بستن پنجره' : 'Close modal'}
-            className="shrink-0 min-w-[44px] min-h-[44px] rounded-xl bg-[#182638] hover:bg-[#21334A] border border-[#2A3E59] flex items-center justify-center text-[#94A3B8] hover:text-[#F1F5F9] cursor-pointer transition-colors"
+            className="shrink-0 min-w-[44px] min-h-[44px] rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle flex items-center justify-center text-ink-muted hover:text-ink-primary cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -269,7 +276,7 @@ export function SettingsSaveModal({
 
         <div className="flex-1 min-h-0 px-3.5 sm:px-6 pt-5 pb-6 space-y-3.5 overflow-y-auto">
           {statusMessage && (
-            <div className="px-3.5 py-2.5 rounded-xl bg-[#1F1A12] border border-[#F59E0B] text-xs text-[#F1F5F9]">
+            <div className="px-3.5 py-2.5 rounded-xl bg-surface-amber-tint border border-gold-500 text-xs text-ink-primary">
               {statusMessage}
             </div>
           )}
@@ -297,10 +304,10 @@ export function SettingsSaveModal({
                 return (
                   <div
                     key={slotNum}
-                    className="p-3 rounded-xl bg-[#121C2A] border border-[#223247] flex flex-wrap items-center justify-between gap-3"
+                    className="p-3 rounded-xl bg-surface-secondary border border-border-subtle flex flex-wrap items-center justify-between gap-3"
                   >
                     <div className="text-xs min-w-0">
-                      <div className="font-semibold text-[#F1F5F9]">
+                      <div className="font-semibold text-ink-primary">
                         {isFa ? `جایگاه ${slotNum}: ` : `Slot ${slotNum}: `}
                         {meta ? (
                           <span>
@@ -311,13 +318,13 @@ export function SettingsSaveModal({
                             )
                           </span>
                         ) : (
-                          <span className="text-[#94A3B8] font-normal">
+                          <span className="text-ink-muted font-normal">
                             {isFa ? 'خالی' : 'Empty'}
                           </span>
                         )}
                       </div>
                       {meta && (
-                        <div className="text-xs text-[#94A3B8] font-mono tabular-nums mt-0.5">
+                        <div className="text-xs text-ink-muted font-mono tabular-nums mt-0.5">
                           {isFa
                             ? `شهرت ${meta.fame} · ذخیره: ${meta.savedAt}`
                             : `Fame ${meta.fame} · Saved ${meta.savedAt}`}
@@ -330,7 +337,7 @@ export function SettingsSaveModal({
                         <button
                           type="button"
                           onClick={() => handleSaveSlot(slotNum)}
-                          className="min-h-[44px] px-3.5 text-xs font-bold bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] rounded-lg inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+                          className="min-h-[44px] px-3.5 text-xs font-bold bg-gold-500 hover:bg-gold-400 text-nordic-950 rounded-lg inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
                         >
                           <Save className="w-3.5 h-3.5" />
                           {isFa ? 'ذخیره' : 'Save'}
@@ -341,16 +348,16 @@ export function SettingsSaveModal({
                           <button
                             type="button"
                             onClick={() => handleLoadSlot(slotNum)}
-                            className="min-h-[44px] px-3.5 text-xs font-semibold bg-[#182638] border border-[#2C415C] hover:border-[#38BDF8] text-[#F1F5F9] rounded-lg inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+                            className="min-h-[44px] px-3.5 text-xs font-semibold bg-surface-interactive border border-border-strong hover:border-status-ice text-ink-primary rounded-lg inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
                           >
-                            <FolderOpen className="w-3.5 h-3.5 text-[#38BDF8]" />
+                            <FolderOpen className="w-3.5 h-3.5 text-accent-ice" />
                             {isFa ? 'بارگذاری' : 'Load'}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteSlot(slotNum)}
                             aria-label={`Delete Slot ${slotNum}`}
-                            className="min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#24161B] flex items-center justify-center text-[#94A3B8] hover:text-[#EF4444] cursor-pointer transition-colors"
+                            className="min-w-[44px] min-h-[44px] rounded-lg hover:bg-surface-crimson-tint flex items-center justify-center text-ink-muted hover:text-accent-crimson cursor-pointer transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -387,9 +394,9 @@ export function SettingsSaveModal({
                   }
                   icon={
                     (settings.theme ?? 'light') === 'light' ? (
-                      <Sun className="w-4 h-4 text-[#F59E0B]" />
+                      <Sun className="w-4 h-4 text-accent-amber" />
                     ) : (
-                      <Moon className="w-4 h-4 text-[#38BDF8]" />
+                      <Moon className="w-4 h-4 text-accent-ice" />
                     )
                   }
                 />
@@ -401,7 +408,7 @@ export function SettingsSaveModal({
                     value={lang}
                     options={languageOptions}
                     onChange={(nextLang) => onUpdateSettings({ ...settings, language: nextLang })}
-                    icon={<Globe className="w-4 h-4 text-[#F59E0B]" />}
+                    icon={<Globe className="w-4 h-4 text-accent-amber" />}
                   />
                 )}
 
@@ -412,7 +419,7 @@ export function SettingsSaveModal({
                   onChange={(nextDiff) =>
                     onUpdateSettings({ ...settings, difficulty: nextDiff })
                   }
-                  icon={<Shield className="w-4 h-4 text-[#F59E0B]" />}
+                  icon={<Shield className="w-4 h-4 text-accent-amber" />}
                 />
 
                 <NordicSelect
@@ -422,7 +429,7 @@ export function SettingsSaveModal({
                   onChange={(nextInt) =>
                     onUpdateSettings({ ...settings, contentIntensity: nextInt })
                   }
-                  icon={<BookOpen className="w-4 h-4 text-[#38BDF8]" />}
+                  icon={<BookOpen className="w-4 h-4 text-accent-ice" />}
                 />
 
                 <NordicSelect
@@ -432,26 +439,26 @@ export function SettingsSaveModal({
                   onChange={(nextSize) =>
                     onUpdateSettings({ ...settings, textSize: nextSize })
                   }
-                  icon={<Type className="w-4 h-4 text-[#38BDF8]" />}
+                  icon={<Type className="w-4 h-4 text-accent-ice" />}
                 />
               </div>
 
               {/* Ambient Soundscape Control */}
-              <div className="p-3.5 rounded-xl bg-[#121C2A] border border-[#223247] space-y-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-surface-secondary border border-border-subtle space-y-3 text-xs">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {settings.ambientAudioEnabled ? (
-                      <Volume2 className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                      <Volume2 className="w-4 h-4 text-accent-amber shrink-0" />
                     ) : (
-                      <VolumeX className="w-4 h-4 text-[#64748B] shrink-0" />
+                      <VolumeX className="w-4 h-4 text-ink-muted shrink-0" />
                     )}
                     <div className="min-w-0">
-                      <div className="font-semibold text-[#F1F5F9]">
+                      <div className="font-semibold text-ink-primary">
                         {isFa
                           ? 'فضای صوتی محیطی وایکینگی (Ambient)'
                           : 'Viking Ambient Soundscape'}
                       </div>
-                      <div className="text-[#94A3B8]">
+                      <div className="text-ink-muted">
                         {isFa
                           ? 'طنین بم تاگلهارپا و باد آبدره‌های شمال هنگام بازی'
                           : 'Low-frequency tagelharpa drone & fjord wind during play'}
@@ -471,8 +478,8 @@ export function SettingsSaveModal({
                     }
                     className={`min-h-[44px] px-4 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
                       settings.ambientAudioEnabled
-                        ? 'bg-[#F59E0B] text-[#0B1118]'
-                        : 'bg-[#0B1118] border border-[#26384F] text-[#94A3B8] hover:text-[#F1F5F9]'
+                        ? 'bg-gold-500 text-nordic-950'
+                        : 'bg-surface-canvas border border-border-subtle text-ink-muted hover:text-ink-primary'
                     }`}
                   >
                     {settings.ambientAudioEnabled
@@ -487,7 +494,7 @@ export function SettingsSaveModal({
 
                 {settings.ambientAudioEnabled && (
                   <div className="flex items-center gap-3 pt-1">
-                    <span className="text-[#94A3B8] whitespace-nowrap">
+                    <span className="text-ink-muted whitespace-nowrap">
                       {isFa ? 'بلندی صدای محیط:' : 'Volume:'}
                     </span>
                     <input
@@ -505,7 +512,7 @@ export function SettingsSaveModal({
                       }
                       className="flex-1 accent-[#F59E0B] cursor-pointer"
                     />
-                    <span className="w-10 text-end font-mono tabular-nums text-[#F1F5F9]">
+                    <span className="w-10 text-end font-mono tabular-nums text-ink-primary">
                       {Math.round((settings.ambientVolume ?? 0.55) * 100)}%
                     </span>
                   </div>
@@ -523,8 +530,8 @@ export function SettingsSaveModal({
                   }
                   className={`min-h-[44px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                     settings.soundEnabled
-                      ? 'bg-[#152438] border-[#38BDF8]/60 text-[#F1F5F9]'
-                      : 'bg-[#0B1118] border-[#1E2D40] text-[#94A3B8]'
+                      ? 'bg-surface-ice-tint border-status-ice/60 text-ink-primary'
+                      : 'bg-surface-canvas border-border-subtle text-ink-muted'
                   }`}
                 >
                   <span className="font-medium whitespace-normal break-words text-start leading-snug">
@@ -532,7 +539,7 @@ export function SettingsSaveModal({
                   </span>
                   <span
                     className={`font-mono font-bold shrink-0 ${
-                      settings.soundEnabled ? 'text-[#38BDF8]' : 'text-[#64748B]'
+                      settings.soundEnabled ? 'text-accent-ice' : 'text-ink-muted'
                     }`}
                   >
                     {settings.soundEnabled ? (isFa ? 'روشن' : 'ON') : isFa ? 'خاموش' : 'OFF'}
@@ -551,8 +558,8 @@ export function SettingsSaveModal({
                   }
                   className={`min-h-[44px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                     settings.weatherOverlayEnabled
-                      ? 'bg-[#152438] border-[#38BDF8]/60 text-[#F1F5F9]'
-                      : 'bg-[#0B1118] border-[#1E2D40] text-[#94A3B8]'
+                      ? 'bg-surface-ice-tint border-status-ice/60 text-ink-primary'
+                      : 'bg-surface-canvas border-border-subtle text-ink-muted'
                   }`}
                 >
                   <span className="font-medium whitespace-normal break-words text-start leading-snug">
@@ -560,7 +567,7 @@ export function SettingsSaveModal({
                   </span>
                   <span
                     className={`font-mono font-bold shrink-0 ${
-                      settings.weatherOverlayEnabled ? 'text-[#38BDF8]' : 'text-[#64748B]'
+                      settings.weatherOverlayEnabled ? 'text-accent-ice' : 'text-ink-muted'
                     }`}
                   >
                     {settings.weatherOverlayEnabled
@@ -585,8 +592,8 @@ export function SettingsSaveModal({
                   }
                   className={`min-h-[44px] px-3 py-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                     settings.emberAnimation
-                      ? 'bg-[#152438] border-[#F59E0B]/60 text-[#F1F5F9]'
-                      : 'bg-[#0B1118] border-[#1E2D40] text-[#94A3B8]'
+                      ? 'bg-surface-ice-tint border-gold-500/60 text-ink-primary'
+                      : 'bg-surface-canvas border-border-subtle text-ink-muted'
                   }`}
                 >
                   <span className="font-medium whitespace-normal break-words text-start leading-snug">
@@ -594,7 +601,7 @@ export function SettingsSaveModal({
                   </span>
                   <span
                     className={`font-mono font-bold shrink-0 ${
-                      settings.emberAnimation ? 'text-[#F59E0B]' : 'text-[#64748B]'
+                      settings.emberAnimation ? 'text-accent-amber' : 'text-ink-muted'
                     }`}
                   >
                     {settings.emberAnimation ? (isFa ? 'روشن' : 'ON') : isFa ? 'خاموش' : 'OFF'}
@@ -622,12 +629,12 @@ export function SettingsSaveModal({
                 <button
                   type="button"
                   onClick={handleCopyExport}
-                  className="min-h-[44px] px-3.5 text-xs font-semibold bg-[#182638] border border-[#2C415C] hover:border-[#F59E0B] text-[#F1F5F9] rounded-xl inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition-colors"
+                  className="min-h-[44px] px-3.5 text-xs font-semibold bg-surface-interactive border border-border-strong hover:border-gold-500 text-ink-primary rounded-xl inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition-colors"
                 >
                   {copiedExport ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className="w-4 h-4 text-accent-emerald" />
                   ) : (
-                    <Copy className="w-4 h-4 text-[#F59E0B]" />
+                    <Copy className="w-4 h-4 text-accent-amber" />
                   )}
                   {copiedExport
                     ? isFa
@@ -649,7 +656,7 @@ export function SettingsSaveModal({
                     ? 'کد ذخیره ELDSAGA1:... را برای بازیابی اینجا قرار دهید...'
                     : 'Paste an ELDSAGA1:... save string here to import...'
                 }
-                className="w-full p-3 text-xs font-mono bg-[#0B1118] border border-[#24354C] rounded-xl text-[#F1F5F9] focus:outline-none focus:border-[#F59E0B]"
+                className="w-full p-3 text-xs font-mono bg-surface-canvas border border-border-subtle rounded-xl text-ink-primary focus:outline-none focus:border-gold-500"
               />
 
               <div className="flex justify-end">
@@ -657,7 +664,7 @@ export function SettingsSaveModal({
                   type="button"
                   disabled={!importText.trim()}
                   onClick={handleImportCode}
-                  className="min-h-[44px] px-4 text-xs font-bold bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+                  className="min-h-[44px] px-4 text-xs font-bold bg-cta-ice hover:bg-status-ice hover:text-nordic-950 disabled:bg-surface-disabled disabled:text-ink-disabled text-white rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   {isFa ? 'بارگذاری کد متنی' : 'Import Save String'}
@@ -667,8 +674,8 @@ export function SettingsSaveModal({
           </NordicAccordion>
 
           {onReturnToTitle && currentState && (
-            <div className="pt-2 border-t border-[#1E2D40] flex flex-wrap justify-between items-center gap-3">
-              <span className="text-xs text-[#94A3B8]">
+            <div className="pt-2 border-t border-border-subtle flex flex-wrap justify-between items-center gap-3">
+              <span className="text-xs text-ink-muted">
                 {isFa
                   ? 'می‌خواهید دوره تاریخی یا شخصیت تازه‌ای بسازید؟'
                   : 'Want to start a different historical era or character?'}
@@ -679,7 +686,7 @@ export function SettingsSaveModal({
                   onClose();
                   onReturnToTitle();
                 }}
-                className="min-h-[44px] px-4 py-2 text-xs font-semibold bg-[#191116] border border-[#7F1D1D] hover:border-[#EF4444] text-[#FCA5A5] rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
+                className="min-h-[44px] px-4 py-2 text-xs font-semibold bg-surface-crimson-tint border border-border-crimson-subtle hover:border-blood-500 text-accent-crimson rounded-xl inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
               >
                 <Download className="w-3.5 h-3.5 rotate-90" />
                 {isFa ? 'بازگشت به صفحه ساخت شخصیت' : 'Return to Character Creation'}

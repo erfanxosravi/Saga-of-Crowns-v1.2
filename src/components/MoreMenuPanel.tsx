@@ -247,15 +247,15 @@ export function MoreMenuPanel({
   const getBadgeToneClasses = (tone: MoreCardItem['costRiskTone']) => {
     switch (tone) {
       case 'crimson':
-        return 'bg-[#DC2626]/20 text-[#FCA5A5] border-[#EF4444]/40';
+        return 'bg-blood-600/20 text-accent-crimson border-blood-500/40';
       case 'amber':
-        return 'bg-[#F59E0B]/15 text-[#FCD34D] border-[#F59E0B]/35';
+        return 'bg-gold-500/15 text-accent-amber border-gold-500/35';
       case 'ice':
-        return 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/35';
+        return 'bg-status-ice/15 text-accent-ice border-status-ice/35';
       case 'emerald':
-        return 'bg-[#34D399]/15 text-[#6EE7B7] border-[#34D399]/35';
+        return 'bg-status-emerald/15 text-accent-emerald border-status-emerald/35';
       case 'violet':
-        return 'bg-[#A78BFA]/15 text-[#DDD6FE] border-[#A78BFA]/35';
+        return 'bg-status-violet/15 text-accent-violet border-status-violet/35';
     }
   };
 
@@ -263,19 +263,19 @@ export function MoreMenuPanel({
     <div className="flex flex-col overflow-hidden space-y-3 text-start">
       {/* Rank Promotion Callout when Eligible */}
       {claimable && (
-        <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#261B0D] via-[#1B1915] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+        <div className="relative p-4 rounded-2xl bg-gradient-to-r from-surface-amber-tint via-surface-amber-tint to-surface-secondary border border-gold-500 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
           <NorseCornerOrnament accent="amber" />
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-[#F59E0B]/20 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-gold-500/20 text-accent-amber ring-1 ring-gold-500/40 flex items-center justify-center shrink-0">
               <Crown className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm sm:text-base font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+              <div className="text-sm sm:text-base font-bold text-ink-primary whitespace-normal break-words leading-snug">
                 {isFa
                   ? `آماده ارتقا به مقام «${SHORT_TITLE_LABELS.fa[claimable]}»!`
                   : `Ready to Claim Rank: ${SHORT_TITLE_LABELS.en[claimable]}`}
               </div>
-              <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed mt-0.5">
+              <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed mt-0.5">
                 {isFa
                   ? 'شرایط املاک، شهرت و سپاه برای ارتقای مقام خاندان فراهم شده است.'
                   : 'Your estates, fame, and warband meet the requirements for a higher title.'}
@@ -292,7 +292,7 @@ export function MoreMenuPanel({
                 onNavigateTab(TabId.Realm, 'holdings');
               }
             }}
-            className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-nordic-950 text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
           >
             {isFa
               ? `ارتقا به ${SHORT_TITLE_LABELS.fa[claimable]}`
@@ -315,32 +315,32 @@ export function MoreMenuPanel({
         {cards.map((card) => {
           const cardSurface =
             card.accent === 'ice'
-              ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
+              ? 'bg-gradient-to-br from-surface-ice-tint via-surface-secondary to-surface-elevated border-status-ice/40 hover:border-status-ice'
               : card.accent === 'emerald'
-                ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
+                ? 'bg-gradient-to-br from-surface-ice-tint via-surface-secondary to-surface-elevated border-status-emerald/40 hover:border-status-emerald'
                 : card.accent === 'violet'
-                  ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
+                  ? 'bg-gradient-to-br from-surface-violet-tint via-surface-secondary to-surface-elevated border-status-violet/40 hover:border-status-violet'
                   : card.accent === 'crimson'
-                    ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
-                    : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
+                    ? 'bg-gradient-to-br from-surface-crimson-tint via-surface-violet-tint to-surface-elevated border-blood-500/55 hover:border-blood-500'
+                    : 'bg-gradient-to-br from-surface-amber-tint via-surface-secondary to-surface-elevated border-gold-500/40 hover:border-gold-500';
 
           const iconWrap =
             card.accent === 'ice'
-              ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
+              ? 'bg-status-ice/15 text-accent-ice ring-1 ring-status-ice/30'
               : card.accent === 'emerald'
-                ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
+                ? 'bg-status-emerald/15 text-accent-emerald ring-1 ring-status-emerald/30'
                 : card.accent === 'violet'
-                  ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
+                  ? 'bg-status-violet/15 text-accent-violet ring-1 ring-status-violet/30'
                   : card.accent === 'crimson'
-                    ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
-                    : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
+                    ? 'bg-blood-500/15 text-accent-crimson ring-1 ring-blood-500/35'
+                    : 'bg-gold-500/15 text-accent-amber ring-1 ring-gold-500/30';
 
           return (
             <button
               key={card.id}
               type="button"
               onClick={() => setActiveModal(card.id)}
-              className={`relative min-h-[138px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface}`}
+              className={`relative min-h-[138px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${cardSurface}`}
             >
               <NorseCornerOrnament accent={card.accent} />
 
@@ -353,22 +353,22 @@ export function MoreMenuPanel({
                       {card.icon}
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[10px] font-semibold text-[#94A3B8] block">
+                      <span className="text-[10px] font-semibold text-ink-muted block">
                         {card.categoryLabel}
                       </span>
-                      <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                      <div className="text-sm font-bold text-ink-primary whitespace-normal break-words leading-snug">
                         {card.title}
                       </div>
                     </div>
                   </div>
                   {card.isReadyHighlight && (
-                    <span className="w-6 h-6 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-status-emerald/15 text-accent-emerald flex items-center justify-center shrink-0">
                       <Check className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+                <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
                   {card.description}
                 </p>
               </div>
@@ -381,7 +381,7 @@ export function MoreMenuPanel({
                 >
                   {card.costRiskBadge}
                 </span>
-                <span className="text-[11px] font-mono tabular-nums text-[#E2E8F0] font-semibold">
+                <span className="text-[11px] font-mono tabular-nums text-ink-secondary font-semibold">
                   {card.statusLabel}
                 </span>
               </div>
@@ -456,22 +456,22 @@ export function MoreMenuPanel({
           title={isFa ? 'ارتقای مقام و هدف حماسه' : 'Rank Promotion & Saga Goal'}
           subtitle={TITLE_LABELS[lang][state.character.title]}
           icon={
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/40 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-2xl bg-status-emerald/15 text-accent-emerald ring-1 ring-status-emerald/40 flex items-center justify-center">
               <Award className="w-6 h-6" />
             </div>
           }
         >
-          <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+          <div className="p-4 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-[#F59E0B]">
+              <span className="text-xs font-bold text-accent-amber">
                 {isFa ? 'جایگاه و مقام کنونی' : 'Current Noble Rank'}
               </span>
-              <span className="px-2.5 py-0.5 rounded-lg bg-[#101926] border border-[#1E2D40] text-xs font-bold text-[#F1F5F9]">
+              <span className="px-2.5 py-0.5 rounded-lg bg-surface-card border border-border-subtle text-xs font-bold text-ink-primary">
                 {TITLE_LABELS[lang][state.character.title]}
               </span>
             </div>
 
-            <p className="text-xs text-[#CBD5E1] leading-relaxed">
+            <p className="text-xs text-ink-secondary leading-relaxed">
               {getNextTitleRequirementText(state.character.title, lang)}
             </p>
 
@@ -482,7 +482,7 @@ export function MoreMenuPanel({
                   onClaimRank();
                   setActiveModal(null);
                 }}
-                className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-xs font-extrabold cursor-pointer transition-colors"
+                className="w-full min-h-[44px] px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-nordic-950 text-xs font-extrabold cursor-pointer transition-colors"
               >
                 {isFa
                   ? `ارتقا به مقام «${SHORT_TITLE_LABELS.fa[claimable]}»!`
@@ -491,21 +491,21 @@ export function MoreMenuPanel({
             )}
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+          <div className="p-4 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="text-xs font-bold text-[#38BDF8]">
+                <div className="text-xs font-bold text-accent-ice">
                   {isFa ? 'هدف نهایی حماسه' : 'Dynasty Victory Goal'}
                 </div>
-                <div className="text-sm font-bold text-[#F1F5F9] mt-0.5">
+                <div className="text-sm font-bold text-ink-primary mt-0.5">
                   {isFa ? winGoalFa?.title ?? winGoal.title : winGoal.title}
                 </div>
               </div>
               <span
                 className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${
                   isGoalCompleted
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'bg-[#101926] text-[#F59E0B] border border-[#1E2D40]'
+                    ? 'bg-status-emerald/20 text-accent-emerald border border-status-emerald/40'
+                    : 'bg-surface-card text-accent-amber border border-border-subtle'
                 }`}
               >
                 {isGoalCompleted
@@ -518,11 +518,11 @@ export function MoreMenuPanel({
               </span>
             </div>
 
-            <p className="text-xs text-[#CBD5E1] leading-relaxed">
+            <p className="text-xs text-ink-secondary leading-relaxed">
               {isFa ? winGoalFa?.description ?? winGoal.description : winGoal.description}
             </p>
 
-            <div className="p-2.5 rounded-xl bg-[#101926] border border-[#1E2D40] text-xs font-mono text-[#38BDF8]">
+            <div className="p-2.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-mono text-accent-ice">
               {goalProgressText}
             </div>
           </div>

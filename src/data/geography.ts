@@ -726,13 +726,63 @@ export const SETTLEMENTS: Settlement[] = [
     ],
   },
   {
+    id: 'aarhus',
+    name: 'Aros (Aarhus)',
+    norseName: 'Árós',
+    regionGroup: 'Denmark',
+    subRegion: 'East Jutland',
+    lat: 56.16,
+    lon: 10.21,
+    settlementType: 'town',
+    norsePopulation: 950,
+    nativePopulation: 220,
+    primaryCulture: 'Old Norse (Dane)',
+    primaryCultureFa: 'نورس کهن (دانمارکی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    baseWealth: 7,
+    baseDefense: 6,
+    historicalSummary:
+      'Fortified East Jutland harbor at the mouth of the Aarhus River (“River-Mouth”), established c. 770–790 AD, ringed with a turf-and-timber rampart in the 930s, and recorded as a bishopric in 948.',
+    controllersByEra: [
+      { untilYear: 934, ruler: 'East Jutland Sea-Kings', polity: 'Danish Petty Kingdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 965, ruler: 'Gorm the Old & Harald Bluetooth', polity: 'Kingdom of Denmark', religion: Religion.NorsePagan, factionColor: '#EA580C', status: 'independent' },
+      { untilYear: 1100, ruler: 'Danish Crown & Bishops of Aros', polity: 'Kingdom of Denmark', religion: Religion.Christian, factionColor: '#EA580C', status: 'independent' },
+    ],
+  },
+  {
+    id: 'odense',
+    name: 'Odense (Nonnebakken)',
+    norseName: 'Óðinsvé',
+    regionGroup: 'Denmark',
+    subRegion: 'Funen (Fyn)',
+    lat: 55.40,
+    lon: 10.39,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 900,
+    nativePopulation: 200,
+    primaryCulture: 'Old Norse (Dane)',
+    primaryCultureFa: 'نورس کهن (دانمارکی)',
+    defaultStatus: 'independent',
+    factionColor: '#EA580C',
+    isThingSite: true,
+    baseWealth: 7,
+    baseDefense: 7,
+    historicalSummary:
+      'Central island sanctuary of Odin (“Odin’s Vi”) on Funen commanding the Belt straits; fortified by Harald Bluetooth c. 980 with the Nonnebakken geometric ring-fortress.',
+    controllersByEra: [
+      { untilYear: 965, ruler: 'Funen Goðar & Jarls', polity: 'Danish Isles', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'House of Jelling & Danish Crown', polity: 'Kingdom of Denmark', religion: Religion.Christian, factionColor: '#EA580C', status: 'independent' },
+    ],
+  },
+  {
     id: 'kaupang',
     name: 'Kaupang',
     norseName: 'Skíringssalr',
     regionGroup: 'Norway',
     subRegion: 'Vestfold',
-    lat: 59.05,
-    lon: 10.05,
+    lat: 58.92,
+    lon: 9.78,
     settlementType: 'trading_post',
     norsePopulation: 950,
     nativePopulation: 180,
@@ -743,11 +793,113 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 7,
     baseDefense: 5,
     historicalSummary:
-      'Norway’s bustling Vestfold port described by Ohthere of Hålogaland, trading soapstone, whetstones, walrus ivory, and iron.',
+      'Norway’s bustling Vestfold port described by Ohthere of Hålogaland, trading soapstone, whetstones, walrus ivory, and iron alongside the sacred hall at Huseby.',
     controllersByEra: [
       { untilYear: 872, ruler: 'Vestfold Petty Kings', polity: 'Vestfold', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 995, ruler: 'Fairhair & Lade Jarls', polity: 'Kingdom of Norway', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'Christian Kings of Norway', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'tunsberg',
+    name: 'Tunsberg & Borre',
+    norseName: 'Túnsberg ok Borró',
+    regionGroup: 'Norway',
+    subRegion: 'Vestfold',
+    lat: 59.35,
+    lon: 10.38,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 1050,
+    nativePopulation: 180,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    isThingSite: true,
+    baseWealth: 7,
+    baseDefense: 6,
+    historicalSummary:
+      'Monumental royal ship-burial mounds of the Yngling/Fairhair line at Borre and the sheltered port of Tunsberg. Historical note (uncertain/debated): Snorri’s Heimskringla dates Tunsberg as a market town before Hafrsfjord (c. 871), whereas archaeological dendrochronology of the urban layers is debated between the 10th and 11th centuries.',
+    controllersByEra: [
+      { untilYear: 872, ruler: 'Yngling Kings of Vestfold', polity: 'Vestfold', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 995, ruler: 'Sons of Harald Fairhair (Bjørn Farmann)', polity: 'Kingdom of Norway', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Kings of Norway', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'avaldsnes',
+    name: 'Avaldsnes (Karmøy)',
+    norseName: 'Avaldsnes á Kormt',
+    regionGroup: 'Norway',
+    subRegion: 'Rogaland / Western Coast',
+    lat: 59.35,
+    lon: 5.29,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 1100,
+    nativePopulation: 200,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    baseWealth: 8,
+    baseDefense: 7,
+    historicalSummary:
+      'Ancient royal seat on Karmøy island commanding the narrow Karmsund strait — the literal “North-Way” (Norðvegr) shipping lane. Famed for the late-8th-century Storhaug and Grønhaug ship burials and chosen by Harald Fairhair as his primary royal manor after Hafrsfjord (872).',
+    controllersByEra: [
+      { untilYear: 872, ruler: 'Sea-Kings of Rogaland & Agder', polity: 'Western Fjord Kingdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 995, ruler: 'Harald Fairhair & Eric Bloodaxe’s Line', polity: 'Kingdom of Norway', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Olaf Tryggvason & St. Olaf’s Crown', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'giske_more',
+    name: 'Giske & Møre',
+    norseName: 'Giski á Mæri',
+    regionGroup: 'Norway',
+    subRegion: 'Sunnmøre / Western Fjords',
+    lat: 62.35,
+    lon: 5.95,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 880,
+    nativePopulation: 150,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    baseWealth: 6,
+    baseDefense: 6,
+    historicalSummary:
+      'Strategic island earldom seat of Ragnvald Eysteinsson (Earl of Møre, father of Göngu-Hrólfr/Rollo and Torf-Einarr of Orkney) and later the powerful Arnmøding clan. Historical note (uncertain): saga tradition places Ragnvald’s 9th-century seat in Møre, while exact early hall layers between Giske and Borgund are partly reconstructed.',
+    controllersByEra: [
+      { untilYear: 870, ruler: 'Petty Kings of Møre & Romsdal', polity: 'Møre Chiefdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 995, ruler: 'Ragnvald Earl of Møre & Kin', polity: 'Earldom of Møre', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Arnmøding Chieftains (Kalv & Finn Arnesson)', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'lade_hladir',
+    name: 'Hlaðir (Lade)',
+    norseName: 'Hlaðir í Þrándheimi',
+    regionGroup: 'Norway',
+    subRegion: 'Trøndelag',
+    lat: 63.44,
+    lon: 10.44,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 1200,
+    nativePopulation: 240,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    abandonedYear: 996,
+    isThingSite: true,
+    baseWealth: 7,
+    baseDefense: 7,
+    historicalSummary:
+      'Pre-Christian power seat of Trøndelag on the Lade peninsula beside the Trondheimsfjord; stronghold of the semi-sovereign Earls of Lade (Håkon Grjotgardsson, Sigurd Håkonsson, and Håkon Sigurdsson the Mighty) and their great pagan hof until Olaf Tryggvason founded Nidaros across the river in 997.',
+    controllersByEra: [
+      { untilYear: 996, ruler: 'Jarls of Lade (Håkon Grjotgardsson to Håkon Sigurdsson)', polity: 'Earldom of Lade (Trøndelag)', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Earls Eirik & Svein Håkonsson', polity: 'Trøndelag Earldom', religion: Religion.Syncretic, factionColor: '#F59E0B', status: 'independent' },
     ],
   },
   {
@@ -759,20 +911,96 @@ export const SETTLEMENTS: Settlement[] = [
     lat: 63.43,
     lon: 10.40,
     settlementType: 'jarldom_seat',
-    norsePopulation: 1200,
+    norsePopulation: 1350,
     nativePopulation: 250,
     primaryCulture: 'Old Norse (Norwegian)',
     primaryCultureFa: 'نورس کهن (نروژی)',
     defaultStatus: 'independent',
+    factionColor: '#38BDF8',
+    foundedYear: 997,
+    isThingSite: true,
+    baseWealth: 8,
+    baseDefense: 7,
+    historicalSummary:
+      'Royal kaupang and Christian capital founded at the mouth of the Nidelva by King Olaf Tryggvason in 997 AD — superseding nearby pagan Hlaðir (Lade) as the seat of Trøndelag and the Øreting, and after 1030 revered as the shrine of St. Olaf.',
+    controllersByEra: [
+      { untilYear: 997, ruler: 'Jarls of Lade (Håkon Sigurdsson)', polity: 'Trøndelag Earldom', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Christian Kings of Norway (Olaf Tryggvason to Harald Hardrada)', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'halogaland_borg',
+    name: 'Borg in Lofoten (Hålogaland)',
+    norseName: 'Borg í Lófót (Hálogaland)',
+    regionGroup: 'Norway',
+    subRegion: 'Hålogaland / Arctic Coast',
+    lat: 66.50,
+    lon: 13.60,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 780,
+    nativePopulation: 260,
+    primaryCulture: 'Old Norse & Sámi Frontier',
+    primaryCultureFa: 'نورس شمالی و مرز سامی',
+    defaultStatus: 'independent',
     factionColor: '#F59E0B',
+    baseWealth: 7,
+    baseDefense: 6,
+    historicalSummary:
+      'Arctic chieftain seat in Hålogaland where archaeologists excavated an 83-meter longhouse (the largest Viking Age hall known). Homeland of the seafarer Ohthere (Óttarr) who described his walrus ivory, whalebone, and Sámi fur tribute (finnskattr) to King Alfred of Wessex c. 890, and of Tore Hund of Bjarkøy.',
+    controllersByEra: [
+      { untilYear: 1030, ruler: 'Chieftains of Borg & Bjarkøy (Ohthere to Tore Hund)', polity: 'Hålogaland Chiefdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Northern Lendmenn under the Norwegian Crown', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'sarpsborg',
+    name: 'Borg (Sarpsborg)',
+    norseName: 'Borg við Sarpsfoss',
+    regionGroup: 'Norway',
+    subRegion: 'Østfold / Viken',
+    lat: 59.28,
+    lon: 11.18,
+    settlementType: 'town',
+    norsePopulation: 1000,
+    nativePopulation: 200,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#38BDF8',
+    foundedYear: 1016,
     isThingSite: true,
     baseWealth: 7,
     baseDefense: 7,
     historicalSummary:
-      'Heartland of the powerful Jarls of Lade and the Frostathing; founded as a royal market town by Olaf Tryggvason c. 997 and later shrine of St. Olaf.',
+      'Fortified town and earthwork rampart (St. Olavs Voll) founded in 1016 AD by King Olaf Haraldsson (St. Olaf) beside the Sarpsfoss waterfall on the Glomma River to anchor eastern Viken and host the Borgarthing assembly.',
     controllersByEra: [
-      { untilYear: 997, ruler: 'Jarls of Lade (Håkon Sigurdsson)', polity: 'Trøndelag Earldom', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
-      { untilYear: 1100, ruler: 'Kings of Norway', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+      { untilYear: 1015, ruler: 'Viken Petty Lords', polity: 'Viken Frontier', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'St. Olaf & Christian Kings of Norway', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'oslo',
+    name: 'Ánslo (Oslo)',
+    norseName: 'Ánslo / Ósló',
+    regionGroup: 'Norway',
+    subRegion: 'Head of Oslofjord',
+    lat: 59.98,
+    lon: 10.75,
+    settlementType: 'town',
+    norsePopulation: 1150,
+    nativePopulation: 220,
+    primaryCulture: 'Old Norse (Norwegian)',
+    primaryCultureFa: 'نورس کهن (نروژی)',
+    defaultStatus: 'independent',
+    factionColor: '#38BDF8',
+    foundedYear: 1048,
+    baseWealth: 7,
+    baseDefense: 7,
+    historicalSummary:
+      'Founded c. 1048 AD by King Harald Hardrada at the head of the Viken fjord (Heimskringla) as a strategic naval and market base facing Denmark. Historical note: Christian graves near St. Clement’s date to c. 1000, while Snorri places the royal town foundation around 1048.',
+    controllersByEra: [
+      { untilYear: 1047, ruler: 'Viken Chieftains', polity: 'Viken', religion: Religion.Syncretic, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Harald Hardrada & Olaf Kyrre', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
     ],
   },
   {
@@ -846,6 +1074,55 @@ export const SETTLEMENTS: Settlement[] = [
     controllersByEra: [
       { untilYear: 975, ruler: 'Unsettled Shore', polity: 'Svealand', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'King Olof Skötkonung & Sons', polity: 'Kingdom of Sweden', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'skara_gotaland',
+    name: 'Skara & Göta Älv',
+    norseName: 'Skara í Gautlandi',
+    regionGroup: 'Sweden',
+    subRegion: 'Västergötland',
+    lat: 58.28,
+    lon: 13.15,
+    settlementType: 'jarldom_seat',
+    norsePopulation: 1000,
+    nativePopulation: 220,
+    primaryCulture: 'Old Norse (Geat / Götar)',
+    primaryCultureFa: 'نورس کهن (گوتلند غربی)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    isThingSite: true,
+    baseWealth: 7,
+    baseDefense: 6,
+    historicalSummary:
+      'Heartland assembly seat of the Western Geats (Allra Göta þing) and corridor to the Göta Älv estuary looking toward Denmark and Norway; near here Olof Skötkonung was baptized at Husaby c. 1008 and Sweden’s oldest bishopric was established c. 1014. Historical note (uncertain): early Viking Age pagan sanctuary attested in tradition, while urban town layers date mainly from c. 1000 AD.',
+    controllersByEra: [
+      { untilYear: 1000, ruler: 'Geatish Jarls & Lawspeakers of Västergötland', polity: 'Västergötland (Gautland)', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Christian Earls (Ragnvald Ulfsson & Stenkil)', polity: 'Kingdom of Sweden', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
+    ],
+  },
+  {
+    id: 'kalmar_oland',
+    name: 'Kalmar & Köpingsvik (Öland)',
+    norseName: 'Kalmarnir ok Eyland',
+    regionGroup: 'Sweden',
+    subRegion: 'Småland & Öland Sound',
+    lat: 56.68,
+    lon: 16.36,
+    settlementType: 'trading_post',
+    norsePopulation: 860,
+    nativePopulation: 190,
+    primaryCulture: 'Old Norse (Swede / Ölander)',
+    primaryCultureFa: 'نورس کهن (ساحل بالتیک سوئد)',
+    defaultStatus: 'independent',
+    factionColor: '#F59E0B',
+    baseWealth: 7,
+    baseDefense: 6,
+    historicalSummary:
+      'Strategic Baltic sound between Småland and the island of Öland (Köpingsvik market and Eketorp ring-fort), where Swedish fleets mustered for the Eastern Route (Austrvegr) and Danish border wars.',
+    controllersByEra: [
+      { untilYear: 1020, ruler: 'Öland & Småland Sea-Chieftains', polity: 'Eastern Götaland', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Swedish Crown & Coastal Leidang', polity: 'Kingdom of Sweden', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
     ],
   },
 
@@ -1928,7 +2205,7 @@ export const SETTLEMENTS: Settlement[] = [
     primaryCultureFa: 'نورس ایسلندی',
     defaultStatus: 'independent',
     factionColor: '#38BDF8',
-    foundedYear: 874,
+    foundedYear: 870,
     baseWealth: 5,
     baseDefense: 4,
     historicalSummary:
@@ -2075,6 +2352,51 @@ export const SETTLEMENTS_BY_ID: Record<string, Settlement> = SETTLEMENTS.reduce<
   },
   {}
 );
+
+/**
+ * Checks whether a settlement exists in the given historical year based on
+ * optional `foundedYear` and `abandonedYear` bounds.
+ */
+export function isSettlementActiveInYear(
+  settlementOrId: Settlement | string | undefined,
+  year: number
+): boolean {
+  const s =
+    typeof settlementOrId === 'string'
+      ? SETTLEMENTS_BY_ID[settlementOrId]
+      : settlementOrId;
+  if (!s) return false;
+  if (s.foundedYear !== undefined && year < s.foundedYear) return false;
+  if (s.abandonedYear !== undefined && year > s.abandonedYear) return false;
+  return true;
+}
+
+/**
+ * Returns all settlements active in the given year.
+ */
+export function getActiveSettlementsForYear(year: number): Settlement[] {
+  return SETTLEMENTS.filter((s) => isSettlementActiveInYear(s, year));
+}
+
+/**
+ * Maps a settlement ID to its active historical counterpart if it is before its
+ * `foundedYear` or after its `abandonedYear` (e.g., Hlaðir/Lade < 997 <-> Nidaros >= 997).
+ */
+export function resolveActiveSettlementId(settlementId: string, year: number): string {
+  if (settlementId === 'nidaros' && year < 997) return 'lade_hladir';
+  if (settlementId === 'lade_hladir' && year >= 997) return 'nidaros';
+  if (settlementId === 'sigtuna' && year < 975) return 'birka';
+  if (settlementId === 'oslo' && year < 1048) return 'tunsberg';
+  if (settlementId === 'sarpsborg' && year < 1016) return 'tunsberg';
+  if (settlementId === 'reykjavik' && year < 870) return 'faroes';
+  if (settlementId === 'akureyri' && year < 890) return year >= 870 ? 'reykjavik' : 'faroes';
+  if (settlementId === 'thingvellir' && year < 930) return year >= 870 ? 'reykjavik' : 'faroes';
+  if (settlementId === 'brattahlid' && year < 985) return year >= 870 ? 'reykjavik' : 'faroes';
+  if ((settlementId === 'gardar' || settlementId === 'vinland') && year < 1000) {
+    return year >= 985 ? 'brattahlid' : year >= 870 ? 'reykjavik' : 'faroes';
+  }
+  return settlementId;
+}
 
 export function getControllerInYear(settlement: Settlement, year: number) {
   for (const entry of settlement.controllersByEra) {
@@ -2424,16 +2746,43 @@ export function getHistoricalBordersForYear(year: number): HistoricalBorderZone[
 export const SEA_ROUTES: [string, string][] = [
   // Scandinavia & North Sea
   ['hedeby', 'dorestad'],
+  ['hedeby', 'odense'],
   ['hedeby', 'roskilde'],
   ['ribe', 'jorvik'],
   ['ribe', 'london'],
+  ['ribe', 'jelling'],
+  ['jelling', 'aarhus'],
+  ['jelling', 'odense'],
+  ['odense', 'roskilde'],
+  ['aarhus', 'roskilde'],
+  ['aarhus', 'kaupang'],
   ['kaupang', 'jelling'],
   ['kaupang', 'roskilde'],
+  ['kaupang', 'tunsberg'],
+  ['kaupang', 'avaldsnes'],
+  ['tunsberg', 'sarpsborg'],
+  ['tunsberg', 'oslo'],
+  ['sarpsborg', 'oslo'],
+  ['sarpsborg', 'skara_gotaland'],
+  ['skara_gotaland', 'roskilde'],
+  ['skara_gotaland', 'birka'],
+  ['avaldsnes', 'giske_more'],
+  ['avaldsnes', 'shetland'],
+  ['giske_more', 'lade_hladir'],
+  ['giske_more', 'nidaros'],
+  ['giske_more', 'shetland'],
+  ['lade_hladir', 'kaupang'],
+  ['lade_hladir', 'shetland'],
+  ['lade_hladir', 'halogaland_borg'],
+  ['nidaros', 'kaupang'],
+  ['nidaros', 'shetland'],
+  ['nidaros', 'halogaland_borg'],
+  ['roskilde', 'kalmar_oland'],
+  ['kalmar_oland', 'visby'],
+  ['kalmar_oland', 'birka'],
   ['roskilde', 'birka'],
   ['birka', 'uppsala'],
   ['birka', 'sigtuna'],
-  ['nidaros', 'kaupang'],
-  ['nidaros', 'shetland'],
 
   // North Atlantic Stepping Stones
   ['shetland', 'kirkwall'],

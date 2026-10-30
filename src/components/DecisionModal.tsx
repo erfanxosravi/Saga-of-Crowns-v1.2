@@ -11,6 +11,7 @@ import {
   STAT_LABELS,
 } from '../i18n/ui';
 import { ContentIntensity, EventChoice, FullGameState, GameEvent, Language } from '../types/game';
+import { useModalA11y } from '../utils/useModalA11y';
 import { EventCategoryIcon } from './EventCategoryIcon';
 
 interface DecisionModalProps {
@@ -183,6 +184,23 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
   const rtl = isRtl(lang);
   const isMild = state.settings.contentIntensity === ContentIntensity.Mild;
 
+  const firstUnlockedChoice = event.choices.find((ch) => {
+    const lacksSilver =
+      ch.requiredSilver !== undefined && state.realm.silver < ch.requiredSilver;
+    const lacksSkill =
+      ch.requiredSkill !== undefined &&
+      state.character.skills[ch.requiredSkill.skill] < ch.requiredSkill.min;
+    const lacksStat =
+      ch.requiredStat !== undefined &&
+      state.character.stats[ch.requiredStat.stat] < ch.requiredStat.min;
+    return !lacksSilver && !lacksSkill && !lacksStat;
+  });
+
+  const modalRef = useModalA11y<HTMLDivElement>({
+    isOpen: true,
+    onClose: firstUnlockedChoice ? () => onSelectChoice(firstUnlockedChoice.id) : undefined,
+  });
+
   const evFa = EVENTS_FA[event.id];
   const displayTitle = isFa ? evFa?.title ?? event.title : event.title;
   const narrativeText = isFa
@@ -203,14 +221,17 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-[#05080D]/85 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 max-h-dvh overflow-hidden flex flex-col items-center justify-center bg-surface-backdrop backdrop-blur-xs p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="decision-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[min(90dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)]">
-        <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 text-center space-y-1.5 border-b border-[#1E2D40] bg-[#121C2B]/85">
-          <div className="inline-flex items-center justify-center gap-1.5 text-xs text-[#38BDF8] font-medium">
+      <div
+        ref={modalRef}
+        className="w-full max-w-xl max-h-[min(90dvh,720px)] flex flex-col overflow-hidden bg-surface-elevated border border-border-subtle rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)]"
+      >
+        <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 text-center space-y-1.5 border-b border-border-subtle bg-surface-secondary/85">
+          <div className="inline-flex items-center justify-center gap-1.5 text-xs text-accent-ice font-medium">
             <EventCategoryIcon
               category={event.category}
               iconType={event.iconType}
@@ -220,7 +241,7 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
               {ageText} · {yearText} · {categoryText}
             </span>
             {lothbrokMeta && (
-              <span className="px-2 py-0.5 rounded-md bg-[#3B181E] border border-[#F59E0B]/50 text-[#FDE68A] text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-md bg-surface-crimson-tint border border-gold-500/50 text-accent-amber-strong text-[10px] font-bold">
                 {isFa
                   ? `فصل ${lothbrokMeta.roman} چرخه لُدبروک`
                   : `Lothbrok Cycle · Chapter ${lothbrokMeta.roman}`}
@@ -229,32 +250,32 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
           </div>
           <h2
             id="decision-modal-title"
-            className="font-saga text-xl sm:text-2xl font-bold text-[#F1F5F9] leading-snug"
+            className="font-saga text-xl sm:text-2xl font-bold text-ink-primary leading-snug"
           >
             {displayTitle}
           </h2>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4">
-          <p className="font-saga text-base sm:text-lg leading-relaxed text-[#E2E8F0] text-center">
+          <p className="font-saga text-base sm:text-lg leading-relaxed text-ink-secondary text-center">
             {narrativeText}
           </p>
 
           {sagaVsChronicleText && (
-            <div className="p-3 rounded-xl bg-[#131D2B] border border-[#F59E0B]/40 text-start space-y-1">
-              <div className="text-[11px] font-bold text-[#FBBF24] flex items-center justify-between gap-2">
+            <div className="p-3 rounded-xl bg-surface-secondary border border-gold-500/40 text-start space-y-1">
+              <div className="text-[11px] font-bold text-accent-amber flex items-center justify-between gap-2">
                 <span>
                   {isFa
                     ? '📜 روایت حماسه در برابر سالنامه‌های تاریخی'
                     : '📜 SAGA SAYS vs. CHRONICLE SAYS'}
                 </span>
                 {event.isSemiLegendary && (
-                  <span className="px-1.5 py-0.5 rounded bg-[#F59E0B]/15 text-[#FDE68A] text-[10px]">
+                  <span className="px-1.5 py-0.5 rounded bg-gold-500/15 text-accent-amber-strong text-[10px]">
                     {isFa ? 'مرز اسطوره و تاریخ' : 'Myth & Record'}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#CBD5E1] leading-relaxed">{sagaVsChronicleText}</p>
+              <p className="text-xs text-ink-secondary leading-relaxed">{sagaVsChronicleText}</p>
             </div>
           )}
 
@@ -287,8 +308,8 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
                   onClick={() => onSelectChoice(ch.id)}
                   className={`w-full min-h-[56px] px-4 py-3 rounded-xl border text-center transition-all ${
                     isLocked
-                      ? 'bg-[#0B1118] border-[#1B2636] text-[#475569] cursor-not-allowed'
-                      : 'bg-[#162232] border-[#2C425E] hover:border-[#F59E0B] hover:bg-[#1C2B3F] text-[#F1F5F9] cursor-pointer active:scale-[0.99]'
+                      ? 'bg-surface-canvas border-border-subtle text-ink-muted cursor-not-allowed'
+                      : 'bg-surface-secondary border-border-strong hover:border-gold-500 hover:bg-surface-interactive text-ink-primary cursor-pointer active:scale-[0.99]'
                   }`}
                 >
                   <div className="text-sm sm:text-[15px] font-semibold leading-snug">{label}</div>
@@ -298,15 +319,15 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
                       {consequences.map((tag, idx) => {
                         const color =
                           tag.tone === 'danger'
-                            ? 'text-rose-400 font-semibold'
+                            ? 'text-accent-crimson font-semibold'
                             : tag.tone === 'cost'
-                              ? 'text-[#F59E0B]'
+                              ? 'text-accent-amber'
                               : tag.tone === 'reward'
-                                ? 'text-emerald-400'
-                                : 'text-[#38BDF8]';
+                                ? 'text-accent-emerald'
+                                : 'text-accent-ice';
                         return (
                           <span key={idx} className={color}>
-                            {idx > 0 && <span className="text-[#64748B] me-2">·</span>}
+                            {idx > 0 && <span className="text-ink-muted me-2">·</span>}
                             {tag.text}
                           </span>
                         );

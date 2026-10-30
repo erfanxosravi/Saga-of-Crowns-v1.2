@@ -531,7 +531,7 @@ export default function App() {
     return (
       <div
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-[#0B1118] ${textScaleClass}`}
+        className={`h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-surface-canvas ${textScaleClass}`}
       >
         <EmberCanvas enabled={settings.emberAnimation} />
         <CharacterCreation
@@ -621,20 +621,20 @@ export default function App() {
   const renderWeatherIcon = (s: Season) => {
     switch (s) {
       case Season.Winter:
-        return <Snowflake className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />;
+        return <Snowflake className="w-3.5 h-3.5 text-accent-ice shrink-0" />;
       case Season.Autumn:
-        return <CloudRain className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />;
+        return <CloudRain className="w-3.5 h-3.5 text-ink-muted shrink-0" />;
       case Season.Spring:
-        return <Wind className="w-3.5 h-3.5 text-teal-300 shrink-0" />;
+        return <Wind className="w-3.5 h-3.5 text-accent-emerald shrink-0" />;
       case Season.Summer:
-        return <Sun className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />;
+        return <Sun className="w-3.5 h-3.5 text-accent-amber shrink-0" />;
     }
   };
 
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className={`h-dvh max-h-dvh overflow-hidden bg-[#0B1118] text-[#F1F5F9] flex flex-col select-none ${textScaleClass}`}
+      className={`h-dvh max-h-dvh overflow-hidden bg-surface-canvas text-ink-primary flex flex-col select-none ${textScaleClass}`}
     >
       <EmberCanvas enabled={settings.emberAnimation} />
       <SeasonalWeatherOverlay
@@ -649,7 +649,7 @@ export default function App() {
 
       {/* Clean Dark Nordic Game HUD Top Bar + Anchored Hamburger Popup */}
       <div className="relative z-40 shrink-0">
-        <header className="relative z-40 w-full border-b border-[#1E2D40] bg-[#0F1722]/95 backdrop-blur-xs">
+        <header className="relative z-40 w-full border-b border-border-subtle bg-surface-elevated/95 backdrop-blur-xs">
           <div className="max-w-6xl w-full mx-auto min-h-[62px] py-2 px-3 sm:px-5 lg:px-6 flex items-center justify-between gap-2.5 sm:gap-4">
             {/* Avatar + Full Character Name + Rank/Age Subtitle */}
             <button
@@ -658,7 +658,7 @@ export default function App() {
                 setIsHeaderMenuOpen(false);
                 setIsMobileStatsSheetOpen(true);
               }}
-              className="flex-1 min-w-0 min-h-[44px] flex items-center gap-2.5 sm:gap-3 text-start rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
+              className="flex-1 min-w-0 min-h-[44px] flex items-center gap-2.5 sm:gap-3 text-start rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70"
             >
               <div className="shrink-0">
                 <VikingPortrait
@@ -673,11 +673,11 @@ export default function App() {
               </div>
               <div className="flex-1 min-w-0">
                 <div
-                  className={`font-saga font-bold text-[#F1F5F9] whitespace-normal line-clamp-2 [overflow-wrap:anywhere] ${headerNameSizeClass}`}
+                  className={`font-saga font-bold text-ink-primary whitespace-normal line-clamp-2 [overflow-wrap:anywhere] ${headerNameSizeClass}`}
                 >
                   {fullDisplayName}
                 </div>
-                <div className="text-[11px] sm:text-xs text-[#94A3B8] leading-snug mt-0.5 whitespace-normal [overflow-wrap:anywhere]">
+                <div className="text-[11px] sm:text-xs text-ink-muted leading-snug mt-0.5 whitespace-normal [overflow-wrap:anywhere]">
                   {SHORT_TITLE_LABELS[lang][c.title]} · {formatAgeLabel(c.age, lang)}
                 </div>
               </div>
@@ -690,8 +690,8 @@ export default function App() {
                 title={isFa ? `خزانه نقره: ${r.silver}` : `Silver Treasury: ${r.silver}`}
                 aria-label={isFa ? `سکه نقره: ${r.silver}` : `Silver: ${r.silver}`}
               >
-                <Coins className="w-4 h-4 text-[#F59E0B] shrink-0" />
-                <span className="font-bold text-[#F1F5F9]">{r.silver}</span>
+                <Coins className="w-4 h-4 text-accent-amber shrink-0" />
+                <span className="font-bold text-ink-primary">{r.silver}</span>
               </div>
 
               <button
@@ -703,10 +703,10 @@ export default function App() {
                 aria-expanded={isHeaderMenuOpen}
                 aria-haspopup="dialog"
                 aria-label={isFa ? 'منوی بالای صفحه' : 'Game Menu'}
-                className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl border flex items-center justify-center transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl border flex items-center justify-center transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
                   isHeaderMenuOpen
-                    ? 'bg-[#192A3E] border-[#F59E0B] text-[#F59E0B]'
-                    : 'bg-[#131D2B] border-[#233246] hover:border-[#F59E0B]/70 text-[#F1F5F9]'
+                    ? 'bg-surface-interactive border-gold-500 text-accent-amber'
+                    : 'bg-surface-secondary border-border-subtle hover:border-gold-500/70 text-ink-primary'
                 }`}
               >
                 {isHeaderMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -745,10 +745,10 @@ export default function App() {
       {/* Main Fixed-Height Game Stage */}
       <main className="relative z-10 flex-1 min-h-0 max-h-dvh overflow-hidden max-w-6xl w-full mx-auto px-0 py-0 sm:px-4 sm:py-3.5 lg:px-6 lg:py-4 flex gap-4 lg:gap-5">
         {/* Desktop Nordic Character Sheet */}
-        <aside className="hidden lg:flex lg:w-72 xl:w-80 shrink-0 max-h-full flex-col justify-between p-4 rounded-2xl bg-[#0F1722]/94 border border-[#1E2D40] overflow-hidden text-start">
+        <aside className="hidden lg:flex lg:w-72 xl:w-80 shrink-0 max-h-full flex-col justify-between p-4 rounded-2xl bg-surface-elevated/94 border border-border-subtle overflow-hidden text-start">
           <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pe-0.5">
             {/* Large Reactive Portrait Card */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#131D2B] border border-[#233246]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-secondary border border-border-subtle">
               <VikingPortrait
                 age={c.age}
                 sex={c.sex}
@@ -759,13 +759,13 @@ export default function App() {
                 size={68}
               />
               <div className="min-w-0 space-y-1">
-                <div className="text-xs font-bold text-[#38BDF8] truncate">
+                <div className="text-xs font-bold text-accent-ice truncate">
                   {SHORT_TITLE_LABELS[lang][c.title]}
                 </div>
-                <div className="text-xs text-[#F1F5F9] font-medium truncate">
+                <div className="text-xs text-ink-primary font-medium truncate">
                   {formatAgeLabel(c.age, lang)}
                 </div>
-                <div className="text-xs text-[#94A3B8] truncate">
+                <div className="text-xs text-ink-muted truncate">
                   {RELIGION_LABELS[lang][c.religion]}
                 </div>
               </div>
@@ -775,13 +775,13 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveTab(TabId.Map)}
-              className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-[#131D2B] border border-[#233246] hover:border-[#38BDF8] flex items-center justify-between gap-2 text-xs transition-colors cursor-pointer"
+              className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-surface-secondary border border-border-subtle hover:border-status-ice flex items-center justify-between gap-2 text-xs transition-colors cursor-pointer"
             >
-              <span className="inline-flex items-center gap-1.5 text-[#F1F5F9] font-medium truncate">
-                <MapPin className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+              <span className="inline-flex items-center gap-1.5 text-ink-primary font-medium truncate">
+                <MapPin className="w-3.5 h-3.5 text-accent-ice shrink-0" />
                 {currentLocName}
               </span>
-              <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8] shrink-0 whitespace-nowrap">
+              <span className="inline-flex items-center gap-1 text-xs text-ink-muted shrink-0 whitespace-nowrap">
                 {renderWeatherIcon(gameState.season)}
                 <span>{SEASON_LABELS[lang][gameState.season]}</span>
               </span>
@@ -791,7 +791,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => handleGeneralAction('claim_rank')}
-                className="w-full min-h-[44px] px-3 text-xs font-extrabold bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] rounded-xl cursor-pointer whitespace-nowrap transition-colors"
+                className="w-full min-h-[44px] px-3 text-xs font-extrabold bg-gold-500 hover:bg-gold-400 text-nordic-950 rounded-xl cursor-pointer whitespace-nowrap transition-colors"
               >
                 {isFa
                   ? `ارتقا به «${SHORT_TITLE_LABELS.fa[claimableTitle]}»!`
@@ -805,15 +805,15 @@ export default function App() {
                 playSound('click', settings.soundEnabled);
                 setIsPosterModalOpen(true);
               }}
-              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] hover:brightness-105 active:scale-[0.99] text-[#0B1118] text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-all"
+              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-gradient-to-r from-gold-500 to-gold-400 hover:brightness-105 active:scale-[0.99] text-nordic-950 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#0B1118]" />
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-nordic-950" />
               <span>{isFa ? 'پوستر داستان زندگی (استوری)' : 'Saga Story Poster'}</span>
             </button>
 
             {/* Secondary Stats & Traits */}
-            <div className="space-y-2.5 pt-1 border-t border-[#1E2D40]">
-              <div className="text-xs font-semibold text-[#94A3B8]">
+            <div className="space-y-2.5 pt-1 border-t border-border-subtle">
+              <div className="text-xs font-semibold text-ink-muted">
                 {isFa ? 'ویژگی‌های فرعی و مهارت‌ها' : 'Secondary Stats & Skills'}
               </div>
               <StatBar label={STAT_LABELS[lang].cunning} value={c.stats.cunning} compact lang={lang} />
@@ -822,15 +822,15 @@ export default function App() {
               <StatBar label={STAT_LABELS[lang].faith} value={c.stats.faith} compact lang={lang} />
 
               {c.traits.length > 0 && (
-                <div className="pt-2 border-t border-[#1E2D40] text-xs text-[#CBD5E1] leading-relaxed">
-                  <span className="text-[#38BDF8] font-semibold">
+                <div className="pt-2 border-t border-border-subtle text-xs text-ink-secondary leading-relaxed">
+                  <span className="text-accent-ice font-semibold">
                     {isFa ? 'ویژگی‌ها: ' : 'Traits: '}
                   </span>
                   {renderTraitsText(c.traits)}
                 </div>
               )}
 
-              <div className="pt-2 border-t border-[#1E2D40] grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs font-mono tabular-nums text-[#CBD5E1]">
+              <div className="pt-2 border-t border-border-subtle grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs font-mono tabular-nums text-ink-secondary">
                 <span>
                   {SKILL_LABELS[lang].combat} {c.skills.combat}
                 </span>
@@ -847,16 +847,16 @@ export default function App() {
             </div>
           </div>
 
-          <div className="shrink-0 pt-3 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono tabular-nums text-[#94A3B8]">
+          <div className="shrink-0 pt-3 border-t border-border-subtle flex items-center justify-between text-xs font-mono tabular-nums text-ink-muted">
             <span>{isFa ? `مزرعه: ${r.landFarms}` : `Farms: ${r.landFarms}`}</span>
             <span>{isFa ? `شهرت: ${r.fame}` : `Fame: ${r.fame}`}</span>
           </div>
         </aside>
 
         {/* Center Game Play Box */}
-        <section className="flex-1 min-w-0 flex flex-col min-h-0 max-h-full sm:rounded-2xl bg-[#0F1722]/90 border-x-0 border-b-0 sm:border border-[#1E2D40] overflow-hidden">
+        <section className="flex-1 min-w-0 flex flex-col min-h-0 max-h-full sm:rounded-2xl bg-surface-elevated/90 border-x-0 border-b-0 sm:border border-border-subtle overflow-hidden">
           {activeTab !== TabId.Life && (
-            <div className="shrink-0 px-3.5 sm:px-5 py-2 border-b border-[#1E2D40] flex items-center justify-between gap-3 bg-[#131D2B]">
+            <div className="shrink-0 px-3.5 sm:px-5 py-2 border-b border-border-subtle flex items-center justify-between gap-3 bg-surface-secondary">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <button
                   type="button"
@@ -867,15 +867,15 @@ export default function App() {
                         : TabId.Life
                     )
                   }
-                  className="min-h-[44px] px-3.5 rounded-xl bg-[#0B1118] hover:bg-[#19283B] border border-[#233246] hover:border-[#F59E0B]/65 text-xs font-bold text-[#F1F5F9] inline-flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
+                  className="min-h-[44px] px-3.5 rounded-xl bg-surface-canvas hover:bg-surface-interactive border border-border-subtle hover:border-gold-500/65 text-xs font-bold text-ink-primary inline-flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70"
                 >
                   <ArrowLeft
-                    className={`w-4 h-4 text-[#F59E0B] shrink-0 ${rtl ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-accent-amber shrink-0 ${rtl ? 'rotate-180' : ''}`}
                   />
                   <span>{isFa ? 'بازگشت' : 'Back'}</span>
                 </button>
 
-                <h2 className="font-saga text-lg sm:text-xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                <h2 className="font-saga text-lg sm:text-xl font-bold text-ink-primary whitespace-normal break-words leading-snug">
                   {tabTitles[activeTab]}
                 </h2>
               </div>
@@ -1015,7 +1015,7 @@ export default function App() {
           )}
 
           {/* Iconic Viking BitLife Control Dock */}
-          <div className="shrink-0 px-2 sm:px-4 py-2 bg-[#0B1118] border-t border-[#1E2D40] grid grid-cols-5 items-center gap-1.5 sm:gap-2.5">
+          <div className="shrink-0 px-2 sm:px-4 py-2 bg-surface-canvas border-t border-border-subtle grid grid-cols-5 items-center gap-1.5 sm:gap-2.5">
             <button
               type="button"
               onClick={() =>
@@ -1023,8 +1023,8 @@ export default function App() {
               }
               className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Actions
-                  ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
-                  : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
+                  ? 'bg-surface-ice-tint text-accent-ice ring-1 ring-status-ice/35'
+                  : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-secondary'
               }`}
             >
               <Swords className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1038,8 +1038,8 @@ export default function App() {
               }
               className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Family
-                  ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
-                  : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
+                  ? 'bg-surface-ice-tint text-accent-ice ring-1 ring-status-ice/35'
+                  : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-secondary'
               }`}
             >
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1053,7 +1053,7 @@ export default function App() {
               disabled={Boolean(
                 gameState.activeEvent || gameState.pendingDeath || gameState.pending1066Epilogue
               )}
-              className="min-h-[52px] px-2 bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-95 disabled:opacity-50 text-[#0B1118] rounded-2xl shadow-[0_0_24px_rgba(245,158,11,0.35)] flex flex-col items-center justify-center transition-all cursor-pointer"
+              className="min-h-[52px] px-2 bg-gold-500 hover:bg-gold-400 active:scale-95 disabled:opacity-50 text-nordic-950 rounded-2xl shadow-[0_0_24px_rgba(245,158,11,0.35)] flex flex-col items-center justify-center transition-all cursor-pointer"
             >
               <Flame className="w-5 h-5 fill-current" />
               <span className="text-xs sm:text-sm font-extrabold tracking-tight leading-none mt-1 whitespace-nowrap">
@@ -1068,8 +1068,8 @@ export default function App() {
               }
               className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === TabId.Map
-                  ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
-                  : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
+                  ? 'bg-surface-ice-tint text-accent-ice ring-1 ring-status-ice/35'
+                  : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-secondary'
               }`}
             >
               <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1087,20 +1087,20 @@ export default function App() {
               }
               className={`min-h-[48px] px-1 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors cursor-pointer relative whitespace-nowrap ${
                 activeTab === TabId.More || activeTab === TabId.Realm || activeTab === TabId.Saga
-                  ? 'bg-[#18293E] text-[#38BDF8] ring-1 ring-[#38BDF8]/35'
-                  : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#131D2B]'
+                  ? 'bg-surface-ice-tint text-accent-ice ring-1 ring-status-ice/35'
+                  : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-secondary'
               }`}
             >
               <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="truncate max-w-full">{isFa ? 'بیشتر' : 'More'}</span>
               {claimableTitle && (
-                <span className="absolute top-1.5 end-2.5 w-2 h-2 rounded-xs bg-[#F59E0B]" />
+                <span className="absolute top-1.5 end-2.5 w-2 h-2 rounded-xs bg-gold-500" />
               )}
             </button>
           </div>
 
           {/* Slim Full-Width 4-Stat Strip Below the Next Year Panel */}
-          <div className="shrink-0 px-3 sm:px-5 py-1.5 bg-[#101926] border-t border-[#1E2D40]">
+          <div className="shrink-0 px-3 sm:px-5 py-1.5 bg-surface-card border-t border-border-subtle">
             <div className="w-full grid grid-cols-4 gap-2.5 sm:gap-5 items-center text-start">
               <StatBar
                 label={isFa ? 'سلامتی' : 'Health'}
@@ -1146,14 +1146,14 @@ export default function App() {
       {/* Character Profile Sheet (Tap portrait in header) */}
       {isMobileStatsSheetOpen && (
         <div
-          className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-[#05080D]/85 backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4"
+          className="fixed inset-0 z-50 max-h-dvh overflow-hidden bg-surface-backdrop backdrop-blur-xs flex flex-col items-center justify-center p-3 sm:p-4"
           onClick={() => setIsMobileStatsSheetOpen(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[min(88dvh,700px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] text-start"
+            className="w-full max-w-lg max-h-[min(88dvh,700px)] flex flex-col overflow-hidden bg-surface-elevated border border-border-subtle rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)] text-start"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-3">
+            <div className="shrink-0 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border-subtle bg-surface-secondary flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <VikingPortrait
                   age={c.age}
@@ -1165,11 +1165,11 @@ export default function App() {
                   size={58}
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-saga text-xl sm:text-2xl font-bold text-[#F1F5F9] break-words leading-snug">
+                  <h3 className="font-saga text-xl sm:text-2xl font-bold text-ink-primary break-words leading-snug">
                     {rulerFullName}
                     {rulerEpithet}
                   </h3>
-                  <p className="text-xs text-[#94A3B8] break-words leading-snug mt-0.5">
+                  <p className="text-xs text-ink-muted break-words leading-snug mt-0.5">
                     {TITLE_LABELS[lang][c.title]} · {currentLocName} ·{' '}
                     {RELIGION_LABELS[lang][c.religion]}
                   </p>
@@ -1179,7 +1179,7 @@ export default function App() {
                 type="button"
                 onClick={() => setIsMobileStatsSheetOpen(false)}
                 aria-label={isFa ? 'بستن مشخصات' : 'Close profile'}
-                className="min-w-[44px] min-h-[44px] rounded-xl bg-[#182638] hover:bg-[#21334A] border border-[#2A3E59] flex items-center justify-center text-[#94A3B8] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+                className="min-w-[44px] min-h-[44px] rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle flex items-center justify-center text-ink-muted hover:text-ink-primary shrink-0 cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1193,7 +1193,7 @@ export default function App() {
                     handleGeneralAction('claim_rank');
                     setIsMobileStatsSheetOpen(false);
                   }}
-                  className="w-full min-h-[46px] px-4 text-xs sm:text-sm font-extrabold bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] rounded-xl cursor-pointer whitespace-nowrap transition-colors"
+                  className="w-full min-h-[46px] px-4 text-xs sm:text-sm font-extrabold bg-gold-500 hover:bg-gold-400 text-nordic-950 rounded-xl cursor-pointer whitespace-nowrap transition-colors"
                 >
                   {isFa
                     ? `ارتقا به «${SHORT_TITLE_LABELS.fa[claimableTitle]}»!`
@@ -1238,7 +1238,7 @@ export default function App() {
               <StatBar label={STAT_LABELS[lang].faith} value={c.stats.faith} compact lang={lang} />
             </div>
 
-            <div className="pt-2 border-t border-[#1E2D40] grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono tabular-nums text-[#94A3B8]">
+            <div className="pt-2 border-t border-border-subtle grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono tabular-nums text-ink-muted">
               <span>
                 {SKILL_LABELS[lang].combat} {c.skills.combat}
               </span>
@@ -1260,15 +1260,15 @@ export default function App() {
             </div>
 
             {c.traits.length > 0 && (
-              <div className="text-xs text-[#94A3B8]">
-                <span className="text-[#38BDF8] font-medium">
+              <div className="text-xs text-ink-muted">
+                <span className="text-accent-ice font-medium">
                   {isFa ? 'ویژگی‌ها: ' : 'Traits: '}
                 </span>
                 {renderTraitsText(c.traits)}
               </div>
             )}
 
-            <div className="pt-2.5 border-t border-[#1E2D40]">
+            <div className="pt-2.5 border-t border-border-subtle">
               <button
                 type="button"
                 onClick={() => {
@@ -1276,26 +1276,26 @@ export default function App() {
                   setIsMobileStatsSheetOpen(false);
                   setIsPosterModalOpen(true);
                 }}
-                className="w-full min-h-[50px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#F59E0B] hover:brightness-105 active:scale-[0.99] border border-[#F59E0B] text-[#0B1118] shadow-[0_6px_20px_rgba(245,158,11,0.25)] flex items-center justify-between gap-3 cursor-pointer transition-all"
+                className="w-full min-h-[50px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 hover:brightness-105 active:scale-[0.99] border border-gold-500 text-nordic-950 shadow-[0_6px_20px_rgba(245,158,11,0.25)] flex items-center justify-between gap-3 cursor-pointer transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0 text-start">
-                  <div className="w-8 h-8 rounded-lg bg-[#0B1118]/12 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-[#0B1118]" />
+                  <div className="w-8 h-8 rounded-lg bg-surface-canvas/12 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-nordic-950" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs sm:text-sm font-extrabold text-[#0B1118] leading-snug">
+                    <div className="text-xs sm:text-sm font-extrabold text-nordic-950 leading-snug">
                       {isFa
                         ? 'طراحی پوستر داستان زندگی'
                         : 'Create Character Saga Poster'}
                     </div>
-                    <div className="text-[11px] font-semibold text-[#0B1118]/75 leading-tight">
+                    <div className="text-[11px] font-semibold text-nordic-950/75 leading-tight">
                       {isFa
                         ? 'تصویر ۹:۱۶ باکیفیت مناسب استوری اینستاگرام'
                         : 'High-craft 9:16 portrait ready for Instagram Story'}
                     </div>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-lg bg-[#0B1118] text-[#FBBF24] text-[11px] font-extrabold shrink-0">
+                <span className="px-2.5 py-1 rounded-lg bg-surface-card text-ink-primary text-[11px] font-extrabold shrink-0">
                   {isFa ? 'مشاهده' : 'Open'}
                 </span>
               </button>

@@ -3,9 +3,11 @@ import {
   AlertTriangle,
   Castle,
   Check,
+  Clock,
   Compass,
   Flame,
   GraduationCap,
+  Lock,
   LockOpen,
   MapPin,
   Scale,
@@ -13,7 +15,12 @@ import {
   Sparkles,
   Swords,
 } from 'lucide-react';
-import { calculateVoyageMetrics, SETTLEMENTS, SETTLEMENTS_BY_ID } from '../data/geography';
+import {
+  calculateVoyageMetrics,
+  isSettlementActiveInYear,
+  SETTLEMENTS,
+  SETTLEMENTS_BY_ID,
+} from '../data/geography';
 import {
   hasLothbrokVengeanceActive,
   isEnglishSettlement,
@@ -136,7 +143,9 @@ export function ActionsPanel({
 
   const [activeSheet, setActiveSheet] = useState<ActivitySheetId | null>(null);
 
-  const otherPorts = SETTLEMENTS.filter((s) => s.id !== state.character.locationId);
+  const otherPorts = SETTLEMENTS.filter(
+    (s) => s.id !== state.character.locationId && isSettlementActiveInYear(s, state.year)
+  );
   const [selectedSkill, setSelectedSkill] = useState<SkillKey>('combat');
   const [raidTargetId, setRaidTargetId] = useState<string>(
     otherPorts.find((s) => s.id === 'lindisfarne')?.id ?? otherPorts[0].id
@@ -463,15 +472,15 @@ export function ActionsPanel({
   const getBadgeToneClasses = (tone: ActivityCardItem['costRiskTone']) => {
     switch (tone) {
       case 'crimson':
-        return 'bg-[#DC2626]/20 text-[#FCA5A5] border-[#EF4444]/40';
+        return 'bg-blood-600/20 text-accent-crimson border-blood-500/40';
       case 'amber':
-        return 'bg-[#F59E0B]/15 text-[#FCD34D] border-[#F59E0B]/35';
+        return 'bg-gold-500/15 text-accent-amber border-gold-500/35';
       case 'ice':
-        return 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/35';
+        return 'bg-status-ice/15 text-accent-ice border-status-ice/35';
       case 'emerald':
-        return 'bg-[#34D399]/15 text-[#6EE7B7] border-[#34D399]/35';
+        return 'bg-status-emerald/15 text-accent-emerald border-status-emerald/35';
       case 'violet':
-        return 'bg-[#A78BFA]/15 text-[#DDD6FE] border-[#A78BFA]/35';
+        return 'bg-status-violet/15 text-accent-violet border-status-violet/35';
     }
   };
 
@@ -479,17 +488,17 @@ export function ActionsPanel({
     <div className="flex flex-col overflow-hidden space-y-3 text-start">
       {/* Thrall Freedom Special Banner */}
       {state.character.title === TitleRank.Thrall && (
-        <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#281C0E] via-[#1B1712] to-[#131D2B] border border-[#F59E0B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+        <div className="relative p-4 rounded-2xl bg-gradient-to-r from-surface-amber-tint via-surface-amber-tint to-surface-secondary border border-gold-500 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
           <NorseCornerOrnament accent="amber" />
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-[#F59E0B]/20 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-gold-500/20 text-accent-amber ring-1 ring-gold-500/40 flex items-center justify-center shrink-0">
               <LockOpen className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm sm:text-base font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+              <div className="text-sm sm:text-base font-bold text-ink-primary whitespace-normal break-words leading-snug">
                 {isFa ? 'خریدن آزادی خود!' : 'Buy Your Freedom'}
               </div>
-              <div className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed mt-0.5">
+              <div className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed mt-0.5">
                 {isFa
                   ? 'رهایی از بندگی، دریافت حق حمل سلاح و +۲۰ شرافت'
                   : 'Break your thrall collar, bear arms as a freeman & gain +20 Honor'}
@@ -500,7 +509,7 @@ export function ActionsPanel({
             type="button"
             disabled={state.realm.silver < 25}
             onClick={() => onGeneralAction('buy_freedom')}
-            className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold shrink-0 cursor-pointer transition-colors"
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 text-xs font-extrabold shrink-0 cursor-pointer transition-colors"
           >
             {isFa ? 'آزادی (۲۵ نقره)' : 'Buy Freedom (25 Silver)'}
           </button>
@@ -521,35 +530,35 @@ export function ActionsPanel({
         {cards.map((card) => {
           const isRaid = Boolean(card.isRaidHero);
           const cardSurface = isRaid
-            ? 'bg-gradient-to-br from-[#3B0D15] via-[#240D14] to-[#131826] border-[#EF4444]/80 hover:border-[#F87171]'
+            ? 'bg-gradient-to-br from-surface-crimson-tint via-surface-crimson-tint to-surface-secondary border-blood-500/80 hover:border-blood-500'
             : card.accent === 'ice'
-              ? 'bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border-[#38BDF8]/40 hover:border-[#38BDF8]'
+              ? 'bg-gradient-to-br from-surface-ice-tint via-surface-secondary to-surface-elevated border-status-ice/40 hover:border-status-ice'
               : card.accent === 'emerald'
-                ? 'bg-gradient-to-br from-[#0F2422] via-[#131D2B] to-[#0F1722] border-[#34D399]/40 hover:border-[#34D399]'
+                ? 'bg-gradient-to-br from-surface-ice-tint via-surface-secondary to-surface-elevated border-status-emerald/40 hover:border-status-emerald'
                 : card.accent === 'violet'
-                  ? 'bg-gradient-to-br from-[#1B1730] via-[#131D2B] to-[#0F1722] border-[#A78BFA]/40 hover:border-[#A78BFA]'
+                  ? 'bg-gradient-to-br from-surface-violet-tint via-surface-secondary to-surface-elevated border-status-violet/40 hover:border-status-violet'
                   : card.accent === 'crimson'
-                    ? 'bg-gradient-to-br from-[#2C1016] via-[#181522] to-[#0F1722] border-[#EF4444]/55 hover:border-[#EF4444]'
-                    : 'bg-gradient-to-br from-[#231911] via-[#131D2B] to-[#0F1722] border-[#F59E0B]/40 hover:border-[#F59E0B]';
+                    ? 'bg-gradient-to-br from-surface-crimson-tint via-surface-violet-tint to-surface-elevated border-blood-500/55 hover:border-blood-500'
+                    : 'bg-gradient-to-br from-surface-amber-tint via-surface-secondary to-surface-elevated border-gold-500/40 hover:border-gold-500';
 
           const iconWrap = isRaid
-            ? 'bg-[#DC2626]/25 text-[#F87171] ring-1 ring-[#EF4444]/60'
+            ? 'bg-blood-600/25 text-accent-crimson ring-1 ring-blood-500/60'
             : card.accent === 'ice'
-              ? 'bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/30'
+              ? 'bg-status-ice/15 text-accent-ice ring-1 ring-status-ice/30'
               : card.accent === 'emerald'
-                ? 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/30'
+                ? 'bg-status-emerald/15 text-accent-emerald ring-1 ring-status-emerald/30'
                 : card.accent === 'violet'
-                  ? 'bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/30'
+                  ? 'bg-status-violet/15 text-accent-violet ring-1 ring-status-violet/30'
                   : card.accent === 'crimson'
-                    ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
-                    : 'bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/30';
+                    ? 'bg-blood-500/15 text-accent-crimson ring-1 ring-blood-500/35'
+                    : 'bg-gold-500/15 text-accent-amber ring-1 ring-gold-500/30';
 
           return (
             <button
               key={card.id}
               type="button"
               onClick={() => setActiveSheet(card.id)}
-              className={`relative min-h-[138px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${cardSurface} ${
+              className={`relative min-h-[138px] p-3.5 rounded-2xl border text-start flex flex-col justify-between gap-2.5 transition-all active:scale-[0.98] cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${cardSurface} ${
                 card.isDone ? 'opacity-80' : ''
               }`}
             >
@@ -564,12 +573,12 @@ export function ActionsPanel({
                       {card.icon}
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[10px] font-semibold text-[#94A3B8] block">
+                      <span className="text-[10px] font-semibold text-ink-muted block">
                         {card.categoryLabel}
                       </span>
                       <div
                         className={`text-sm font-bold whitespace-normal break-words leading-snug ${
-                          isRaid ? 'text-[#FFE4E6]' : 'text-[#F1F5F9]'
+                          isRaid ? 'text-accent-crimson' : 'text-ink-primary'
                         }`}
                       >
                         {card.title}
@@ -577,13 +586,13 @@ export function ActionsPanel({
                     </div>
                   </div>
                   {card.isDone && (
-                    <span className="w-6 h-6 rounded-lg bg-[#34D399]/15 text-[#34D399] flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-status-emerald/15 text-accent-emerald flex items-center justify-center shrink-0">
                       <Check className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+                <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
                   {card.description}
                 </p>
               </div>
@@ -599,10 +608,10 @@ export function ActionsPanel({
                 <span
                   className={`text-[11px] font-mono tabular-nums ${
                     card.isDone
-                      ? 'text-[#34D399] font-semibold'
+                      ? 'text-accent-emerald font-semibold'
                       : card.isLocked
-                        ? 'text-[#94A3B8]'
-                        : 'text-[#E2E8F0] font-semibold'
+                        ? 'text-ink-muted'
+                        : 'text-ink-secondary font-semibold'
                   }`}
                 >
                   {card.statusLabel}
@@ -628,7 +637,7 @@ export function ActionsPanel({
             : `Forces: ${state.realm.longships} Longships · ${state.realm.hirdWarriors} Warriors · Combat ${state.character.skills.combat}`
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#DC2626]/20 text-[#F87171] ring-1 ring-[#EF4444]/50 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-blood-600/20 text-accent-crimson ring-1 ring-blood-500/50 flex items-center justify-center">
             <Swords className="w-6 h-6" />
           </div>
         }
@@ -641,9 +650,15 @@ export function ActionsPanel({
                 onRaid(validRaidTargetId, raidTactic);
                 setActiveSheet(null);
               }}
-              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-blood-600 hover:bg-blood-500 disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
-              <Swords className="w-4 h-4 shrink-0" />
+              {used.raid ? (
+                <Clock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : !canRaid ? (
+                <Lock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : (
+                <Swords className="w-4 h-4 shrink-0" />
+              )}
               <span>
                 {used.raid
                   ? isFa
@@ -665,7 +680,7 @@ export function ActionsPanel({
             <button
               type="button"
               onClick={() => setActiveSheet(null)}
-              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+              className="min-h-[48px] px-4 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle text-xs font-bold text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors"
             >
               {isFa ? 'بستن' : 'Close'}
             </button>
@@ -673,8 +688,8 @@ export function ActionsPanel({
         }
       >
         {!canRaid && !used.raid && (
-          <div className="p-3.5 rounded-xl bg-[#261116] border border-[#EF4444]/45 flex items-start gap-2.5 text-xs text-[#FECACA]">
-            <AlertTriangle className="w-4 h-4 text-[#F87171] shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-surface-crimson-tint border border-blood-500/45 flex items-start gap-2.5 text-xs text-accent-crimson">
+            <AlertTriangle className="w-4 h-4 text-accent-crimson shrink-0 mt-0.5" />
             <span className="whitespace-normal break-words leading-relaxed">
               {isChild
                 ? isFa
@@ -693,25 +708,25 @@ export function ActionsPanel({
           options={raidPortOptions}
           onChange={setRaidTargetId}
           disabled={Boolean(used.raid)}
-          icon={<MapPin className="w-4 h-4 text-[#F87171]" />}
+          icon={<MapPin className="w-4 h-4 text-accent-crimson" />}
         />
 
         {isEnglishSettlement(validRaidTargetId) && hasLothbrokVengeanceActive(state) && (
-          <div className="p-3 rounded-xl bg-gradient-to-r from-[#2D0F16] via-[#1E1320] to-[#131D2B] border border-[#EF4444]/60 space-y-1.5">
+          <div className="p-3 rounded-xl bg-gradient-to-r from-surface-crimson-tint via-surface-violet-tint to-surface-secondary border border-blood-500/60 space-y-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-bold text-[#FCA5A5] flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-[#F59E0B] shrink-0" />
+              <span className="text-xs font-bold text-accent-crimson flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-accent-amber shrink-0" />
                 {isFa
                   ? 'خونِ گرگ و انتقام راگنار لُدبروک (هِفند فعال)'
                   : 'Wolf-Blood & Hefnd Vengeance Active'}
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-[#0B1118]/90 border border-[#EF4444]/50 text-[10px] font-mono font-bold text-[#FBBF24]">
+              <span className="px-2 py-0.5 rounded-md bg-surface-canvas/90 border border-blood-500/50 text-[10px] font-mono font-bold text-accent-amber">
                 {isFa
                   ? `بدهی انتقام هِفند: ${state.hefndMeter ?? 0}/100`
                   : `Hefnd Debt: ${state.hefndMeter ?? 0}/100`}
               </span>
             </div>
-            <p className="text-[11px] text-[#E2E8F0] leading-relaxed">
+            <p className="text-[11px] text-ink-secondary leading-relaxed">
               {isFa
                 ? 'هدف در خاک انگلستان است: +۱۲ قدرت رزم، +۲۰٪ غنیمت نقره، +۲۵٪ شهرت و کاهش بدهی انتقام چاه مارهای شاه ائلا در صورت پیروزی زیر پرچم کلاغ!'
                 : 'English target: +12 Combat Power, +20% Silver Loot, +25% Fame, and satisfies Ragnar’s snake-pit blood-debt (Hefnd) upon victory beneath the Raven Banner!'}
@@ -720,7 +735,7 @@ export function ActionsPanel({
         )}
 
         <div className="space-y-2">
-          <div className="text-xs font-semibold text-[#CBD5E1]">
+          <div className="text-xs font-semibold text-ink-secondary">
             {isFa ? 'انتخاب تاکتیک نبرد:' : 'Choose Battle Tactic:'}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -734,17 +749,17 @@ export function ActionsPanel({
                   onClick={() => setRaidTactic(tac.value)}
                   className={`min-h-[68px] p-3 rounded-xl border text-start flex flex-col justify-between gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     sel
-                      ? 'bg-[#2C1219] border-[#EF4444] text-[#F1F5F9] ring-1 ring-[#EF4444]/40'
-                      : 'bg-[#131D2B] border-[#233246] hover:border-[#EF4444]/60 text-[#CBD5E1]'
+                      ? 'bg-surface-crimson-tint border-blood-500 text-ink-primary ring-1 ring-blood-500/40'
+                      : 'bg-surface-secondary border-border-subtle hover:border-blood-500/60 text-ink-secondary'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+                    <span className="text-xs sm:text-sm font-bold text-ink-primary whitespace-normal break-words">
                       {tac.label}
                     </span>
-                    <span className="text-xs font-mono text-[#FCA5A5] shrink-0">{tac.tag}</span>
+                    <span className="text-xs font-mono text-accent-crimson shrink-0">{tac.tag}</span>
                   </div>
-                  <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                  <p className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed">
                     {tac.desc}
                   </p>
                 </button>
@@ -769,7 +784,7 @@ export function ActionsPanel({
             : 'Choose one skill to hone this year — free of silver cost'
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/40 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-status-ice/15 text-accent-ice ring-1 ring-status-ice/40 flex items-center justify-center">
             <GraduationCap className="w-6 h-6" />
           </div>
         }
@@ -782,9 +797,13 @@ export function ActionsPanel({
                 onTrainSkill(selectedSkill);
                 setActiveSheet(null);
               }}
-              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-cta-ice hover:bg-status-ice hover:text-nordic-950 disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
-              <GraduationCap className="w-4 h-4 shrink-0" />
+              {used.train ? (
+                <Clock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : (
+                <GraduationCap className="w-4 h-4 shrink-0" />
+              )}
               <span>
                 {used.train
                   ? isFa
@@ -798,7 +817,7 @@ export function ActionsPanel({
             <button
               type="button"
               onClick={() => setActiveSheet(null)}
-              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+              className="min-h-[48px] px-4 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle text-xs font-bold text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors"
             >
               {isFa ? 'بستن' : 'Close'}
             </button>
@@ -817,20 +836,20 @@ export function ActionsPanel({
                 onClick={() => setSelectedSkill(skKey)}
                 className={`w-full min-h-[64px] p-3 rounded-xl border text-start flex items-center justify-between gap-3 transition-colors cursor-pointer disabled:opacity-55 ${
                   isSel
-                    ? 'bg-[#15283D] border-[#38BDF8] text-[#F1F5F9] ring-1 ring-[#38BDF8]/40'
-                    : 'bg-[#131D2B] border-[#233246] hover:border-[#38BDF8]/50 text-[#CBD5E1]'
+                    ? 'bg-surface-ice-tint border-status-ice text-ink-primary ring-1 ring-status-ice/40'
+                    : 'bg-surface-secondary border-border-subtle hover:border-status-ice/50 text-ink-secondary'
                 }`}
               >
                 <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="text-xs sm:text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                  <div className="text-xs sm:text-sm font-bold text-ink-primary whitespace-normal break-words leading-snug">
                     {SKILL_LABELS[lang][skKey]}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                  <div className="text-[11px] text-ink-muted whitespace-normal break-words leading-relaxed">
                     {isFa ? SKILL_HINTS[skKey].fa : SKILL_HINTS[skKey].en}
                   </div>
                 </div>
                 <div className="shrink-0 text-end space-y-1">
-                  <div className="text-xs font-mono font-bold tabular-nums text-[#38BDF8]">
+                  <div className="text-xs font-mono font-bold tabular-nums text-accent-ice">
                     {isFa ? `سطح ${lv}` : `Lv ${lv}`}
                   </div>
                   <svg
@@ -870,7 +889,7 @@ export function ActionsPanel({
             : `Moored at ${currentLocName} · Effective Sailing ${effectiveSeamanship}`
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/40 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-status-emerald/15 text-accent-emerald ring-1 ring-status-emerald/40 flex items-center justify-center">
             <Compass className="w-6 h-6" />
           </div>
         }
@@ -883,9 +902,15 @@ export function ActionsPanel({
                 onGeneralAction('trade_voyage');
                 setActiveSheet(null);
               }}
-              className="w-full min-h-[46px] px-3.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="w-full min-h-[46px] px-3.5 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Scale className="w-4 h-4 shrink-0" />
+              {used.trade ? (
+                <Clock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : isChild ? (
+                <Lock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : (
+                <Scale className="w-4 h-4 shrink-0" />
+              )}
               <span>
                 {used.trade
                   ? isFa
@@ -908,9 +933,15 @@ export function ActionsPanel({
                 onSail(validSailDestId);
                 setActiveSheet(null);
               }}
-              className="w-full min-h-[46px] px-3.5 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="w-full min-h-[46px] px-3.5 rounded-xl bg-cta-ice hover:bg-status-ice hover:text-nordic-950 disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Compass className="w-4 h-4 shrink-0" />
+              {used.travel ? (
+                <Clock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : !hasShips ? (
+                <Lock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : (
+                <Compass className="w-4 h-4 shrink-0" />
+              )}
               <span>
                 {used.travel
                   ? isFa
@@ -929,17 +960,17 @@ export function ActionsPanel({
         }
       >
         {/* Option A: Local Market Trade */}
-        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 text-[#F59E0B] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gold-500/15 text-accent-amber flex items-center justify-center shrink-0">
                 <Scale className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                <div className="text-sm font-bold text-ink-primary whitespace-normal break-words leading-snug">
                   {isFa ? `۱. معامله در بازار ${currentLocName}` : `1. Market Trade in ${currentLocName}`}
                 </div>
-                <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed mt-0.5">
+                <p className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed mt-0.5">
                   {isChild
                     ? isFa
                       ? 'نیازمند حداقل ۱۵ سال سن'
@@ -950,7 +981,7 @@ export function ActionsPanel({
                 </p>
               </div>
             </div>
-            <span className="text-xs font-mono font-bold text-[#FBBF24] shrink-0">
+            <span className="text-xs font-mono font-bold text-accent-amber shrink-0">
               {used.trade ? (isFa ? 'انجام شد ✓' : 'Done ✓') : isFa ? '+نقره' : '+Silver'}
             </span>
           </div>
@@ -959,18 +990,18 @@ export function ActionsPanel({
         <RuneDivider label={isFa ? '۲. سفر به بندر دیگر' : '2. Set Sail to Another Port'} accent="ice" />
 
         {/* Option B: Sail to Destination */}
-        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+        <div className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-3">
           <NordicSelect
             label={isFa ? 'مقصد سفر دریایی' : 'Voyage Destination Port'}
             value={validSailDestId}
             options={sailPortOptions}
             onChange={setSailDestId}
             disabled={Boolean(used.travel)}
-            icon={<MapPin className="w-4 h-4 text-[#38BDF8]" />}
+            icon={<MapPin className="w-4 h-4 text-accent-ice" />}
           />
 
-          <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40] flex flex-wrap items-center justify-between gap-2 text-xs font-mono tabular-nums">
-            <span className="text-[#CBD5E1]">
+          <div className="p-3 rounded-xl bg-surface-canvas border border-border-subtle flex flex-wrap items-center justify-between gap-2 text-xs font-mono tabular-nums">
+            <span className="text-ink-secondary">
               {isFa
                 ? `${voyageInfo.nauticalMiles} مایل دریایی · ~${voyageInfo.sailingDays} روز`
                 : `${voyageInfo.nauticalMiles} NM · ~${voyageInfo.sailingDays} days`}
@@ -978,8 +1009,8 @@ export function ActionsPanel({
             <span
               className={
                 voyageInfo.dangerPct >= 30
-                  ? 'text-[#F87171] font-bold'
-                  : 'text-[#38BDF8] font-semibold'
+                  ? 'text-accent-crimson font-bold'
+                  : 'text-accent-ice font-semibold'
               }
             >
               {isFa ? `خطر دریا: ${voyageInfo.dangerPct}%` : `Sea Risk: ${voyageInfo.dangerPct}%`}
@@ -1003,7 +1034,7 @@ export function ActionsPanel({
             : `Treasury: ${state.realm.silver} Silver · Build honor, hall joy, and saga renown`
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-gold-500/15 text-accent-amber ring-1 ring-gold-500/40 flex items-center justify-center">
             <Flame className="w-6 h-6" />
           </div>
         }
@@ -1012,7 +1043,7 @@ export function ActionsPanel({
             <button
               type="button"
               onClick={() => setActiveSheet(null)}
-              className="min-h-[44px] px-5 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#F1F5F9] cursor-pointer transition-colors"
+              className="min-h-[44px] px-5 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle text-xs font-bold text-ink-primary cursor-pointer transition-colors"
             >
               {isFa ? 'بستن پنجره' : 'Done / Close'}
             </button>
@@ -1020,19 +1051,19 @@ export function ActionsPanel({
         }
       >
         {/* 1. Speak at the Thing */}
-        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+              <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
                 {isFa ? 'سخنرانی در شورای ثینگ' : 'Speak at the Thing Assembly'}
               </div>
-              <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+              <p className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed">
                 {isFa
                   ? 'دفاع از قانون و سخنوری در جمع آزادمردان · +۶ شرافت'
                   : 'Argue law and oaths before the assembly of freemen · +6 Honor'}
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-[#34D399] shrink-0">
+            <span className="text-xs font-mono font-bold text-accent-emerald shrink-0">
               {isFa ? 'رایگان' : 'Free'}
             </span>
           </div>
@@ -1043,7 +1074,7 @@ export function ActionsPanel({
               onGeneralAction('attend_thing');
               setActiveSheet(null);
             }}
-            className="w-full min-h-[44px] px-4 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-bold text-xs cursor-pointer transition-colors"
+            className="w-full min-h-[44px] px-4 rounded-xl bg-cta-ice hover:bg-status-ice hover:text-nordic-950 disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-bold text-xs cursor-pointer transition-colors"
           >
             {famUsed.act_attend_thing
               ? isFa
@@ -1060,19 +1091,19 @@ export function ActionsPanel({
         </div>
 
         {/* 2. Host Great Mead-Hall Feast */}
-        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+              <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
                 {isFa ? 'برگزاری سوروسات بزرگ در تالار' : 'Host Great Mead-Hall Feast'}
               </div>
-              <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+              <p className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed">
                 {isFa
                   ? 'باده و خوراک مفصل برای یاران و خانواده · +۱۰ شادی و روحیه'
                   : 'Roast boar and mead-horns for kin and warriors · +10 Joy'}
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-[#FBBF24] shrink-0">
+            <span className="text-xs font-mono font-bold text-accent-amber shrink-0">
               {isFa ? '۱۶ نقره' : '16 Silver'}
             </span>
           </div>
@@ -1083,7 +1114,7 @@ export function ActionsPanel({
               onGeneralAction('hold_feast');
               setActiveSheet(null);
             }}
-            className="w-full min-h-[44px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs cursor-pointer transition-colors"
+            className="w-full min-h-[44px] px-4 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 font-extrabold text-xs cursor-pointer transition-colors"
           >
             {famUsed.act_hold_feast
               ? isFa
@@ -1100,19 +1131,19 @@ export function ActionsPanel({
         </div>
 
         {/* 3. Patronize Skald Poet */}
-        <div className="p-3.5 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+              <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
                 {isFa ? 'استخدام شاعر حماسه‌سرا (اسکالد)' : 'Hire a Skald Poet'}
               </div>
-              <p className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+              <p className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed">
                 {isFa
                   ? 'سرایش اشعار رزمی به نام خاندان شما · +۲۶ شهرت ماندگار'
                   : 'Compose praise-verses of your deeds · +26 Dynasty Fame'}
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-[#FBBF24] shrink-0">
+            <span className="text-xs font-mono font-bold text-accent-amber shrink-0">
               {isFa ? '۱۵ نقره' : '15 Silver'}
             </span>
           </div>
@@ -1123,19 +1154,28 @@ export function ActionsPanel({
               onGeneralAction('patronize_skald');
               setActiveSheet(null);
             }}
-            className="w-full min-h-[44px] px-4 rounded-xl bg-[#E07A2F] hover:bg-[#F59E0B] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs cursor-pointer transition-colors"
+            className="w-full min-h-[44px] px-4 rounded-xl bg-cta-terracotta hover:bg-gold-500 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 font-extrabold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
           >
-            {famUsed.act_patronize_skald
-              ? isFa
-                ? 'امسال شاعر استخدام شد ✓'
-                : 'Skald Hired This Year ✓'
-              : state.realm.silver < 15
+            {famUsed.act_patronize_skald ? (
+              <Clock className="w-3.5 h-3.5 shrink-0 opacity-80" />
+            ) : isChild || state.realm.silver < 15 ? (
+              <Lock className="w-3.5 h-3.5 shrink-0 opacity-80" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            )}
+            <span>
+              {famUsed.act_patronize_skald
                 ? isFa
-                  ? 'نیازمند ۱۵ سکه نقره'
-                  : 'Need 15 Silver'
-                : isFa
-                  ? 'استخدام اسکالد (۱۵ نقره)'
-                  : 'Hire Skald Poet (15 Silver)'}
+                  ? 'امسال شاعر استخدام شد ✓'
+                  : 'Skald Hired This Year ✓'
+                : state.realm.silver < 15
+                  ? isFa
+                    ? 'نیازمند ۱۵ سکه نقره'
+                    : 'Need 15 Silver'
+                  : isFa
+                    ? 'استخدام اسکالد (۱۵ نقره)'
+                    : 'Hire Skald Poet (15 Silver)'}
+            </span>
           </button>
         </div>
       </NorseBottomSheet>
@@ -1163,7 +1203,7 @@ export function ActionsPanel({
             : `Current holdings: ${state.realm.landFarms} farms across ${state.realm.holdings.length} estates · ${state.realm.silver} Silver`
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/40 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-gold-500/15 text-accent-amber ring-1 ring-gold-500/40 flex items-center justify-center">
             <Castle className="w-6 h-6" />
           </div>
         }
@@ -1182,7 +1222,7 @@ export function ActionsPanel({
                   onConquerCity(currentLoc.id);
                   setActiveSheet(null);
                 }}
-                className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="flex-1 min-h-[48px] px-4 rounded-xl bg-blood-600 hover:bg-blood-500 disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <Swords className="w-4 h-4 shrink-0" />
                 <span>
@@ -1207,7 +1247,7 @@ export function ActionsPanel({
                   onGeneralAction('farm_settle');
                   setActiveSheet(null);
                 }}
-                className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="flex-1 min-h-[48px] px-4 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-surface-disabled disabled:text-ink-disabled text-nordic-950 font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <Castle className="w-4 h-4 shrink-0" />
                 <span>
@@ -1228,7 +1268,7 @@ export function ActionsPanel({
             <button
               type="button"
               onClick={() => setActiveSheet(null)}
-              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+              className="min-h-[48px] px-4 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle text-xs font-bold text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors"
             >
               {isFa ? 'بستن' : 'Close'}
             </button>
@@ -1236,29 +1276,29 @@ export function ActionsPanel({
         }
       >
         {locIsFortified && onConquerCity ? (
-          <div className="p-4 rounded-2xl bg-[#241117] border border-[#EF4444]/50 space-y-2.5">
-            <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+          <div className="p-4 rounded-2xl bg-surface-crimson-tint border border-blood-500/50 space-y-2.5">
+            <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
               {isFa
                 ? `«${currentLocName}» یک دژ مستحکم دشمن است (دفاع ${currentLoc.baseDefense}/10)`
                 : `${currentLocName} is a Fortified Stronghold (Defense ${currentLoc.baseDefense}/10)`}
             </div>
-            <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+            <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
               {isFa
                 ? 'زمین‌های شهرهای مستحکم با نقره فروخته نمی‌شوند. برای تصاحب آن باید با حداقل ۱ کشتی جنگی و ۱۲ جنگجوی هیرد به باروهای شهر یورش ببرید.'
                 : 'Fortified cities cannot be purchased with silver. Storm the ramparts with at least 1 War Longship and 12+ Hird Warriors to claim it as your estate.'}
             </p>
           </div>
         ) : (
-          <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
+          <div className="p-4 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
             <div className="flex items-start justify-between gap-3">
-              <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+              <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
                 {isFa ? `خرید مزرعه در ${currentLocName}` : `Buy Farmland in ${currentLocName}`}
               </div>
-              <span className="text-xs font-mono font-bold text-[#FBBF24] shrink-0">
+              <span className="text-xs font-mono font-bold text-accent-amber shrink-0">
                 {isFa ? '۳۵ نقره' : '35 Silver'}
               </span>
             </div>
-            <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+            <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
               {isFa
                 ? 'هر مزرعه درآمد سالانه نقره و ذخیره غله خاندان را افزایش می‌دهد و راه رسیدن به مقام بونده، هرسیر و یارل را هموار می‌کند.'
                 : 'Each farmstead increases yearly harvest stores and silver income while advancing you toward Bonde, Hersir, and Jarl rank.'}
@@ -1282,7 +1322,7 @@ export function ActionsPanel({
             : `Current Faith: ${RELIGION_LABELS[lang][state.character.religion]}`
         }
         icon={
-          <div className="w-11 h-11 rounded-2xl bg-[#A78BFA]/15 text-[#A78BFA] ring-1 ring-[#A78BFA]/40 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-status-violet/15 text-accent-violet ring-1 ring-status-violet/40 flex items-center justify-center">
             <Shield className="w-6 h-6" />
           </div>
         }
@@ -1299,9 +1339,15 @@ export function ActionsPanel({
                 );
                 setActiveSheet(null);
               }}
-              className="flex-1 min-h-[48px] px-4 rounded-xl bg-[#8B5CF6] hover:bg-[#A78BFA] hover:text-[#0B1118] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              className="flex-1 min-h-[48px] px-4 rounded-xl bg-cta-violet hover:bg-cta-violet-hover disabled:bg-surface-disabled disabled:text-ink-disabled text-white font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
-              <Sparkles className="w-4 h-4 shrink-0" />
+              {faithDone ? (
+                <Clock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : isChild ? (
+                <Lock className="w-4 h-4 shrink-0 opacity-80" />
+              ) : (
+                <Sparkles className="w-4 h-4 shrink-0" />
+              )}
               <span>
                 {faithDone
                   ? isFa
@@ -1323,15 +1369,15 @@ export function ActionsPanel({
             <button
               type="button"
               onClick={() => setActiveSheet(null)}
-              className="min-h-[48px] px-4 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] text-xs font-bold text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors"
+              className="min-h-[48px] px-4 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle text-xs font-bold text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors"
             >
               {isFa ? 'بستن' : 'Close'}
             </button>
           </div>
         }
       >
-        <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2.5">
-          <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words">
+        <div className="p-4 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2.5">
+          <div className="text-sm font-bold text-ink-primary whitespace-normal break-words">
             {state.character.religion === Religion.Christian
               ? isFa
                 ? 'بازگشت به آیین خدایان کهن اسکاندیناوی'
@@ -1340,7 +1386,7 @@ export function ActionsPanel({
                 ? 'پذیرش غسل تعمید مسیحی'
                 : 'Accept Christian Baptism'}
           </div>
-          <p className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+          <p className="text-xs text-ink-secondary whitespace-normal break-words leading-relaxed">
             {state.character.religion === Religion.Christian
               ? isFa
                 ? 'برافراشتن دوباره نشان چکش ثور، قربانی در نیایشگاه هوف و جلب وفاداری جنگجویان سنتی.'

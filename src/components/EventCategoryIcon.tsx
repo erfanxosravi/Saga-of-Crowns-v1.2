@@ -75,56 +75,56 @@ export function EventCategoryIcon({
     case 'sword':
       return (
         <Swords
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#EF4444]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-crimson'} shrink-0`}
         />
       );
     case 'ship':
       return (
         <Ship
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#38BDF8]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-ice'} shrink-0`}
         />
       );
     case 'skull':
       return (
         <Skull
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#F87171]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-crimson'} shrink-0`}
         />
       );
     case 'heart':
       return (
         <Heart
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#FB7185]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-crimson'} shrink-0`}
         />
       );
     case 'coin':
       return (
         <Coins
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#34D399]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-emerald'} shrink-0`}
         />
       );
     case 'religion':
       return (
         <Flame
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#A78BFA]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-violet'} shrink-0`}
         />
       );
     case 'family':
       return (
         <Users
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#34D399]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-emerald'} shrink-0`}
         />
       );
     case 'dragon':
       return (
         <Flame
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#F59E0B]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-amber'} shrink-0`}
         />
       );
     case 'crown':
     default:
       return (
         <Crown
-          className={`${className} ${inheritColor ? 'text-current' : 'text-[#38BDF8]'} shrink-0`}
+          className={`${className} ${inheritColor ? 'text-current' : 'text-accent-ice'} shrink-0`}
         />
       );
   }

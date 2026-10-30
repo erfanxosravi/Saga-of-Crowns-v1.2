@@ -52,13 +52,13 @@ interface HeaderMenuDropdownProps {
 function renderSeasonIcon(season: Season) {
   switch (season) {
     case Season.Winter:
-      return <Snowflake className="w-4 h-4 text-[#38BDF8] shrink-0" />;
+      return <Snowflake className="w-4 h-4 text-accent-ice shrink-0" />;
     case Season.Autumn:
-      return <CloudRain className="w-4 h-4 text-[#94A3B8] shrink-0" />;
+      return <CloudRain className="w-4 h-4 text-ink-muted shrink-0" />;
     case Season.Spring:
-      return <Wind className="w-4 h-4 text-teal-300 shrink-0" />;
+      return <Wind className="w-4 h-4 text-accent-emerald shrink-0" />;
     case Season.Summer:
-      return <Sun className="w-4 h-4 text-[#F59E0B] shrink-0" />;
+      return <Sun className="w-4 h-4 text-accent-amber shrink-0" />;
   }
 }
 
@@ -127,12 +127,12 @@ export function HeaderMenuDropdown({
   const unlockedMsCount = evaluateHistoricalMilestones(state).filter((m) => m.unlocked).length;
 
   const rowBaseClass =
-    'group w-full min-h-[54px] px-2.5 py-2 rounded-xl flex items-center justify-between gap-3 text-start transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70';
+    'group w-full min-h-[54px] px-2.5 py-2 rounded-xl flex items-center justify-between gap-3 text-start transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70';
 
   const iconTileBaseClass =
-    'w-9 h-9 rounded-lg bg-[#142030] border border-[#22344D] flex items-center justify-center shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none group-hover:scale-105';
+    'w-9 h-9 rounded-lg bg-surface-secondary border border-border-subtle flex items-center justify-center shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none group-hover:scale-105';
 
-  const chevronClass = `w-4 h-4 text-[#64748B] group-hover:text-[#F1F5F9] shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+  const chevronClass = `w-4 h-4 text-ink-muted group-hover:text-ink-primary shrink-0 transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
     rtl ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'
   }`;
 
@@ -142,7 +142,7 @@ export function HeaderMenuDropdown({
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`fixed inset-0 z-30 bg-[#05080D]/55 backdrop-blur-[1px] transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+        className={`fixed inset-0 z-30 bg-surface-backdrop backdrop-blur-[1px] transition-opacity duration-200 ease-out motion-reduce:transition-none ${
           isAnimatedIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -153,35 +153,35 @@ export function HeaderMenuDropdown({
         role="dialog"
         aria-modal="false"
         aria-label={isFa ? 'منوی سریع بازی' : 'Quick Game Menu'}
-        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[356px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-[#0D1520]/98 backdrop-blur-md border border-[#26384F] shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute top-full end-2.5 sm:end-5 mt-1.5 z-50 w-[calc(100vw-1.25rem)] max-w-[356px] max-h-[calc(100dvh-5rem)] flex flex-col overflow-hidden rounded-2xl bg-surface-elevated/98 backdrop-blur-md border border-border-subtle shadow-[0_20px_48px_rgba(0,0,0,0.86)] transition-all duration-200 ease-out motion-reduce:transition-none ${
           isAnimatedIn
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
         }`}
       >
         {/* Top Saga Status Strip + Close Button */}
-        <div className="shrink-0 px-3.5 py-1.5 border-b border-[#1E2D40] flex items-center justify-between gap-2 bg-[#121C2B]/85">
-          <div className="flex items-center gap-2.5 text-[11px] font-mono tabular-nums text-[#94A3B8] min-w-0 flex-wrap">
-            <span className="text-[#F1F5F9] font-semibold">{formatYearLabel(year, lang)}</span>
-            <span aria-hidden="true" className="text-[#475569]">
+        <div className="shrink-0 px-3.5 py-1.5 border-b border-border-subtle flex items-center justify-between gap-2 bg-surface-secondary/85">
+          <div className="flex items-center gap-2.5 text-[11px] font-mono tabular-nums text-ink-muted min-w-0 flex-wrap">
+            <span className="text-ink-primary font-semibold">{formatYearLabel(year, lang)}</span>
+            <span aria-hidden="true" className="text-ink-muted">
               ·
             </span>
             <span
               className="inline-flex items-center gap-1"
               title={isFa ? 'جنگجویان تالار' : 'Household Warriors'}
             >
-              <Swords className="w-3.5 h-3.5 text-[#EF4444] shrink-0" />
-              <span className="text-[#F1F5F9]">{hirdWarriors}</span>
+              <Swords className="w-3.5 h-3.5 text-accent-crimson shrink-0" />
+              <span className="text-ink-primary">{hirdWarriors}</span>
             </span>
-            <span aria-hidden="true" className="text-[#475569]">
+            <span aria-hidden="true" className="text-ink-muted">
               ·
             </span>
             <span
               className="inline-flex items-center gap-1"
               title={isFa ? 'مجموع کشتی‌ها' : 'Fleet Ships'}
             >
-              <Ship className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
-              <span className="text-[#F1F5F9]">{fleetShips}</span>
+              <Ship className="w-3.5 h-3.5 text-accent-ice shrink-0" />
+              <span className="text-ink-primary">{fleetShips}</span>
             </span>
           </div>
 
@@ -189,7 +189,7 @@ export function HeaderMenuDropdown({
             type="button"
             onClick={onClose}
             aria-label={isFa ? 'بستن منو' : 'Close menu'}
-            className="min-w-[44px] min-h-[44px] -me-2 rounded-xl flex items-center justify-center text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#19283B] transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70"
+            className="min-w-[44px] min-h-[44px] -me-2 rounded-xl flex items-center justify-center text-ink-muted hover:text-ink-primary hover:bg-surface-interactive transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70"
           >
             <X className="w-4 h-4" />
           </button>
@@ -203,7 +203,7 @@ export function HeaderMenuDropdown({
             aria-label={isFa ? 'ذخیره، نشان‌ها و راهنما' : 'Saves, Badges & Guide'}
             className="space-y-0.5"
           >
-            <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
+            <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted select-none">
               {isFa ? 'نشان‌ها، ذخیره و راهنما' : 'Badges, Saves & Guide'}
             </div>
 
@@ -215,21 +215,21 @@ export function HeaderMenuDropdown({
                 aria-expanded={isBadgesOpen}
                 className={`${rowBaseClass} ${
                   isBadgesOpen
-                    ? 'bg-[#17283D] border border-[#F59E0B]/40'
-                    : 'hover:bg-[#152233]/90 active:bg-[#1A2A3F]'
+                    ? 'bg-surface-ice-tint border border-gold-500/40'
+                    : 'hover:bg-surface-secondary/90 active:bg-surface-interactive'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
-                    className={`${iconTileBaseClass} border-[#F59E0B]/45 bg-[#F59E0B]/15 group-hover:border-[#F59E0B]/75 group-hover:bg-[#F59E0B]/25`}
+                    className={`${iconTileBaseClass} border-gold-500/45 bg-gold-500/15 group-hover:border-gold-500/75 group-hover:bg-gold-500/25`}
                   >
-                    <Trophy className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                    <Trophy className="w-4 h-4 text-accent-amber shrink-0" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                    <div className="text-xs font-bold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                       {isFa ? 'نشان‌های حماسه و تاریخ' : 'Saga & Era Badges'}
                     </div>
-                    <div className="text-[11px] font-mono tabular-nums text-[#94A3B8] truncate mt-0.5">
+                    <div className="text-[11px] font-mono tabular-nums text-ink-muted truncate mt-0.5">
                       {isFa
                         ? `${unlockedAchCount}/${BITLIFE_ACHIEVEMENTS.length} نشان خاندان · ${unlockedMsCount}/${HISTORICAL_MILESTONES.length} مهر تاریخی`
                         : `${unlockedAchCount}/${BITLIFE_ACHIEVEMENTS.length} Dynasty · ${unlockedMsCount}/${HISTORICAL_MILESTONES.length} Era Seals`}
@@ -237,9 +237,9 @@ export function HeaderMenuDropdown({
                   </div>
                 </div>
                 {isBadgesOpen ? (
-                  <ChevronUp className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                  <ChevronUp className="w-4 h-4 text-accent-amber shrink-0" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-[#94A3B8] shrink-0" />
+                  <ChevronDown className="w-4 h-4 text-ink-muted shrink-0" />
                 )}
               </button>
 
@@ -264,19 +264,19 @@ export function HeaderMenuDropdown({
                 onClose();
                 onOpenSettings();
               }}
-              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
+              className={`${rowBaseClass} hover:bg-surface-secondary/90 active:bg-surface-interactive`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  className={`${iconTileBaseClass} border-[#34D399]/35 bg-[#34D399]/12 group-hover:border-[#34D399]/65 group-hover:bg-[#34D399]/20`}
+                  className={`${iconTileBaseClass} border-status-emerald/35 bg-status-emerald/12 group-hover:border-status-emerald/65 group-hover:bg-status-emerald/20`}
                 >
-                  <Save className="w-4 h-4 text-[#34D399] shrink-0" />
+                  <Save className="w-4 h-4 text-accent-emerald shrink-0" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                  <div className="text-xs font-bold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                     {isFa ? 'ذخیره و تنظیمات' : 'Saves & Settings'}
                   </div>
-                  <div className="text-[11px] font-mono tabular-nums text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] font-mono tabular-nums text-ink-muted truncate mt-0.5">
                     {isFa
                       ? `سال ${year} · ۳ جایگاه ذخیره · صدا ${isAudioOn ? 'روشن' : 'خاموش'}`
                       : `${year} AD · 3 save slots · Audio ${isAudioOn ? 'on' : 'off'}`}
@@ -293,19 +293,19 @@ export function HeaderMenuDropdown({
                 onClose();
                 onOpenGuide();
               }}
-              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
+              className={`${rowBaseClass} hover:bg-surface-secondary/90 active:bg-surface-interactive`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  className={`${iconTileBaseClass} border-[#A78BFA]/35 bg-[#A78BFA]/12 group-hover:border-[#A78BFA]/65 group-hover:bg-[#A78BFA]/20`}
+                  className={`${iconTileBaseClass} border-status-violet/35 bg-status-violet/12 group-hover:border-status-violet/65 group-hover:bg-status-violet/20`}
                 >
-                  <BookOpen className="w-4 h-4 text-[#A78BFA] shrink-0" />
+                  <BookOpen className="w-4 h-4 text-accent-violet shrink-0" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                  <div className="text-xs font-bold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                     {isFa ? 'راهنما و واژه‌نامه' : 'Guide & Glossary'}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] text-ink-muted truncate mt-0.5">
                     {isFa
                       ? 'قوانین بازی، غارت، جانشینی و ۶ اصطلاح نورس'
                       : 'Rules, raids, succession & 6 Norse terms'}
@@ -324,16 +324,16 @@ export function HeaderMenuDropdown({
               }}
               className={`${rowBaseClass} ${
                 isMapActive
-                  ? 'bg-[#17283D] text-[#38BDF8]'
-                  : 'hover:bg-[#152233]/90 active:bg-[#1A2A3F] text-[#F1F5F9]'
+                  ? 'bg-surface-ice-tint text-accent-ice'
+                  : 'hover:bg-surface-secondary/90 active:bg-surface-interactive text-ink-primary'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className={`${iconTileBaseClass} ${
                     isMapActive
-                      ? 'border-[#38BDF8]/60 bg-[#182E46]'
-                      : 'group-hover:border-[#38BDF8]/50 group-hover:bg-[#17283D]'
+                      ? 'border-status-ice/60 bg-surface-ice-tint'
+                      : 'group-hover:border-status-ice/50 group-hover:bg-surface-ice-tint'
                   }`}
                 >
                   {renderSeasonIcon(season)}
@@ -341,12 +341,12 @@ export function HeaderMenuDropdown({
                 <div className="min-w-0 flex-1">
                   <div
                     className={`text-xs font-semibold leading-tight truncate transition-colors ${
-                      isMapActive ? 'text-[#38BDF8]' : 'text-[#F1F5F9] group-hover:text-white'
+                      isMapActive ? 'text-accent-ice' : 'text-ink-primary group-hover:text-white'
                     }`}
                   >
                     {isFa ? 'فصل و وضعیت دریا' : 'Season & Sea Chart'}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] text-ink-muted truncate mt-0.5">
                     {SEASON_LABELS[lang][season]} · {weatherName}
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export function HeaderMenuDropdown({
             </button>
           </div>
 
-          <hr className="border-t border-[#1E2D40] my-2" />
+          <hr className="border-t border-border-subtle my-2" />
 
           {/* Category 2: Quick Toggles (Theme, Audio & Language) */}
           <div
@@ -363,31 +363,31 @@ export function HeaderMenuDropdown({
             aria-label={isFa ? 'حالت روز و شب، صدا و زبان' : 'Theme, Audio & Language'}
             className="space-y-0.5"
           >
-            <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] select-none">
+            <div className="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted select-none">
               {isFa ? 'حالت روز و شب، صدا و زبان' : 'Theme, Audio & Language'}
             </div>
 
             {/* 4. Day / Night Theme Switcher */}
-            <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-[#152233]/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
+            <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-surface-secondary/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div className="flex items-center gap-3 min-w-0 flex-1 text-start">
                 <div
                   className={`${iconTileBaseClass} ${
                     theme === 'light'
-                      ? 'border-[#F59E0B]/55 bg-[#F59E0B]/15'
-                      : 'border-[#38BDF8]/45 bg-[#16293E]'
+                      ? 'border-gold-500/55 bg-gold-500/15'
+                      : 'border-status-ice/45 bg-surface-ice-tint'
                   }`}
                 >
                   {theme === 'light' ? (
-                    <Sun className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                    <Sun className="w-4 h-4 text-accent-amber shrink-0" />
                   ) : (
-                    <Moon className="w-4 h-4 text-[#38BDF8] shrink-0" />
+                    <Moon className="w-4 h-4 text-accent-ice shrink-0" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                  <div className="text-xs font-semibold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                     {isFa ? 'حالت نمایش (روز / شب)' : 'Display Theme'}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] text-ink-muted truncate mt-0.5">
                     {theme === 'light'
                       ? isFa
                         ? 'روشن (عاج و طلای شمالی)'
@@ -399,15 +399,15 @@ export function HeaderMenuDropdown({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[#090F17] border border-[#223247] shrink-0">
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-canvas border border-border-subtle shrink-0">
                 <button
                   type="button"
                   onClick={() => onSetTheme('light')}
                   aria-pressed={theme === 'light'}
-                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
                     theme === 'light'
-                      ? 'bg-[#F59E0B] text-[#0B1118] shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
-                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                      ? 'bg-gold-500 text-nordic-950 shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
+                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-secondary'
                   }`}
                 >
                   <Sun className="w-3.5 h-3.5 shrink-0" />
@@ -417,10 +417,10 @@ export function HeaderMenuDropdown({
                   type="button"
                   onClick={() => onSetTheme('dark')}
                   aria-pressed={theme === 'dark'}
-                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                  className={`min-h-[40px] min-w-[60px] px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
                     theme === 'dark'
-                      ? 'bg-[#38BDF8] text-[#0B1118] shadow-[0_2px_8px_rgba(56,189,248,0.28)]'
-                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                      ? 'bg-status-ice text-nordic-950 shadow-[0_2px_8px_rgba(56,189,248,0.28)]'
+                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-secondary'
                   }`}
                 >
                   <Moon className="w-3.5 h-3.5 shrink-0" />
@@ -430,31 +430,31 @@ export function HeaderMenuDropdown({
             </div>
 
             {/* 4. Language Switcher */}
-            <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-[#152233]/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
+            <div className="group min-h-[54px] px-2.5 py-1.5 rounded-xl hover:bg-surface-secondary/85 flex items-center justify-between gap-3 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div className="flex items-center gap-3 min-w-0 flex-1 text-start">
                 <div
-                  className={`${iconTileBaseClass} group-hover:border-[#F59E0B]/50 group-hover:bg-[#1B283B]`}
+                  className={`${iconTileBaseClass} group-hover:border-gold-500/50 group-hover:bg-surface-interactive`}
                 >
-                  <Globe className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                  <Globe className="w-4 h-4 text-accent-amber shrink-0" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                  <div className="text-xs font-semibold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                     {isFa ? 'زبان بازی' : 'Language'}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] text-ink-muted truncate mt-0.5">
                     {isFa ? 'فارسی / English' : 'English / فارسی'}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[#090F17] border border-[#223247] shrink-0">
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-canvas border border-border-subtle shrink-0">
                 <button
                   type="button"
                   onClick={() => onSetLanguage('fa')}
-                  className={`min-h-[44px] min-w-[54px] px-2.5 rounded-md text-xs font-bold transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                  className={`min-h-[44px] min-w-[54px] px-2.5 rounded-md text-xs font-bold transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
                     lang === 'fa'
-                      ? 'bg-[#F59E0B] text-[#0B1118] shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
-                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                      ? 'bg-gold-500 text-nordic-950 shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
+                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-secondary'
                   }`}
                 >
                   فارسی
@@ -462,10 +462,10 @@ export function HeaderMenuDropdown({
                 <button
                   type="button"
                   onClick={() => onSetLanguage('en')}
-                  className={`min-h-[44px] min-w-[54px] px-2.5 rounded-md text-xs font-bold transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]/70 ${
+                  className={`min-h-[44px] min-w-[54px] px-2.5 rounded-md text-xs font-bold transition-all duration-150 motion-reduce:transition-none cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 ${
                     lang === 'en'
-                      ? 'bg-[#F59E0B] text-[#0B1118] shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
-                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#131F2E]'
+                      ? 'bg-gold-500 text-nordic-950 shadow-[0_2px_8px_rgba(245,158,11,0.28)]'
+                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-secondary'
                   }`}
                 >
                   English
@@ -479,27 +479,27 @@ export function HeaderMenuDropdown({
               role="switch"
               aria-checked={isAudioOn}
               onClick={onToggleAudio}
-              className={`${rowBaseClass} hover:bg-[#152233]/90 active:bg-[#1A2A3F]`}
+              className={`${rowBaseClass} hover:bg-surface-secondary/90 active:bg-surface-interactive`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className={`${iconTileBaseClass} ${
                     isAudioOn
-                      ? 'group-hover:border-[#38BDF8]/55 group-hover:bg-[#16293E]'
-                      : 'group-hover:border-[#475569] group-hover:bg-[#182434]'
+                      ? 'group-hover:border-status-ice/55 group-hover:bg-surface-ice-tint'
+                      : 'group-hover:border-border-strong group-hover:bg-surface-interactive'
                   }`}
                 >
                   {isAudioOn ? (
-                    <Volume2 className="w-4 h-4 text-[#38BDF8] shrink-0" />
+                    <Volume2 className="w-4 h-4 text-accent-ice shrink-0" />
                   ) : (
-                    <VolumeX className="w-4 h-4 text-[#94A3B8] shrink-0" />
+                    <VolumeX className="w-4 h-4 text-ink-muted shrink-0" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#F1F5F9] group-hover:text-white leading-tight truncate transition-colors">
+                  <div className="text-xs font-semibold text-ink-primary group-hover:text-white leading-tight truncate transition-colors">
                     {isFa ? 'صدای بازی و محیط' : 'Sound & Ambience'}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+                  <div className="text-[11px] text-ink-muted truncate mt-0.5">
                     {isAudioOn
                       ? isFa
                         ? 'موسیقی محیطی و افکت‌ها فعال'
@@ -514,8 +514,8 @@ export function HeaderMenuDropdown({
               <span
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border shrink-0 transition-colors duration-200 ${
                   isAudioOn
-                    ? 'bg-[#F59E0B]/15 border-[#F59E0B]/45 text-[#FBBF24]'
-                    : 'bg-[#0B1118] border-[#223247] text-[#94A3B8] group-hover:text-[#CBD5E1]'
+                    ? 'bg-gold-500/15 border-gold-500/45 text-accent-amber'
+                    : 'bg-surface-canvas border-border-subtle text-ink-muted group-hover:text-ink-secondary'
                 }`}
               >
                 {isAudioOn ? (isFa ? 'روشن' : 'On') : isFa ? 'خاموش' : 'Off'}

@@ -384,7 +384,7 @@ export const QUICK_GUIDE: Record<
 > = {
   en: {
     title: 'Saga of Crowns — Guide to Power',
-    subtitle: 'Rise from thrall to high king across blood, faith, and strategy (793–1066 AD).',
+    subtitle: 'Rise from thrall to high king across blood, faith, and strategy (793–1066 AD & beyond).',
     steps: [
       {
         heading: '1. Advance the Chronicle (Next Year)',
@@ -416,7 +416,7 @@ export const QUICK_GUIDE: Record<
   },
   fa: {
     title: 'حماسه‌ی تاج‌ها — راهنمای اقتدار',
-    subtitle: 'صعود از بندگی تا شاهنشاهی در کشاکش خون، ایمان و سیاست (۷۹۳ تا ۱۰۶۶ میلادی).',
+    subtitle: 'صعود از بندگی تا شاهنشاهی در کشاکش خون، ایمان و سیاست (۷۹۳ تا ۱۰۶۶ میلادی و ادامه آزاد دودمان).',
     steps: [
       {
         heading: '۱. پیشبرد وقایع‌نامه (سال بعد)',

@@ -144,15 +144,15 @@ export function HonorToast({ toast, lang, onDismiss }: HonorToastProps) {
         type="button"
         onClick={handleManualClose}
         aria-label={isFa ? 'بستن اعلان شرافت' : 'Dismiss honor notification'}
-        className={`pointer-events-auto w-auto max-w-[calc(100vw-1.5rem)] sm:max-w-md min-w-[230px] sm:min-w-[290px] min-h-[48px] px-3.5 py-2.5 rounded-xl bg-[#0F1722]/95 backdrop-blur-md border flex items-center gap-3 cursor-pointer transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:translate-y-0 ${
+        className={`pointer-events-auto w-auto max-w-[calc(100vw-1.5rem)] sm:max-w-md min-w-[230px] sm:min-w-[290px] min-h-[48px] px-3.5 py-2.5 rounded-xl bg-surface-elevated/95 backdrop-blur-md border flex items-center gap-3 cursor-pointer transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:translate-y-0 ${
           isGain
-            ? 'border-[#F59E0B]/45 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_20px_rgba(245,158,11,0.14)] hover:border-[#F59E0B]/70'
-            : 'border-[#EF4444]/45 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_20px_rgba(239,68,68,0.14)] hover:border-[#EF4444]/70'
+            ? 'border-gold-500/45 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_20px_rgba(245,158,11,0.14)] hover:border-gold-500/70'
+            : 'border-blood-500/45 shadow-[0_10px_28px_rgba(0,0,0,0.65),0_0_20px_rgba(239,68,68,0.14)] hover:border-blood-500/70'
         } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
       >
         <div
           className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-            isGain ? 'bg-[#F59E0B]/15 text-[#FBBF24]' : 'bg-[#EF4444]/15 text-[#F87171]'
+            isGain ? 'bg-gold-500/15 text-accent-amber' : 'bg-blood-500/15 text-accent-crimson'
           }`}
         >
           {isGain ? (
@@ -169,12 +169,12 @@ export function HonorToast({ toast, lang, onDismiss }: HonorToastProps) {
         </div>
 
         <div className="min-w-0 flex-1 text-start">
-          <div className="font-saga text-sm font-bold text-[#F1F5F9] leading-tight truncate">
+          <div className="font-saga text-sm font-bold text-ink-primary leading-tight truncate">
             {title}
           </div>
-          <div className="text-[11px] text-[#94A3B8] leading-snug truncate mt-0.5">
+          <div className="text-[11px] text-ink-muted leading-snug truncate mt-0.5">
             {subtitle} ·{' '}
-            <span className="font-mono tabular-nums text-[#CBD5E1]">
+            <span className="font-mono tabular-nums text-ink-secondary">
               {isFa ? `شرافت ${renderedToast.currentHonor}` : `Honor ${renderedToast.currentHonor}`}
             </span>
           </div>
@@ -184,7 +184,7 @@ export function HonorToast({ toast, lang, onDismiss }: HonorToastProps) {
           <span
             dir="ltr"
             className={`font-mono tabular-nums text-sm sm:text-base font-extrabold ${
-              isGain ? 'text-[#FBBF24]' : 'text-[#F87171]'
+              isGain ? 'text-accent-amber' : 'text-accent-crimson'
             }`}
           >
             {signedDelta}

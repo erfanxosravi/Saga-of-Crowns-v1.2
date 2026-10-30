@@ -1,11 +1,15 @@
 import { GameEventFa } from '../i18n/eventsFa';
 import { GameEvent, Religion } from '../types/game';
+import {
+  LEGEND_ENCOUNTERS_PHASE_23_EVENTS,
+  LEGEND_ENCOUNTERS_PHASE_23_FA,
+} from './legendEncountersPhase23';
 
 /**
- * Phase 1 Living Legends Encounters:
- * - Ragnar Lothbrok (Mentor / Sea-King / Seine 845 / Final Voyage & Snake-Pit Memorial)
- * - Lagertha / Hlaðgerðr (Shield-Wall on the Headland / Defense of Gaular's Independence)
- * - Floki — Hrafna-Flóki & Brother Aldwin (The Whispering Keel & Faith Tension / Three Ravens to Ísland)
+ * Phase 1, 2 & 3 Living Legends Encounters:
+ * - Ragnar Lothbrok, Lagertha / Hlaðgerðr, Floki & Brother Aldwin
+ * - Rollo, Ivar the Boneless, Björn Ironside, Halfdan, Ubba, Hvitserk, Sigurd Snake-in-the-Eye, Aslaug
+ * - King Ecgberht, King Ælla, King Alfred, King Guthrum
  *
  * All encounters are gated by year, age, region/fame, and flags — never random spam.
  */
@@ -574,6 +578,7 @@ export const LEGEND_ENCOUNTER_EVENTS: GameEvent[] = [
       },
     ],
   },
+  ...LEGEND_ENCOUNTERS_PHASE_23_EVENTS,
 ];
 
 export const LEGEND_ENCOUNTERS_FA: Record<string, GameEventFa> = {
@@ -767,4 +772,5 @@ export const LEGEND_ENCOUNTERS_FA: Record<string, GameEventFa> = {
       },
     },
   },
+  ...LEGEND_ENCOUNTERS_PHASE_23_FA,
 };

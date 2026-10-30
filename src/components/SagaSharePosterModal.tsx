@@ -30,6 +30,7 @@ import {
   TITLE_LABELS,
 } from '../i18n/ui';
 import { FullGameState } from '../types/game';
+import { useModalA11y } from '../utils/useModalA11y';
 import { VikingPortrait } from './VikingPortrait';
 
 export type PosterThemeId = 'valhalla_gold' | 'nordic_parchment' | 'fjord_aurora';
@@ -291,20 +292,21 @@ export function SagaSharePosterModal({
   onClose,
   state,
 }: SagaSharePosterModalProps) {
-  const [themeId, setThemeId] = useState<PosterThemeId>('valhalla_gold');
+  const defaultPosterTheme: PosterThemeId =
+    (state.settings.theme ?? 'light') === 'light' ? 'nordic_parchment' : 'valhalla_gold';
+  const [themeId, setThemeId] = useState<PosterThemeId>(defaultPosterTheme);
   const [quoteIdx, setQuoteIdx] = useState<number>(0);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [savedNotice, setSavedNotice] = useState<boolean>(false);
   const hiddenPortraitWrapRef = useRef<HTMLDivElement | null>(null);
+  const modalRef = useModalA11y<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
 
   useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
+    setThemeId((state.settings.theme ?? 'light') === 'light' ? 'nordic_parchment' : 'valhalla_gold');
+  }, [state.settings.theme]);
 
   if (!isOpen) return null;
 
@@ -661,7 +663,7 @@ export function SagaSharePosterModal({
   const modalNode = (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-[120] max-h-dvh overflow-hidden bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-2.5 sm:p-4"
+      className="fixed inset-0 z-[120] max-h-dvh overflow-hidden bg-surface-backdrop backdrop-blur-sm flex flex-col items-center justify-center p-2.5 sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -681,20 +683,21 @@ export function SagaSharePosterModal({
       </div>
 
       <div
-        className="w-full max-w-xl max-h-[94dvh] flex flex-col overflow-hidden rounded-2xl bg-[#0F1722] border border-[#2A3E59] shadow-[0_25px_70px_rgba(0,0,0,0.85)] text-start"
+        ref={modalRef}
+        className="w-full max-w-xl max-h-[94dvh] flex flex-col overflow-hidden rounded-2xl bg-surface-elevated border border-border-subtle shadow-[0_25px_70px_rgba(0,0,0,0.85)] text-start"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Studio Bar */}
-        <div className="shrink-0 px-3.5 sm:px-4 py-2.5 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-2">
+        <div className="shrink-0 px-3.5 sm:px-4 py-2.5 border-b border-border-subtle bg-surface-secondary flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gold-500/15 border border-gold-500/40 text-accent-amber flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-saga text-sm sm:text-base font-bold text-[#F1F5F9] leading-snug">
+              <h3 className="font-saga text-sm sm:text-base font-bold text-ink-primary leading-snug">
                 {isFa ? 'پوستر داستان زندگی (استوری ۹:۱۶)' : 'Character Saga Story Poster'}
               </h3>
-              <p className="text-[10px] sm:text-[11px] text-[#94A3B8] leading-snug">
+              <p className="text-[10px] sm:text-[11px] text-ink-muted leading-snug">
                 {isFa
                   ? 'چهره، زندگینامه و کارنامه افتخارات کاراکتر شما'
                   : 'High-resolution 9:16 portrait poster with biography & deeds'}
@@ -706,14 +709,14 @@ export function SagaSharePosterModal({
             type="button"
             onClick={onClose}
             aria-label={isFa ? 'بستن' : 'Close'}
-            className="w-8 h-8 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle flex items-center justify-center text-ink-secondary cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Customization Strip: Theme + Quote Switcher */}
-        <div className="shrink-0 px-3.5 sm:px-4 py-2 bg-[#101926] border-b border-[#1E2D40] flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="shrink-0 px-3.5 sm:px-4 py-2 bg-surface-card border-b border-border-subtle flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-1.5 shrink-0">
             {(Object.values(POSTER_THEMES) as PosterPalette[]).map((t) => {
               const active = t.id === themeId;
@@ -724,8 +727,8 @@ export function SagaSharePosterModal({
                   onClick={() => setThemeId(t.id)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
                     active
-                      ? 'bg-[#F59E0B] text-[#0B1118] border-[#F59E0B]'
-                      : 'bg-[#131D2B] text-[#CBD5E1] border-[#233246] hover:border-[#F59E0B]/50'
+                      ? 'bg-gold-500 text-nordic-950 border-gold-500'
+                      : 'bg-surface-secondary text-ink-secondary border-border-subtle hover:border-gold-500/50'
                   }`}
                 >
                   {isFa ? t.nameFa : t.nameEn}
@@ -737,7 +740,7 @@ export function SagaSharePosterModal({
           <button
             type="button"
             onClick={() => setQuoteIdx((v) => v + 1)}
-            className="px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] text-[11px] font-semibold text-[#38BDF8] cursor-pointer whitespace-nowrap shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-surface-secondary hover:bg-surface-interactive border border-border-subtle text-[11px] font-semibold text-accent-ice cursor-pointer whitespace-nowrap shrink-0"
           >
             {isFa ? '↻ سخن دیگر' : '↻ Quote'}
           </button>
@@ -934,12 +937,12 @@ export function SagaSharePosterModal({
         </div>
 
         {/* Sticky Action Footer: Download HD Story PNG + Share */}
-        <div className="shrink-0 px-4 py-2.5 border-t border-[#1E2D40] bg-[#121C2B] flex flex-wrap items-center justify-between gap-2.5">
+        <div className="shrink-0 px-4 py-2.5 border-t border-border-subtle bg-surface-secondary flex flex-wrap items-center justify-between gap-2.5">
           <button
             type="button"
             disabled={isExporting}
             onClick={() => handleExportPoster('download')}
-            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:opacity-50 text-[#0B1118] font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md"
+            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-nordic-950 font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md"
           >
             {savedNotice ? (
               <>
@@ -964,7 +967,7 @@ export function SagaSharePosterModal({
             type="button"
             disabled={isExporting}
             onClick={() => handleExportPoster('share')}
-            className="min-h-[44px] px-4 py-2 rounded-xl bg-[#16283E] hover:bg-[#1E3652] border border-[#38BDF8]/50 text-xs sm:text-sm font-bold text-[#38BDF8] inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-surface-ice-tint hover:bg-surface-ice-hover border border-status-ice/50 text-xs sm:text-sm font-bold text-accent-ice inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
             <Share2 className="w-4 h-4 shrink-0" />
             <span>{isFa ? 'اشتراک‌گذاری' : 'Share'}</span>

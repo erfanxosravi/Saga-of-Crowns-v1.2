@@ -127,7 +127,7 @@ export function SagaChroniclePanel({
   return (
     <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* Nordic Dynasty Banner (wrapped titles, min 12px) */}
-      <div className="relative min-h-[144px] rounded-2xl overflow-hidden border border-[#24364D] bg-[#0F1722] flex flex-col justify-end p-4">
+      <div className="relative min-h-[144px] rounded-2xl overflow-hidden border border-border-subtle bg-surface-elevated flex flex-col justify-end p-4">
         {!imgFailed ? (
           <img
             src={longhouseHearthUrl}
@@ -137,30 +137,30 @@ export function SagaChroniclePanel({
             className="absolute inset-0 w-full h-full object-cover opacity-70"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#131D2B]">
-            <Flame className="w-8 h-8 text-[#F59E0B]" />
+          <div className="absolute inset-0 flex items-center justify-center bg-surface-secondary">
+            <Flame className="w-8 h-8 text-accent-amber" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1118] via-[#0B1118]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-canvas via-surface-canvas/70 to-transparent" />
 
         <div className="relative z-10 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-mono text-[#38BDF8] whitespace-normal break-words">
+            <div className="text-xs font-mono text-accent-ice whitespace-normal break-words">
               {isFa
                 ? `نسل ${state.generation} · کد دنیا ${state.seedString}`
                 : `Gen ${state.generation} · Seed ${state.seedString}`}
             </div>
-            <h2 className="font-saga text-2xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug mt-0.5">
+            <h2 className="font-saga text-2xl font-bold text-ink-primary whitespace-normal break-words leading-snug mt-0.5">
               {formatDynastyName(state.dynastyName, lang)}
             </h2>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="text-end">
-              <div className="text-xs text-[#CBD5E1]">
+              <div className="text-xs text-ink-secondary">
                 {isFa ? 'امتیاز میراث' : 'Legacy Score'}
               </div>
-              <div className="text-lg font-mono font-bold tabular-nums text-[#FBBF24]">
+              <div className="text-lg font-mono font-bold tabular-nums text-accent-amber">
                 {legacyScore.toLocaleString()}
               </div>
             </div>
@@ -169,12 +169,12 @@ export function SagaChroniclePanel({
               onClick={handleCopySeed}
               title={isFa ? 'کپی کد دنیا' : 'Copy Seed'}
               aria-label={isFa ? 'کپی کد دنیا' : 'Copy Seed'}
-              className="min-w-[44px] min-h-[44px] px-2.5 rounded-xl bg-[#131D2B]/90 border border-[#283B52] hover:border-[#38BDF8] text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
+              className="min-w-[44px] min-h-[44px] px-2.5 rounded-xl bg-surface-secondary/90 border border-border-subtle hover:border-status-ice text-ink-primary flex items-center justify-center cursor-pointer transition-colors"
             >
               {copiedSeed ? (
-                <Check className="w-4 h-4 text-[#34D399]" />
+                <Check className="w-4 h-4 text-accent-emerald" />
               ) : (
-                <Copy className="w-4 h-4 text-[#CBD5E1]" />
+                <Copy className="w-4 h-4 text-ink-secondary" />
               )}
             </button>
           </div>
@@ -182,26 +182,26 @@ export function SagaChroniclePanel({
       </div>
 
       {/* The Lothbrok Cycle & Debt of Vengeance (Hefnd) Panel */}
-      <div className="p-3.5 rounded-2xl bg-[#15121E] border border-[#F59E0B]/40 space-y-3">
+      <div className="p-3.5 rounded-2xl bg-surface-violet-tint border border-gold-500/40 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#3B181E] border border-[#F59E0B]/50 text-[#FBBF24] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-surface-crimson-tint border border-gold-500/50 text-accent-amber flex items-center justify-center shrink-0">
               <Swords className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                <span className="text-xs sm:text-sm font-bold text-ink-primary">
                   {isFa
                     ? 'چرخه راگنار لُدبروک و سوگند انتقام (Hefnd)'
                     : 'The Lothbrok Cycle & Debt of Vengeance (Hefnd)'}
                 </span>
                 {state.ragnarBloodline && (
-                  <span className="px-2 py-0.5 rounded-md bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[10px] font-bold text-[#FDE68A]">
+                  <span className="px-2 py-0.5 rounded-md bg-gold-500/20 border border-gold-500/50 text-[10px] font-bold text-accent-amber-strong">
                     {isFa ? 'میراث اسطوره‌ای راگنار' : 'LEGENDARY CLAIM: RAGNARSÆTTIN'}
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-[#CBD5E1]">
+              <div className="text-[11px] text-ink-secondary">
                 {branchInfo
                   ? isFa
                     ? `${branchInfo.nameFa} · ${completedChaptersCount}/9 فصل تکمیل‌شده`
@@ -223,14 +223,14 @@ export function SagaChroniclePanel({
                   setShowHallModal(true);
                 }
               }}
-              className="px-3 py-1.5 rounded-xl bg-[#C8641B] hover:bg-[#B25412] text-xs font-bold text-[#FFFDF9] cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-cta-copper hover:bg-cta-copper-hover text-xs font-bold text-cta-ink-light cursor-pointer transition-colors"
             >
               {isFa ? 'تالار افسانه‌ها (راگنار و حلقه او)' : 'Open Hall of Legends'}
             </button>
             <button
               type="button"
               onClick={() => setShowLothbrokChapters((v) => !v)}
-              className="px-3 py-1.5 rounded-xl bg-[#1F1A2C] hover:bg-[#2A223B] border border-[#F59E0B]/45 text-xs font-bold text-[#FDE68A] cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-surface-violet-tint hover:bg-surface-violet-tint border border-gold-500/45 text-xs font-bold text-accent-amber-strong cursor-pointer transition-colors"
             >
               {showLothbrokChapters
                 ? isFa
@@ -258,27 +258,27 @@ export function SagaChroniclePanel({
 
         {/* Hefnd (Vengeance) Meter — 0–100 Gauge in Dark Nordic Container (#0F1722) with Blood-Red Gradient (#991b1b to #dc2626) */}
         <div
-          className={`p-3.5 rounded-xl bg-[#0F1722] border transition-[border-color,box-shadow] duration-500 space-y-2.5 ${
+          className={`p-3.5 rounded-xl bg-surface-elevated border transition-[border-color,box-shadow] duration-500 space-y-2.5 ${
             hefndDelta > 0
-              ? 'border-[#dc2626] shadow-[0_0_20px_rgba(220,38,38,0.45),inset_0_0_12px_rgba(153,27,27,0.35)]'
+              ? 'border-blood-600 shadow-[0_0_20px_rgba(220,38,38,0.45),inset_0_0_12px_rgba(153,27,27,0.35)]'
               : hefndDelta < 0
-                ? 'border-emerald-500/70 shadow-[0_0_16px_rgba(16,185,129,0.25),inset_0_0_10px_rgba(15,23,34,0.8)]'
-                : 'border-[#991b1b]/60 shadow-inner'
+                ? 'border-status-emerald/70 shadow-[0_0_16px_rgba(16,185,129,0.25),inset_0_0_10px_rgba(15,23,34,0.8)]'
+                : 'border-border-crimson-subtle shadow-inner'
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <ShieldAlert
-                className={`w-4 h-4 text-[#dc2626] shrink-0 transition-transform duration-500 ${
+                className={`w-4 h-4 text-accent-crimson shrink-0 transition-transform duration-500 ${
                   hefndDelta > 0 ? 'scale-125 drop-shadow-[0_0_8px_rgba(220,38,38,0.9)]' : ''
                 }`}
               />
-              <span className="font-bold text-[#F8FAFC]">
+              <span className="font-bold text-ink-primary">
                 {isFa
                   ? 'هفند — کین‌خواهی و انتقام خون (Hefnd · Vengeance)'
                   : 'Hefnd (Vengeance) · هفند (انتقام خون)'}
               </span>
-              <span className="text-[10px] font-mono tracking-widest text-rose-200 px-1.5 py-0.5 rounded bg-[#991b1b]/35 border border-[#dc2626]/40">
+              <span className="text-[10px] font-mono tracking-widest text-accent-crimson px-1.5 py-0.5 rounded bg-surface-crimson-tint border border-border-crimson-subtle">
                 ᚺᛖᚠᚾᛞ
               </span>
             </div>
@@ -289,8 +289,8 @@ export function SagaChroniclePanel({
                   dir="ltr"
                   className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-extrabold animate-pulse ${
                     hefndDelta > 0
-                      ? 'bg-[#dc2626]/30 text-rose-200 border border-[#dc2626]/70'
-                      : 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50'
+                      ? 'bg-surface-crimson-tint text-accent-crimson border border-border-crimson-subtle'
+                      : 'bg-surface-emerald-tint text-accent-emerald border border-status-emerald/50'
                   }`}
                 >
                   {hefndDelta > 0 ? `+${hefndDelta}` : hefndDelta}
@@ -299,10 +299,10 @@ export function SagaChroniclePanel({
               <span
                 className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-colors duration-500 ${
                   clampedHefnd >= 68
-                    ? 'bg-[#991b1b]/40 border-[#dc2626]/70 text-rose-200'
+                    ? 'bg-surface-crimson-tint border-border-crimson-subtle text-accent-crimson'
                     : clampedHefnd > 20
-                      ? 'bg-[#991b1b]/25 border-[#dc2626]/40 text-rose-300'
-                      : 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300'
+                      ? 'bg-surface-crimson-tint border-border-crimson-subtle text-accent-crimson'
+                      : 'bg-surface-emerald-tint border-status-emerald/40 text-accent-emerald'
                 }`}
               >
                 {clampedHefnd >= 68
@@ -319,8 +319,8 @@ export function SagaChroniclePanel({
               </span>
               <span
                 dir="ltr"
-                className={`font-mono text-xs font-extrabold text-white bg-gradient-to-r from-[#991b1b] to-[#dc2626] px-2.5 py-0.5 rounded-md border border-rose-400/40 shadow-sm transition-transform duration-500 ${
-                  hefndDelta > 0 ? 'scale-105 ring-2 ring-[#dc2626]/60' : ''
+                className={`font-mono text-xs font-extrabold text-white bg-gradient-to-r from-blood-600 to-blood-600 px-2.5 py-0.5 rounded-md border border-blood-500/40 shadow-sm transition-transform duration-500 ${
+                  hefndDelta > 0 ? 'scale-105 ring-2 ring-blood-600/60' : ''
                 }`}
               >
                 {clampedHefnd} / 100
@@ -336,17 +336,17 @@ export function SagaChroniclePanel({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={clampedHefnd}
-            className="relative w-full h-3.5 rounded-full bg-[#090D14] border border-[#991b1b]/70 overflow-hidden shadow-inner"
+            className="relative w-full h-3.5 rounded-full bg-surface-canvas border border-border-crimson-subtle overflow-hidden shadow-inner"
           >
             {/* Threshold markers at 20 and 68 */}
             <div
               style={{ left: '20%' }}
-              className="absolute inset-y-0 w-px bg-[#FDE68A]/40 z-10"
+              className="absolute inset-y-0 w-px bg-gold-400/40 z-10"
               title={isFa ? 'مرز آرامش انتقام (۲۰)' : 'Satisfied Threshold (20)'}
             />
             <div
               style={{ left: '68%' }}
-              className="absolute inset-y-0 w-px bg-rose-300/70 z-10"
+              className="absolute inset-y-0 w-px bg-blood-500/70 z-10"
               title={isFa ? 'مرز نفرین خون بی‌انتقام (۶۸)' : 'Unavenged Penalty Threshold (68)'}
             />
 
@@ -357,7 +357,7 @@ export function SagaChroniclePanel({
                 transition:
                   'width 750ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 500ms ease-out, filter 500ms ease-out',
               }}
-              className={`h-full rounded-full bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#dc2626] transition-[width,box-shadow,filter] duration-700 ease-out will-change-[width] relative ${
+              className={`h-full rounded-full bg-gradient-to-r from-blood-600 via-blood-600 to-blood-600 transition-[width,box-shadow,filter] duration-700 ease-out will-change-[width] relative ${
                 hefndDelta > 0
                   ? 'shadow-[0_0_20px_rgba(220,38,38,0.95)] brightness-125'
                   : clampedHefnd >= 68
@@ -365,22 +365,22 @@ export function SagaChroniclePanel({
                     : 'shadow-[0_0_12px_rgba(220,38,38,0.65)]'
               }`}
             >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-white/10 via-rose-200/25 to-white/35" />
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-white/10 via-blood-500/25 to-white/35" />
               {clampedHefnd > 0 && (
-                <div className="absolute right-0 inset-y-0 w-2 rounded-full bg-rose-200/80 blur-[1px] shadow-[0_0_10px_#dc2626]" />
+                <div className="absolute right-0 inset-y-0 w-2 rounded-full bg-blood-500/80 blur-[1px] shadow-[0_0_10px_#dc2626]" />
               )}
             </div>
           </div>
 
           {/* Gauge Scale (0–100) & Mechanical Legend */}
-          <div className="flex items-center justify-between gap-2 text-[10px] text-[#94A3B8]">
-            <span className="font-mono font-bold text-rose-300/80">0</span>
-            <span className="text-center text-[#CBD5E1]/90">
+          <div className="flex items-center justify-between gap-2 text-[10px] text-ink-muted">
+            <span className="font-mono font-bold text-accent-crimson">0</span>
+            <span className="text-center text-ink-secondary">
               {isFa
                 ? 'یورش به انگلستان بدهی خون را فرو می‌نشاند (Hefnd ↓) و بی‌تفاوتی یا مرگ خویشاوندان آن را شعله‌ور می‌کند (Hefnd ↑)'
                 : 'Raiding England quenches Hefnd (↓); slain kin or neglected oaths fan the blood-debt (↑)'}
             </span>
-            <span className="font-mono font-bold text-[#dc2626]">100</span>
+            <span className="font-mono font-bold text-accent-crimson">100</span>
           </div>
         </div>
 
@@ -394,11 +394,11 @@ export function SagaChroniclePanel({
                 <div
                   key={hid}
                   title={isFa ? `${h.loreFa} (${h.effectsLabelFa})` : `${h.loreEn} (${h.effectsLabelEn})`}
-                  className="px-2.5 py-1 rounded-xl bg-[#27151D] border border-[#F59E0B]/45 text-xs text-[#FDE68A] flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-xl bg-surface-crimson-tint border border-gold-500/45 text-xs text-accent-amber-strong flex items-center gap-1.5"
                 >
-                  <span className="font-serif text-amber-400">{h.rune}</span>
+                  <span className="font-serif text-accent-amber">{h.rune}</span>
                   <span className="font-bold">{isFa ? h.nameFa : h.nameEn}</span>
-                  <span className="text-[10px] text-[#CBD5E1]">
+                  <span className="text-[10px] text-ink-secondary">
                     ({isFa ? h.effectsLabelFa : h.effectsLabelEn})
                   </span>
                 </div>
@@ -417,31 +417,31 @@ export function SagaChroniclePanel({
                   key={ch.id}
                   className={`p-3 rounded-xl border space-y-1.5 ${
                     isDone
-                      ? 'bg-[#1D1829] border-[#F59E0B]/60 text-[#F1F5F9]'
-                      : 'bg-[#0E1520] border-[#233246] text-[#94A3B8]'
+                      ? 'bg-surface-amber-tint border-gold-500/60 text-ink-primary'
+                      : 'bg-surface-card border-border-subtle text-ink-muted'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="font-bold text-xs sm:text-sm text-[#F1F5F9]">
+                    <div className="font-bold text-xs sm:text-sm text-ink-primary">
                       {isFa
                         ? `فصل ${ch.roman}: ${ch.titleFa}`
                         : `Chapter ${ch.roman}: ${ch.titleEn}`}{' '}
-                      <span className="text-[11px] font-mono text-[#38BDF8]">({ch.yearHint})</span>
+                      <span className="text-[11px] font-mono text-accent-ice">({ch.yearHint})</span>
                     </div>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         isDone
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                          : 'bg-[#162232] text-[#94A3B8]'
+                          ? 'bg-surface-emerald-tint text-accent-emerald border border-status-emerald/40'
+                          : 'bg-surface-secondary text-ink-muted'
                       }`}
                     >
                       {isDone ? (isFa ? 'روایت‌شده ✓' : 'Chronicled ✓') : isFa ? 'در انتظار' : 'Awaiting'}
                     </span>
                   </div>
-                  <p className="text-xs leading-relaxed text-[#CBD5E1]">
+                  <p className="text-xs leading-relaxed text-ink-secondary">
                     {isFa ? ch.summaryFa : ch.summaryEn}
                   </p>
-                  <div className="p-2 rounded-lg bg-[#0B1018] border border-[#26354A] text-[11px] text-[#FDE68A] leading-relaxed">
+                  <div className="p-2 rounded-lg bg-surface-canvas border border-border-subtle text-[11px] text-accent-amber-strong leading-relaxed">
                     {isFa ? ch.sagaVsChronicleFa : ch.sagaVsChronicleEn}
                   </div>
                 </div>
@@ -452,17 +452,17 @@ export function SagaChroniclePanel({
       </div>
 
       {/* Visually Distinct Unlocked Badges & Historical Seals Showcase */}
-      <div className="p-3.5 rounded-2xl bg-[#101926] border border-[#233246] space-y-2.5">
+      <div className="p-3.5 rounded-2xl bg-surface-card border border-border-subtle space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gold-500/15 border border-gold-500/40 text-accent-amber flex items-center justify-center shrink-0">
               <Trophy className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+              <div className="text-xs sm:text-sm font-bold text-ink-primary">
                 {isFa ? 'ویترین نشان‌های خاندان و مهرهای تاریخی' : 'Unlocked Dynasty & Era Badges'}
               </div>
-              <div className="text-[11px] text-[#94A3B8]">
+              <div className="text-[11px] text-ink-muted">
                 {isFa
                   ? `${unlockedCount} نشان افتخار دودمان · ${unlockedMilestonesCount} مهر عصر وایکینگ‌ها`
                   : `${unlockedCount} Dynasty Badges · ${unlockedMilestonesCount} Historical Era Seals`}
@@ -471,7 +471,7 @@ export function SagaChroniclePanel({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-mono tabular-nums">
-            <span className="px-2 py-0.5 rounded-lg bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-amber-500 font-bold">
+            <span className="px-2 py-0.5 rounded-lg bg-gold-500/15 border border-gold-500/40 text-accent-amber font-bold">
               {Math.round(
                 ((unlockedCount + unlockedMilestonesCount) /
                   (BITLIFE_ACHIEVEMENTS.length + HISTORICAL_MILESTONES.length)) *
@@ -535,7 +535,7 @@ export function SagaChroniclePanel({
 
         {/* Inspected Badge Detail Banner */}
         {(inspectedAchievement || inspectedMilestone) && (
-          <div className="p-3 rounded-xl bg-[#131D2B] border border-[#2A3E59] flex items-start justify-between gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-surface-secondary border border-border-subtle flex items-start justify-between gap-3 text-xs">
             {inspectedAchievement ? (
               <div className="flex items-start gap-2.5 min-w-0">
                 <div
@@ -547,7 +547,7 @@ export function SagaChroniclePanel({
                 </div>
                 <div className="space-y-0.5 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold text-sm text-[#F1F5F9]">
+                    <span className="font-bold text-sm text-ink-primary">
                       {isFa ? inspectedAchievement.ach.nameFa : inspectedAchievement.ach.nameEn}
                     </span>
                     <span
@@ -558,7 +558,7 @@ export function SagaChroniclePanel({
                       {BADGE_CATEGORY_LABELS[lang][inspectedAchievement.meta.category]}
                     </span>
                   </div>
-                  <p className="text-[#CBD5E1] leading-relaxed">
+                  <p className="text-ink-secondary leading-relaxed">
                     {isFa ? inspectedAchievement.ach.descFa : inspectedAchievement.ach.descEn}
                   </p>
                 </div>
@@ -576,7 +576,7 @@ export function SagaChroniclePanel({
                 </div>
                 <div className="space-y-0.5 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold text-sm text-[#F1F5F9]">
+                    <span className="font-bold text-sm text-ink-primary">
                       {isFa ? inspectedMilestone.def.titleFa : inspectedMilestone.def.titleEn}
                     </span>
                     <span
@@ -589,7 +589,7 @@ export function SagaChroniclePanel({
                       {isFa ? inspectedMilestone.def.eraLabelFa : inspectedMilestone.def.eraLabelEn}
                     </span>
                   </div>
-                  <p className="text-[#CBD5E1] leading-relaxed">
+                  <p className="text-ink-secondary leading-relaxed">
                     {isFa ? inspectedMilestone.def.descFa : inspectedMilestone.def.descEn}
                   </p>
                 </div>
@@ -599,7 +599,7 @@ export function SagaChroniclePanel({
             <button
               type="button"
               onClick={() => setInspectedBadgeId(null)}
-              className="px-2.5 py-1 rounded-lg bg-[#0B1118] hover:bg-[#19283B] border border-[#233246] text-[11px] text-[#94A3B8] hover:text-[#F1F5F9] shrink-0 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-surface-canvas hover:bg-surface-interactive border border-border-subtle text-[11px] text-ink-muted hover:text-ink-primary shrink-0 cursor-pointer"
             >
               {isFa ? 'بستن' : 'Close'}
             </button>
@@ -608,14 +608,14 @@ export function SagaChroniclePanel({
       </div>
 
       {/* 4 Sub-Tabs (Dynasty Badges, Historical Milestones, Lineage, Alt-History) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-[#0B1118] border border-[#1E2D40] rounded-2xl">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-surface-canvas border border-border-subtle rounded-2xl">
         <button
           type="button"
           onClick={() => setSubTab('badges')}
           className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
             subTab === 'badges'
-              ? 'bg-[#F59E0B] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
+              ? 'bg-gold-500 text-nordic-950'
+              : 'text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <Award className="w-4 h-4 shrink-0" />
@@ -631,8 +631,8 @@ export function SagaChroniclePanel({
           onClick={() => setSubTab('milestones')}
           className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
             subTab === 'milestones'
-              ? 'bg-[#38BDF8] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
+              ? 'bg-status-ice text-nordic-950'
+              : 'text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <History className="w-4 h-4 shrink-0" />
@@ -648,8 +648,8 @@ export function SagaChroniclePanel({
           onClick={() => setSubTab('ancestors')}
           className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
             subTab === 'ancestors'
-              ? 'bg-[#38BDF8] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
+              ? 'bg-status-ice text-nordic-950'
+              : 'text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <BookOpen className="w-4 h-4 shrink-0" />
@@ -663,8 +663,8 @@ export function SagaChroniclePanel({
           onClick={() => setSubTab('history')}
           className={`min-h-[44px] min-w-0 px-2 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
             subTab === 'history'
-              ? 'bg-[#38BDF8] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9]'
+              ? 'bg-status-ice text-nordic-950'
+              : 'text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <GitBranch className="w-4 h-4 shrink-0" />
@@ -699,8 +699,8 @@ export function SagaChroniclePanel({
                 onClick={() => setBadgeFilter(f.id)}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                   badgeFilter === f.id
-                    ? 'bg-[#18293E] border-[#F59E0B]/70 text-[#FBBF24]'
-                    : 'bg-[#131D2B] border-[#233246] text-[#94A3B8] hover:text-[#F1F5F9]'
+                    ? 'bg-surface-ice-tint border-gold-500/70 text-accent-amber'
+                    : 'bg-surface-secondary border-border-subtle text-ink-muted hover:text-ink-primary'
                 }`}
               >
                 {isFa ? f.labelFa : f.labelEn}
@@ -716,8 +716,8 @@ export function SagaChroniclePanel({
                   key={ach.id}
                   className={`relative p-4 rounded-2xl border space-y-3 transition-colors overflow-hidden ${
                     earned
-                      ? `${pal.cardBg} text-[#F1F5F9]`
-                      : 'bg-[#131D2B] border-[#233246] text-[#CBD5E1]'
+                      ? `${pal.cardBg} text-ink-primary`
+                      : 'bg-surface-secondary border-border-subtle text-ink-secondary'
                   }`}
                 >
                   {earned && <NorseCornerOrnament accent="amber" />}
@@ -729,8 +729,8 @@ export function SagaChroniclePanel({
                         earned
                           ? pal.iconBox
                           : pct > 0
-                            ? 'bg-[#182638] border-[#38BDF8]/40 text-[#38BDF8]'
-                            : 'bg-[#0B1118] border-[#233246] text-[#64748B]'
+                            ? 'bg-surface-interactive border-status-ice/40 text-accent-ice'
+                            : 'bg-surface-canvas border-border-subtle text-ink-muted'
                       }`}
                     >
                       {earned ? (
@@ -747,14 +747,14 @@ export function SagaChroniclePanel({
 
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                        <div className="text-sm font-bold text-ink-primary whitespace-normal break-words leading-snug">
                           {isFa ? ach.nameFa : ach.nameEn}
                         </div>
                         <span
                           className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold tabular-nums shrink-0 ${
                             earned
                               ? pal.tagPill
-                              : 'bg-[#0B1118] border border-[#233246] text-[#94A3B8]'
+                              : 'bg-surface-canvas border border-border-subtle text-ink-muted'
                           }`}
                         >
                           {earned
@@ -769,7 +769,7 @@ export function SagaChroniclePanel({
                         {BADGE_CATEGORY_LABELS[lang][meta.category]}
                       </div>
 
-                      <div className="text-xs text-[#94A3B8] whitespace-normal break-words leading-relaxed">
+                      <div className="text-xs text-ink-muted whitespace-normal break-words leading-relaxed">
                         {isFa ? ach.descFa : ach.descEn}
                       </div>
                     </div>
@@ -804,7 +804,7 @@ export function SagaChroniclePanel({
       {subTab === 'ancestors' && (
         <div className="space-y-3">
           {state.ancestors.length === 0 ? (
-            <div className="p-5 rounded-2xl bg-[#131D2B] border border-[#233246] text-xs text-[#94A3B8] text-center leading-relaxed">
+            <div className="p-5 rounded-2xl bg-surface-secondary border border-border-subtle text-xs text-ink-muted text-center leading-relaxed">
               {isFa
                 ? `«${formatPersonName(state.character.givenName, 'fa')}» نسل اول خاندان شماست. پس از مرگ و ادامه بازی با وارث، کارنامه فرمانروایان پیشین در اینجا ثبت می‌شود.`
                 : `${state.character.givenName} is Generation 1. Past rulers and their obituaries appear here when you continue as an heir.`}
@@ -813,10 +813,10 @@ export function SagaChroniclePanel({
             state.ancestors.map((anc) => (
               <div
                 key={anc.id}
-                className="relative p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-2 overflow-hidden"
+                className="relative p-4 rounded-2xl bg-surface-secondary border border-border-subtle space-y-2 overflow-hidden"
               >
                 <NorseCornerOrnament accent="amber" />
-                <div className="flex flex-wrap justify-between gap-2 text-xs text-[#38BDF8] font-mono tabular-nums">
+                <div className="flex flex-wrap justify-between gap-2 text-xs text-accent-ice font-mono tabular-nums">
                   <span>
                     {isFa
                       ? `نسل ${anc.generation} · ${SHORT_TITLE_LABELS.fa[anc.title]}`
@@ -828,10 +828,10 @@ export function SagaChroniclePanel({
                       : `${anc.birthYear}–${anc.deathYear} AD (Age ${anc.ageAtDeath})`}
                   </span>
                 </div>
-                <div className="font-saga text-lg font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                <div className="font-saga text-lg font-bold text-ink-primary whitespace-normal break-words leading-snug">
                   {formatPersonName(anc.fullName.replace(/"/g, ''), lang)}
                 </div>
-                <p className="text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+                <p className="text-xs sm:text-sm text-ink-secondary whitespace-normal break-words leading-relaxed">
                   {isFa ? anc.obituaryProseFa ?? anc.obituaryProse : anc.obituaryProse}
                 </p>
               </div>
@@ -843,7 +843,7 @@ export function SagaChroniclePanel({
       {subTab === 'history' && (
         <div className="space-y-2.5">
           {divergencesList.length === 0 ? (
-            <div className="p-5 rounded-2xl bg-[#131D2B] border border-[#233246] text-xs text-[#94A3B8] text-center leading-relaxed">
+            <div className="p-5 rounded-2xl bg-surface-secondary border border-border-subtle text-xs text-ink-muted text-center leading-relaxed">
               {isFa
                 ? 'مسیر تاریخ هنوز مطابق روایت‌های واقعی پیش می‌رود. با رقم‌زدن انتخاب‌های متفاوت در رویدادهای بزرگ تاریخی، تغییرات شما در اینجا ثبت می‌شود.'
                 : 'History still flows on its recorded course. Alter major historical events to record divergences here.'}
@@ -852,9 +852,9 @@ export function SagaChroniclePanel({
             divergencesList.map((d, i) => (
               <div
                 key={i}
-                className="p-4 rounded-2xl bg-[#131D2B] border border-purple-400/45 flex items-start gap-2.5 font-saga text-base text-[#F1F5F9] whitespace-normal break-words leading-relaxed"
+                className="p-4 rounded-2xl bg-surface-secondary border border-status-violet/45 flex items-start gap-2.5 font-saga text-base text-ink-primary whitespace-normal break-words leading-relaxed"
               >
-                <Sparkles className="w-4 h-4 text-purple-300 shrink-0 mt-1" />
+                <Sparkles className="w-4 h-4 text-accent-violet shrink-0 mt-1" />
                 <span>{d}</span>
               </div>
             ))

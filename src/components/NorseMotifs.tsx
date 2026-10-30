@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import { useModalA11y } from '../utils/useModalA11y';
 
 export type NorseAccent = 'amber' | 'crimson' | 'ice' | 'emerald' | 'violet' | 'slate';
 
@@ -15,12 +16,12 @@ const ACCENT_HEX: Record<NorseAccent, string> = {
 };
 
 const ACCENT_TEXT_CLASS: Record<NorseAccent, string> = {
-  amber: 'text-[#F59E0B]',
-  crimson: 'text-[#EF4444]',
-  ice: 'text-[#38BDF8]',
-  emerald: 'text-[#34D399]',
-  violet: 'text-[#A78BFA]',
-  slate: 'text-[#64748B]',
+  amber: 'text-accent-amber',
+  crimson: 'text-accent-crimson',
+  ice: 'text-accent-ice',
+  emerald: 'text-accent-emerald',
+  violet: 'text-accent-violet',
+  slate: 'text-ink-muted',
 };
 
 interface RuneDividerProps {
@@ -47,7 +48,7 @@ export function RuneDivider({
       role={label ? undefined : 'separator'}
       aria-hidden={label ? undefined : true}
     >
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#24364D] to-[#2F4663]" />
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-surface-interactive to-surface-interactive" />
       <div className="inline-flex items-center gap-2 shrink-0">
         <svg
           width="14"
@@ -70,7 +71,7 @@ export function RuneDivider({
           />
         </svg>
         {label ? (
-          <span className="text-xs font-semibold text-[#CBD5E1] whitespace-normal break-words leading-snug">
+          <span className="text-xs font-semibold text-ink-secondary whitespace-normal break-words leading-snug">
             {label}
           </span>
         ) : (
@@ -101,7 +102,7 @@ export function RuneDivider({
           </svg>
         )}
       </div>
-      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[#24364D] to-[#2F4663]" />
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-surface-interactive to-surface-interactive" />
     </div>
   );
 }
@@ -186,36 +187,31 @@ export function NorseBottomSheet({
   const prefersReducedMotion = useReducedMotion();
   const dragStartYRef = useRef<number | null>(null);
   const [dragOffsetY, setDragOffsetY] = useState<number>(0);
+  const sheetCardRef = useModalA11y<HTMLDivElement>({
+    isOpen,
+    onClose,
+    ignoreWhenSelectorPresent: '[data-city-modal="true"]',
+  });
 
   useEffect(() => {
     if (!isOpen) {
       setDragOffsetY(0);
       dragStartYRef.current = null;
-      return;
     }
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (document.querySelector('[data-city-modal="true"]')) return;
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const borderAccentClass =
     accent === 'crimson'
-      ? 'border-[#DC2626]/45'
+      ? 'border-blood-600/45'
       : accent === 'ice'
-        ? 'border-[#38BDF8]/45'
+        ? 'border-status-ice/45'
         : accent === 'emerald'
-          ? 'border-[#34D399]/45'
+          ? 'border-status-emerald/45'
           : accent === 'violet'
-            ? 'border-[#A78BFA]/45'
-            : 'border-[#243447]';
+            ? 'border-status-violet/45'
+            : 'border-border-subtle';
 
   const currentDir =
     typeof document !== 'undefined' && document.documentElement.dir
@@ -257,13 +253,14 @@ export function NorseBottomSheet({
       initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: 'easeOut' }}
-      className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-[#05080D]/65 backdrop-blur-[2px] flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4 text-[#F1F5F9]"
+      className="fixed inset-0 z-[100] max-h-dvh overflow-hidden bg-surface-backdrop backdrop-blur-[2px] flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4 text-ink-primary"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <motion.div
+        ref={sheetCardRef}
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0.9, y: 42 }}
         animate={{ opacity: 1, y: dragOffsetY }}
         transition={
@@ -271,7 +268,7 @@ export function NorseBottomSheet({
             ? { duration: 0 }
             : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
         }
-        className={`relative w-full ${maxWidthClass} h-[92dvh] max-h-[92dvh] sm:h-auto sm:max-h-[90dvh] flex flex-col overflow-hidden bg-[#0F1722] border-t sm:border ${borderAccentClass} rounded-t-[20px] sm:rounded-[20px] shadow-[0_-12px_42px_rgba(0,0,0,0.45)] text-start`}
+        className={`relative w-full ${maxWidthClass} h-[92dvh] max-h-[92dvh] sm:h-auto sm:max-h-[90dvh] flex flex-col overflow-hidden bg-surface-elevated border-t sm:border ${borderAccentClass} rounded-t-[20px] sm:rounded-[20px] shadow-[0_-12px_42px_rgba(0,0,0,0.45)] text-start`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle + Sticky Sheet Header (Swipe-down enabled) */}
@@ -280,22 +277,22 @@ export function NorseBottomSheet({
           onPointerMove={handleHeaderPointerMove}
           onPointerUp={handleHeaderPointerUp}
           onPointerCancel={handleHeaderPointerUp}
-          className="sticky top-0 z-20 shrink-0 border-b border-[#1E2D40] bg-[#121C2B] touch-none select-none cursor-grab active:cursor-grabbing"
+          className="sticky top-0 z-20 shrink-0 border-b border-border-subtle bg-surface-secondary touch-none select-none cursor-grab active:cursor-grabbing"
         >
           {/* Centered Drag Pill */}
           <div className="pt-2.5 pb-1 flex justify-center">
-            <div className="w-10 h-1.5 rounded-full bg-[#334863] opacity-75" />
+            <div className="w-10 h-1.5 rounded-full bg-border-strong opacity-75" />
           </div>
 
           <div className="px-4 sm:px-5 pb-3 pt-1 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               {icon && <div className="shrink-0">{icon}</div>}
               <div className="min-w-0 flex-1">
-                <h3 className="font-saga text-[20px] font-semibold text-[#F1F5F9] whitespace-normal break-words leading-snug">
+                <h3 className="font-saga text-[20px] font-semibold text-ink-primary whitespace-normal break-words leading-snug">
                   {title}
                 </h3>
                 {subtitle && (
-                  <p className="text-[12px] text-[#94A3B8] whitespace-normal break-words leading-relaxed mt-0.5">
+                  <p className="text-[12px] text-ink-muted whitespace-normal break-words leading-relaxed mt-0.5">
                     {subtitle}
                   </p>
                 )}
@@ -306,7 +303,7 @@ export function NorseBottomSheet({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] hover:text-[#F1F5F9] shrink-0 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-surface-interactive hover:bg-surface-interactive border border-border-subtle flex items-center justify-center text-ink-secondary hover:text-ink-primary shrink-0 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
             >
               <X className="w-5 h-5" />
             </button>
@@ -320,7 +317,7 @@ export function NorseBottomSheet({
 
         {/* Sticky Footer CTA */}
         {footer && (
-          <div className="shrink-0 px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-[#1E2D40] bg-[#121C2B]">
+          <div className="shrink-0 px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border-subtle bg-surface-secondary">
             {footer}
           </div>
         )}
