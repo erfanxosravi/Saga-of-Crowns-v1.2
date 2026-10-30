@@ -12,6 +12,7 @@ import {
   Shield,
   Smile,
   Snowflake,
+  Sparkles,
   Sun,
   Swords,
   Users,
@@ -36,6 +37,7 @@ import { MoreMenuPanel, RealmSection } from './components/MoreMenuPanel';
 import { QuickGuideModal } from './components/QuickGuideModal';
 import { RealmPanel } from './components/RealmPanel';
 import { SagaChroniclePanel } from './components/SagaChroniclePanel';
+import { SagaSharePosterModal } from './components/SagaSharePosterModal';
 import { SeasonalWeatherOverlay } from './components/SeasonalWeatherOverlay';
 import { SettingsSaveModal } from './components/SettingsSaveModal';
 import { StatBar } from './components/StatBar';
@@ -143,6 +145,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
   const [isMobileStatsSheetOpen, setIsMobileStatsSheetOpen] = useState<boolean>(false);
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState<boolean>(false);
   const [honorToast, setHonorToast] = useState<HonorToastPayload | null>(null);
   const prevHonorSnapRef = useRef<{ sessionKey: string; honor: number } | null>(null);
   const suppressHonorToastRef = useRef<boolean>(false);
@@ -789,6 +792,18 @@ export default function App() {
               </button>
             )}
 
+            <button
+              type="button"
+              onClick={() => {
+                playSound('click', settings.soundEnabled);
+                setIsPosterModalOpen(true);
+              }}
+              className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#19283B] border border-[#F59E0B]/45 hover:border-[#F59E0B] text-xs font-bold text-[#F59E0B] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>{isFa ? 'پوستر داستان زندگی (استوری)' : 'Saga Story Poster'}</span>
+            </button>
+
             {/* Secondary Stats & Traits */}
             <div className="space-y-2.5 pt-1 border-t border-[#1E2D40]">
               <div className="text-xs font-semibold text-[#94A3B8]">
@@ -1239,10 +1254,36 @@ export default function App() {
                 {renderTraitsText(c.traits)}
               </div>
             )}
+
+            <div className="pt-2 border-t border-[#1E2D40]">
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click', settings.soundEnabled);
+                  setIsMobileStatsSheetOpen(false);
+                  setIsPosterModalOpen(true);
+                }}
+                className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#17263B] via-[#1C2F47] to-[#17263B] hover:brightness-110 border border-[#F59E0B]/55 text-xs sm:text-sm font-bold text-[#F1F5F9] flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <Sparkles className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                <span>
+                  {isFa
+                    ? 'طراحی پوستر داستان زندگی (مناسب استوری اینستاگرام)'
+                    : 'Create Character Saga Poster (Story Ready)'}
+                </span>
+              </button>
+            </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Shareable Character Saga Story Poster Modal */}
+      <SagaSharePosterModal
+        isOpen={isPosterModalOpen}
+        onClose={() => setIsPosterModalOpen(false)}
+        state={gameState}
+      />
 
       {/* Event Decision Modal */}
       {gameState.activeEvent && (

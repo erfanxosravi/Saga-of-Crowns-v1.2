@@ -126,14 +126,14 @@ export function RealmPanel({
   return (
     <div className="flex flex-col overflow-hidden space-y-4 text-start">
       {/* 3-Way Segmented Navigation Header */}
-      <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#0B1118] border border-[#1E2D40]">
+      <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#111A26] border border-[#233246]">
         <button
           type="button"
           onClick={() => setTab('holdings')}
           className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             tab === 'holdings'
               ? 'bg-[#F59E0B] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#131D2B]'
+              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
           }`}
         >
           <Castle className="w-4 h-4 shrink-0" />
@@ -148,7 +148,7 @@ export function RealmPanel({
           className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             tab === 'fleet'
               ? 'bg-[#38BDF8] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#131D2B]'
+              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
           }`}
         >
           <Ship className="w-4 h-4 shrink-0" />
@@ -162,8 +162,8 @@ export function RealmPanel({
           onClick={() => setTab('politics')}
           className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             tab === 'politics'
-              ? 'bg-rose-500 text-white'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#131D2B]'
+              ? 'bg-[#F59E0B] text-[#0B1118]'
+              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
           }`}
         >
           <Crown className="w-4 h-4 shrink-0" />
@@ -191,7 +191,7 @@ export function RealmPanel({
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-2.5 rounded-xl bg-[#0B1118]/80 border border-emerald-500/30 space-y-1">
+            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-emerald-500/35 space-y-1">
               <div className="text-emerald-400 font-bold flex items-center justify-between">
                 <span>{isFa ? 'سپاه شما' : 'Your Warband'}</span>
                 <span className="font-mono">{state.activeBattle.playerWarriors}</span>
@@ -201,7 +201,7 @@ export function RealmPanel({
               </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-[#0B1118]/80 border border-rose-500/30 space-y-1">
+            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-rose-500/35 space-y-1">
               <div className="text-rose-400 font-bold flex items-center justify-between">
                 <span>{isFa ? 'مدافعان دژ' : 'Garrison Defenders'}</span>
                 <span className="font-mono">{state.activeBattle.enemyWarriors}</span>
@@ -213,7 +213,7 @@ export function RealmPanel({
           </div>
 
           {/* Battle Log */}
-          <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40] text-xs font-mono text-[#CBD5E1] space-y-1 max-h-24 overflow-y-auto">
+          <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246] text-xs font-mono text-[#CBD5E1] space-y-1 max-h-24 overflow-y-auto">
             {(isFa ? state.activeBattle.logFa : state.activeBattle.log).map((entry, idx) => (
               <div key={idx} className="leading-relaxed">
                 ⚔️ {entry}
@@ -435,7 +435,7 @@ export function RealmPanel({
                     <button
                       type="button"
                       onClick={() => setSelectedHoldingId(h.settlementId)}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#0B1118] border border-[#233246] hover:border-[#38BDF8] text-[#38BDF8] cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#162232] border border-[#233246] hover:border-[#38BDF8] text-[#38BDF8] cursor-pointer"
                     >
                       {isFa ? 'ساخت بنا' : 'Build'}
                     </button>
@@ -452,7 +452,7 @@ export function RealmPanel({
                         {h.unrest ?? 15}%
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-[#0B1118] overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-[#182638] overflow-hidden">
                       <div
                         className={`h-full transition-all ${
                           isCriticalUnrest
@@ -475,7 +475,7 @@ export function RealmPanel({
                   <div className="pt-2 border-t border-[#1E2D40] flex flex-wrap items-center gap-2">
                     {/* Garrison Transfer */}
                     {onStationGarrison && (
-                      <div className="flex items-center gap-1 bg-[#0B1118] px-2 py-1 rounded-xl border border-[#233246]">
+                      <div className="flex items-center gap-1 bg-[#162232] px-2 py-1 rounded-xl border border-[#233246]">
                         <span className="text-[11px] text-[#CBD5E1] me-1">{isFa ? 'پادگان:' : 'Garrison:'}</span>
                         <button
                           type="button"
@@ -550,7 +550,7 @@ export function RealmPanel({
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
                               (h.tributeBurden ?? 'normal') === tb
                                 ? 'bg-[#F59E0B] text-[#0B1118]'
-                                : 'bg-[#0B1118] text-[#94A3B8] hover:text-[#F1F5F9]'
+                                : 'bg-[#162232] text-[#94A3B8] hover:text-[#F1F5F9]'
                             }`}
                           >
                             {tb === 'none' ? (isFa ? 'هیچ' : '0') : tb === 'light' ? (isFa ? 'کم' : 'Lt') : tb === 'normal' ? (isFa ? 'متوسط' : 'Med') : tb === 'heavy' ? (isFa ? 'سنگین' : 'Hvy') : (isFa ? 'ظالمانه' : 'Max')}
@@ -645,26 +645,26 @@ export function RealmPanel({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40]">
+              <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246]">
                 <div className="text-xs text-[#94A3B8]">{isFa ? 'جنگجویان هیرد' : 'Hird Warriors'}</div>
                 <div className="text-xl font-mono font-bold text-[#F1F5F9]">{state.realm.hirdWarriors}</div>
                 <div className="text-[11px] text-[#CBD5E1]">{isFa ? 'سربازان سوگندخورده' : 'Sworn warriors'}</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40]">
+              <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246]">
                 <div className="text-xs text-[#94A3B8]">{isFa ? 'کشتی‌های جنگی' : 'War Longships'}</div>
                 <div className="text-xl font-mono font-bold text-[#38BDF8]">{state.realm.longships}</div>
                 <div className="text-[11px] text-[#CBD5E1]">{isFa ? 'لانگ‌شیپ اژدهانشان' : 'Fast dragon-ships'}</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40]">
+              <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246]">
                 <div className="text-xs text-[#94A3B8]">{isFa ? 'کشتی‌های تجاری' : 'Trade Knarrs'}</div>
                 <div className="text-xl font-mono font-bold text-[#F59E0B]">{state.realm.knarrs}</div>
                 <div className="text-[11px] text-[#CBD5E1]">{isFa ? 'کِنار اقیانوس‌پیما' : 'Deep-ocean hulls'}</div>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#0B1118] border border-[#1E2D40] flex items-center justify-between text-xs font-mono">
+            <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246] flex items-center justify-between text-xs font-mono">
               <span className="text-[#94A3B8]">{isFa ? 'هزینه نگهداری سالانه ناوگان و سپاه:' : 'Annual Fleet & Warband Upkeep:'}</span>
               <span className="text-[#F59E0B] font-bold">{totalUpkeep} {isFa ? 'نقره در سال' : 'Silver/yr'}</span>
             </div>
@@ -740,7 +740,7 @@ export function RealmPanel({
                         ? 'bg-[#12241C] border-emerald-500/50'
                         : st.canClaim
                           ? 'bg-[#211E16] border-[#F59E0B]'
-                          : 'bg-[#0B1118] border-[#1E2D40]'
+                          : 'bg-[#111A26] border-[#233246]'
                     }`}
                   >
                     <div>
@@ -781,9 +781,9 @@ export function RealmPanel({
 
           {/* Intrigue & Dark Plots */}
           {onExecutePlot && (
-            <div className="p-4 rounded-2xl bg-[#131D2B] border border-rose-500/30 space-y-3">
-              <div className="font-saga text-lg font-bold text-rose-200 flex items-center gap-2">
-                <Skull className="w-5 h-5 text-rose-400" />
+            <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+              <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
+                <Skull className="w-5 h-5 text-[#F59E0B]" />
                 <span>{isFa ? 'توطئه‌ها و دسیسه‌های درباری' : 'Intrigue & Dark Plots'}</span>
               </div>
               <p className="text-xs text-[#94A3B8]">
@@ -797,10 +797,11 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 32}
                   onClick={() => onExecutePlot('assassination')}
-                  className="p-3 rounded-xl bg-[#0B1118] border border-rose-500/40 hover:border-rose-400 text-start space-y-1 cursor-pointer disabled:opacity-40"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
                 >
-                  <div className="font-bold text-xs text-rose-300">
-                    🗡️ {isFa ? 'ترور شبانه رقیب (۳۲ نقره)' : 'Night Assassination (32 Silv)'}
+                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                    <span>🗡️ {isFa ? 'ترور شبانه رقیب' : 'Night Assassination'}</span>
+                    <span className="font-mono text-[11px] text-[#F59E0B]">{isFa ? '۳۲ نقره' : '32 Silv'}</span>
                   </div>
                   <div className="text-[11px] text-[#94A3B8]">
                     {isFa ? 'آدم‌کش اجیرشده برای قتل سردار یا دشمن خونی' : 'Hired shadow-blade strikes rival in the dark'}
@@ -811,10 +812,11 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 22}
                   onClick={() => onExecutePlot('poisoning')}
-                  className="p-3 rounded-xl bg-[#0B1118] border border-emerald-500/40 hover:border-emerald-400 text-start space-y-1 cursor-pointer disabled:opacity-40"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
                 >
-                  <div className="font-bold text-xs text-emerald-300">
-                    🧪 {isFa ? 'زهر شوکران در جام (۲۲ نقره)' : 'Poison Mead Horn (22 Silv)'}
+                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                    <span>🧪 {isFa ? 'زهر شوکران در جام' : 'Poison Mead Horn'}</span>
+                    <span className="font-mono text-[11px] text-[#F59E0B]">{isFa ? '۲۲ نقره' : '22 Silv'}</span>
                   </div>
                   <div className="text-[11px] text-[#94A3B8]">
                     {isFa ? 'ریختن سم شوکران در جام بزم رقیب' : 'Distil hemlock to cause quiet heart failure'}
@@ -825,10 +827,11 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 25}
                   onClick={() => onExecutePlot('bribe_thing')}
-                  className="p-3 rounded-xl bg-[#0B1118] border border-amber-500/40 hover:border-amber-400 text-start space-y-1 cursor-pointer disabled:opacity-40"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#38BDF8]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
                 >
-                  <div className="font-bold text-xs text-amber-300">
-                    ⚖️ {isFa ? 'رشوه به شورای ثینگ (۲۵ نقره)' : 'Bribe Thing Speaker (25 Silv)'}
+                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                    <span>⚖️ {isFa ? 'رشوه به شورای ثینگ' : 'Bribe Thing Speaker'}</span>
+                    <span className="font-mono text-[11px] text-[#38BDF8]">{isFa ? '۲۵ نقره' : '25 Silv'}</span>
                   </div>
                   <div className="text-[11px] text-[#94A3B8]">
                     {isFa ? 'تطمیع سخنگوی قانون و تبرئه از تبعید و جرم' : 'Weigh silver rings to clear outlawry & win rulings'}
@@ -839,10 +842,11 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.hirdWarriors < 15}
                   onClick={() => onExecutePlot('mass_reprisal')}
-                  className="p-3 rounded-xl bg-[#0B1118] border border-fuchsia-500/40 hover:border-fuchsia-400 text-start space-y-1 cursor-pointer disabled:opacity-40"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-rose-500/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
                 >
-                  <div className="font-bold text-xs text-fuchsia-300">
-                    🔥 {isFa ? 'سرکوب قاطع توطئه‌گران' : 'Mass Reprisal (St Brice Style)'}
+                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                    <span>🔥 {isFa ? 'سرکوب قاطع توطئه‌گران' : 'Mass Reprisal'}</span>
+                    <span className="font-mono text-[11px] text-rose-400">{isFa ? '۱۵+ جنگجو' : '15+ Hird'}</span>
                   </div>
                   <div className="text-[11px] text-[#94A3B8]">
                     {isFa ? 'سرکوب خونین بومیان و صفر کردن ناآرامی (-۱۸ شرافت)' : 'Preemptive terror wipeouts unrest to 0% (-18 Honor)'}

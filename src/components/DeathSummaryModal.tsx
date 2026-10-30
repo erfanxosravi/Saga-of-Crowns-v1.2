@@ -3,16 +3,16 @@ import {
   ChevronDown,
   ChevronUp,
   Crown,
-  Download,
   RotateCcw,
   Share2,
   Skull,
   Sparkles,
 } from 'lucide-react';
 import { evaluateLifeReportTitle } from '../data/deathsAndAchievements';
-import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
-import { EPITHET_FA, formatAgeLabel, isRtl, ROLE_LABELS, SHORT_TITLE_LABELS } from '../i18n/ui';
+import { formatPersonName } from '../i18n/gameDataFa';
+import { EPITHET_FA, formatAgeLabel, isRtl, ROLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
+import { SagaSharePosterModal } from './SagaSharePosterModal';
 import { VikingPortrait } from './VikingPortrait';
 
 interface DeathSummaryModalProps {
@@ -20,27 +20,6 @@ interface DeathSummaryModalProps {
   onContinueWithHeir: (heirId: string) => void;
   onQuickNewLife?: () => void;
   onEndDynastyAndRestart: () => void;
-}
-
-function wrapCanvasText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number
-): string[] {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let current = '';
-  for (const word of words) {
-    const test = current ? `${current} ${word}` : word;
-    if (ctx.measureText(test).width > maxWidth && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = test;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
 }
 
 export function DeathSummaryModal({
@@ -51,7 +30,7 @@ export function DeathSummaryModal({
 }: DeathSummaryModalProps) {
   const [showOtherHeirs, setShowOtherHeirs] = useState(false);
   const [showFullSaga, setShowFullSaga] = useState(false);
-  const [cardSavedToast, setCardSavedToast] = useState(false);
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
 
   const death = state.pendingDeath;
   if (!death) return null;
@@ -83,181 +62,6 @@ export function DeathSummaryModal({
   const otherHeirs = death.eligibleHeirs.slice(1);
   const childrenCount = state.relationships.filter((r) => r.role === 'Child' && r.alive).length;
 
-  const handleSaveOrShareCard = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1350;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.direction = isFa ? 'rtl' : 'ltr';
-
-    // Nordic Slate Gradient Background
-    const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    bg.addColorStop(0, '#0B1118');
-    bg.addColorStop(0.55, '#111B28');
-    bg.addColorStop(1, '#090D13');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Subtle Double Nordic Frame
-    ctx.strokeStyle = '#1E2D40';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(38, 38, canvas.width - 76, canvas.height - 76);
-    ctx.strokeStyle = '#DC2626';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(54, 54, canvas.width - 108, canvas.height - 108);
-
-    ctx.textAlign = 'center';
-
-    // Header Kicker
-    ctx.fillStyle = '#EF4444';
-    ctx.font = 'bold 28px system-ui, sans-serif';
-    ctx.fillText(
-      isFa
-        ? `کارنامه پایان زندگی · ${c.birthYear} تا ${state.year} میلادی`
-        : `VIKING LIFE REPORT CARD · ${c.birthYear}–${state.year} AD`,
-      540,
-      135
-    );
-
-    // Character Name
-    ctx.fillStyle = '#F1F5F9';
-    ctx.font = 'bold 62px Georgia, serif';
-    ctx.fillText(`${fullName}${epText}`, 540, 225);
-
-    // Dynasty & Age
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '32px system-ui, sans-serif';
-    const rankStr = SHORT_TITLE_LABELS[lang][c.title];
-    const dynStr = formatDynastyName(state.dynastyName, lang);
-    ctx.fillText(
-      isFa
-        ? `${rankStr} از ${dynStr} · عمر: ${c.age} سال`
-        : `${rankStr} of ${dynStr} · Died at Age ${c.age}`,
-      540,
-      285
-    );
-
-    // Earned Title Box
-    ctx.fillStyle = '#162232';
-    ctx.strokeStyle = '#F59E0B';
-    ctx.lineWidth = 3;
-    ctx.fillRect(120, 340, 840, 150);
-    ctx.strokeRect(120, 340, 840, 150);
-
-    ctx.fillStyle = '#FBBF24';
-    ctx.font = 'bold 24px system-ui, sans-serif';
-    ctx.fillText(isFa ? 'لقب کارنامه زندگی' : 'EARNED SAGA TITLE', 540, 390);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 48px Georgia, serif';
-    ctx.fillText(lifeTitle, 540, 455);
-
-    // Cause of Death Box
-    ctx.fillStyle = '#1A1116';
-    ctx.strokeStyle = '#991B1B';
-    ctx.lineWidth = 2;
-    ctx.fillRect(100, 535, 880, 310);
-    ctx.strokeRect(100, 535, 880, 310);
-
-    ctx.fillStyle = '#F87171';
-    ctx.font = 'bold 26px system-ui, sans-serif';
-    ctx.fillText(isFa ? 'علت مرگ' : 'CAUSE OF DEATH', 540, 588);
-
-    ctx.fillStyle = '#E2E8F0';
-    ctx.font = '32px system-ui, sans-serif';
-    const causeLines = wrapCanvasText(ctx, causeText, 800).slice(0, 4);
-    causeLines.forEach((ln, idx) => {
-      ctx.fillText(ln, 540, 648 + idx * 44);
-    });
-
-    ctx.fillStyle = '#FBBF24';
-    ctx.font = 'italic bold 28px Georgia, serif';
-    ctx.fillText(closingLine, 540, 815);
-
-    // 4 Stat Tiles
-    const statsGrid = isFa
-      ? [
-          { k: 'امتیاز میراث', v: death.legacyScore.toLocaleString() },
-          { k: 'نقره خزانه', v: `${state.realm.silver}` },
-          { k: 'غارت‌های دریایی', v: `${c.raidsLed}` },
-          { k: 'فرزندان زنده', v: `${childrenCount}` },
-        ]
-      : [
-          { k: 'LEGACY SCORE', v: death.legacyScore.toLocaleString() },
-          { k: 'SILVER HOARD', v: `${state.realm.silver}` },
-          { k: 'SEA RAIDS', v: `${c.raidsLed}` },
-          { k: 'LIVING KIDS', v: `${childrenCount}` },
-        ];
-
-    statsGrid.forEach((item, i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = 100 + col * 450;
-      const y = 890 + row * 150;
-      ctx.fillStyle = '#131D2B';
-      ctx.strokeStyle = '#24354C';
-      ctx.lineWidth = 2;
-      ctx.fillRect(x, y, 430, 128);
-      ctx.strokeRect(x, y, 430, 128);
-
-      ctx.fillStyle = '#94A3B8';
-      ctx.font = 'bold 22px system-ui, sans-serif';
-      ctx.fillText(item.k, x + 215, y + 48);
-
-      ctx.fillStyle = '#38BDF8';
-      ctx.font = 'bold 44px monospace';
-      ctx.fillText(item.v, x + 215, y + 102);
-    });
-
-    // Footer Watermark
-    ctx.fillStyle = '#64748B';
-    ctx.font = '24px system-ui, sans-serif';
-    ctx.fillText(
-      isFa
-        ? `حماسه‌ی تاج‌ها (Saga of Crowns) · نسل ${state.generation} · کد دنیا: ${state.seedString}`
-        : `SAGA OF CROWNS · Gen ${state.generation} · Seed ${state.seedString}`,
-      540,
-      1265
-    );
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const fileName = `saga-of-crowns-${c.givenName.toLowerCase()}-${state.year}.png`;
-      const file = new File([blob], fileName, { type: 'image/png' });
-
-      if (
-        typeof navigator !== 'undefined' &&
-        navigator.canShare &&
-        navigator.canShare({ files: [file] })
-      ) {
-        try {
-          await navigator.share({
-            title: `${fullName} — ${lifeTitle}`,
-            text: `${fullName} (${c.age}): ${causeText} ${closingLine}`,
-            files: [file],
-          });
-          setCardSavedToast(true);
-          setTimeout(() => setCardSavedToast(false), 2400);
-          return;
-        } catch {
-          // Fall through to PNG download if user cancels share sheet
-        }
-      }
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      setCardSavedToast(true);
-      setTimeout(() => setCardSavedToast(false), 2400);
-    }, 'image/png');
-  };
-
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
@@ -266,9 +70,9 @@ export function DeathSummaryModal({
       aria-modal="true"
       aria-labelledby="death-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[94dvh] sm:max-h-[min(92dvh,760px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#991B1B] rounded-2xl shadow-[0_0_55px_rgba(220,38,38,0.28)] text-start">
-        {/* Top Report Header — Two-row structure so Name, Epithet, Title & Score never truncate */}
-        <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 bg-[#131D2B] border-b border-[#1E2D40] space-y-2.5">
+      <div className="w-full max-w-xl max-h-[94dvh] sm:max-h-[min(92dvh,760px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#F59E0B]/55 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.82)] text-start">
+        {/* Top Report Header */}
+        <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 bg-[#121C2B] border-b border-[#1E2D40] space-y-2.5">
           {/* Top Kicker Row: Death Age/Year + Legacy Score */}
           <div className="flex items-center justify-between gap-2 border-b border-[#1E2D40]/80 pb-2">
             <div className="text-xs font-mono font-semibold text-[#F87171] inline-flex items-center gap-1.5 min-w-0">
@@ -280,17 +84,17 @@ export function DeathSummaryModal({
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#0B1118] border border-[#24354C] shrink-0">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#162232] border border-[#24354C] shrink-0">
               <span className="text-[11px] text-[#94A3B8]">
                 {isFa ? 'امتیاز کل:' : 'Score:'}
               </span>
-              <span className="text-sm sm:text-base font-mono font-bold tabular-nums text-[#38BDF8]">
+              <span className="text-sm sm:text-base font-mono font-bold tabular-nums text-[#F59E0B]">
                 {death.legacyScore.toLocaleString()}
               </span>
             </div>
           </div>
 
-          {/* Character Portrait + Full Name, Epithet & Earned Saga Title (No Truncation) */}
+          {/* Character Portrait + Full Name, Epithet & Earned Saga Title */}
           <div className="flex items-center gap-3 min-w-0">
             <VikingPortrait
               age={c.age}
@@ -299,7 +103,7 @@ export function DeathSummaryModal({
               title={c.title}
               appearance={c.appearance}
               seedId={c.id}
-              size={56}
+              size={58}
               className="shrink-0"
             />
             <div className="min-w-0 flex-1 space-y-1">
@@ -310,49 +114,49 @@ export function DeathSummaryModal({
                 {fullName}
                 {epText}
               </h2>
-              <div className="text-xs text-[#FBBF24] font-semibold whitespace-normal break-words leading-snug">
+              <div className="text-xs text-[#F59E0B] font-semibold whitespace-normal break-words leading-snug">
                 {isFa ? `لقب کارنامه: ${lifeTitle}` : `Earned Title: ${lifeTitle}`}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Scrollable Middle Body: Cause of Death + 4 Metrics + Share/Obituary */}
+        {/* Scrollable Middle Body: Cause of Death + 4 Metrics + Share Poster Studio */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-3.5 space-y-3">
           {/* Complete Cause of Death + Closing Line */}
-          <div className="p-3.5 sm:p-4 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/70 space-y-2">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-[#131D2B] border border-[#24354C] space-y-2">
             <div className="text-[11px] font-bold text-[#F87171]">
-              {isFa ? 'علت پایان زندگی:' : 'Cause of Death:'}
+              {isFa ? 'سرانجام و علت پایان زندگی:' : 'Cause of Death:'}
             </div>
             <p className="text-xs sm:text-sm font-medium text-[#F1F5F9] whitespace-normal break-words leading-relaxed">
               {causeText}
             </p>
-            <p className="font-saga text-sm sm:text-base font-bold text-[#FBBF24] whitespace-normal break-words pt-0.5">
+            <p className="font-saga text-sm sm:text-base font-bold text-[#F59E0B] whitespace-normal break-words pt-0.5">
               « {closingLine} »
             </p>
           </div>
 
           {/* Compact 4-Column Report Metrics */}
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'غارت‌ها' : 'Raids'}</div>
               <div className="text-sm font-mono font-bold text-[#F1F5F9] tabular-nums mt-0.5">
                 {c.raidsLed}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'نقره' : 'Silver'}</div>
-              <div className="text-sm font-mono font-bold text-[#FBBF24] tabular-nums mt-0.5">
+              <div className="text-sm font-mono font-bold text-[#F59E0B] tabular-nums mt-0.5">
                 {state.realm.silver}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'مزارع' : 'Farms'}</div>
               <div className="text-sm font-mono font-bold text-[#34D399] tabular-nums mt-0.5">
                 {state.realm.landFarms}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#1E2D40]">
+            <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
               <div className="text-[11px] text-[#94A3B8]">{isFa ? 'فرزندان' : 'Kids'}</div>
               <div className="text-sm font-mono font-bold text-[#38BDF8] tabular-nums mt-0.5">
                 {childrenCount}
@@ -360,30 +164,26 @@ export function DeathSummaryModal({
             </div>
           </div>
 
-          {/* Balanced 2-Column Utility Row: Save/Share Image + Toggle Full Obituary */}
+          {/* Highlighted Shareable Story Poster CTA + Full Obituary Toggle */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handleSaveOrShareCard}
-              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#162232] hover:bg-[#1E2F45] border border-[#38BDF8]/50 text-xs font-semibold text-[#38BDF8] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              onClick={() => setIsPosterModalOpen(true)}
+              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#18293E] to-[#132134] hover:brightness-110 border border-[#F59E0B]/60 text-xs font-bold text-[#F59E0B] inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm"
             >
-              <Download className="w-3.5 h-3.5 shrink-0" />
+              <Sparkles className="w-4 h-4 shrink-0" />
               <span className="whitespace-normal break-words">
-                {cardSavedToast
-                  ? isFa
-                    ? 'تصویر کارنامه ذخیره شد!'
-                    : 'Report Card Saved!'
-                  : isFa
-                    ? 'ذخیره / اشتراک تصویر کارنامه'
-                    : 'Save / Share Report Image'}
+                {isFa
+                  ? 'پوستر داستان زندگی (مناسب استوری)'
+                  : 'Create Saga Story Poster'}
               </span>
-              <Share2 className="w-3.5 h-3.5 opacity-75 shrink-0" />
+              <Share2 className="w-3.5 h-3.5 opacity-80 shrink-0" />
             </button>
 
             <button
               type="button"
               onClick={() => setShowFullSaga((v) => !v)}
-              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#1E2D40] text-xs font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[44px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#233246] text-xs font-semibold text-[#CBD5E1] hover:text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>{isFa ? 'متن کامل حماسه زندگی' : 'Full Saga Obituary'}</span>
               {showFullSaga ? (
@@ -395,14 +195,14 @@ export function DeathSummaryModal({
           </div>
 
           {showFullSaga && (
-            <div className="p-3.5 rounded-xl bg-[#0B1118] border border-[#1E2D40] text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-[#131D2B] border border-[#233246] text-xs sm:text-sm text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
               {isFa ? death.obituaryProseFa ?? death.obituaryProse : death.obituaryProse}
             </div>
           )}
 
-          {/* Other Heirs Accordion List (inside scrollable area when expanded) */}
+          {/* Other Heirs Accordion List */}
           {primaryHeir && otherHeirs.length > 0 && showOtherHeirs && (
-            <div className="p-2.5 rounded-xl bg-[#0B1118] border border-[#24354C] space-y-1.5">
+            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#24354C] space-y-1.5">
               <div className="text-[11px] font-bold text-[#94A3B8] px-1">
                 {isFa ? 'سایر وارثان خاندان:' : 'Other Eligible Heirs:'}
               </div>
@@ -411,13 +211,13 @@ export function DeathSummaryModal({
                   key={heir.id}
                   type="button"
                   onClick={() => onContinueWithHeir(heir.id)}
-                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#1A273A] border border-[#24354C] flex items-center justify-between gap-2 text-xs text-[#F1F5F9] cursor-pointer transition-colors"
+                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#162232] hover:bg-[#1A273A] border border-[#24354C] flex items-center justify-between gap-2 text-xs text-[#F1F5F9] cursor-pointer transition-colors"
                 >
                   <span className="font-semibold whitespace-normal break-words text-start">
                     {formatPersonName(heir.name, lang)} · {ROLE_LABELS[lang][heir.role]} ·{' '}
                     {formatAgeLabel(Math.max(6, heir.age), lang)}
                   </span>
-                  <span className="text-[#FBBF24] font-bold whitespace-nowrap shrink-0">
+                  <span className="text-[#F59E0B] font-bold whitespace-nowrap shrink-0">
                     {isFa ? 'انتخاب ←' : 'Play →'}
                   </span>
                 </button>
@@ -426,7 +226,7 @@ export function DeathSummaryModal({
           )}
         </div>
 
-        {/* Sticky Footer: Heir Continuation & New Life Actions (Always Visible, Never Truncated) */}
+        {/* Sticky Footer: Heir Continuation & New Life Actions */}
         <div className="shrink-0 px-4 sm:px-5 py-3 bg-[#121C2B] border-t border-[#1E2D40] space-y-2">
           {primaryHeir ? (
             <>
@@ -470,7 +270,7 @@ export function DeathSummaryModal({
               )}
             </>
           ) : (
-            <div className="p-2.5 rounded-xl bg-[#1A1116] border border-[#7F1D1D]/60 text-xs text-[#FCA5A5] text-center">
+            <div className="p-2.5 rounded-xl bg-[#162232] border border-[#24354C] text-xs text-[#F87171] text-center">
               {isFa
                 ? 'هیچ وارث زنده‌ای باقی نمانده است؛ یک زندگی جدید را آغاز کنید!'
                 : 'No living heirs remain — start a fresh Viking life!'}
@@ -506,6 +306,12 @@ export function DeathSummaryModal({
           </div>
         </div>
       </div>
+
+      <SagaSharePosterModal
+        isOpen={isPosterModalOpen}
+        onClose={() => setIsPosterModalOpen(false)}
+        state={state}
+      />
     </div>
   );
 }
