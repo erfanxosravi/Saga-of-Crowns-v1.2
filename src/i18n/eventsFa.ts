@@ -1,9 +1,11 @@
 import { BITLIFE_EVENTS_FA } from './bitlifeEventsFa';
 import { LOTHBROK_EVENTS_FA } from '../data/lothbrokCycle';
+import { LEGEND_ENCOUNTERS_FA } from '../data/legendEncounters';
 
 export interface EventChoiceFa {
   label: string;
   mildLabel?: string;
+  tooltipHint?: string;
   outcomeText: string;
   mildOutcomeText?: string;
   deathReason?: string;
@@ -14,6 +16,7 @@ export interface GameEventFa {
   title: string;
   text: string;
   mildText?: string;
+  sagaVsChronicleNote?: string;
   choices: Record<string, EventChoiceFa>;
 }
 
@@ -1387,5 +1390,6 @@ export const EVENTS_FA: Record<string, GameEventFa> = {
   },
   ...BITLIFE_EVENTS_FA,
   ...LOTHBROK_EVENTS_FA,
+  ...LEGEND_ENCOUNTERS_FA,
 };
 

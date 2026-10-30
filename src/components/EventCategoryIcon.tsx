@@ -11,7 +11,7 @@ import {
 import { EventCategory, EventIconType } from '../types/game';
 
 export function resolveEventIconType(
-  category: EventCategory | 'Chronicle' | 'Action' | 'Succession',
+  category: EventCategory | 'Chronicle' | 'Action' | 'Succession' | 'Word from the Lands',
   explicit?: EventIconType,
   isDanger?: boolean
 ): EventIconType {
@@ -41,6 +41,7 @@ export function resolveEventIconType(
     case 'Coming of Age':
     case 'Family':
       return 'family';
+    case 'Word from the Lands':
     case 'Politics & Kings':
     case 'Law & the Thing':
     case 'Thing & Law':
@@ -54,7 +55,7 @@ export function resolveEventIconType(
 }
 
 interface EventCategoryIconProps {
-  category: EventCategory | 'Chronicle' | 'Action' | 'Succession';
+  category: EventCategory | 'Chronicle' | 'Action' | 'Succession' | 'Word from the Lands';
   iconType?: EventIconType;
   isDanger?: boolean;
   className?: string;

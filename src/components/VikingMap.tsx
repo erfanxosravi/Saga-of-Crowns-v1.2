@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
@@ -48,7 +48,11 @@ import {
   SETTLEMENTS,
   SETTLEMENTS_BY_ID,
 } from '../data/geography';
-import { BUILDINGS_CATALOG } from '../data/namesAndTraits';
+import {
+  BUILDINGS_CATALOG,
+  MILITARY_CATALOG_BY_ID,
+  MilitaryCatalogItemId,
+} from '../data/namesAndTraits';
 import {
   DiplomacyApproach,
   hasBoathouse,
@@ -57,6 +61,7 @@ import {
 } from '../engine/gameEngine';
 import { BUILDINGS_FA, SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import {
+  MAP_FORCES_UI,
   REGION_LABELS,
   RELIGION_LABELS,
   SEASON_LABELS,
@@ -72,7 +77,7 @@ import {
   SettlementType,
   TributeBurden,
 } from '../types/game';
-import { NorseBottomSheet } from './NorseMotifs';
+import { MilitaryUnitGlyph, NorseBottomSheet } from './NorseMotifs';
 
 interface VikingMapProps {
   state: FullGameState;
@@ -93,8 +98,16 @@ interface VikingMapProps {
   onToggleTolerance?: (settlementId: string) => void;
 }
 
-type MapLensId = 'all' | 'owned' | 'loot' | 'trade';
-type SheetTabId = 'assets' | 'buildings' | 'actions' | 'raid' | 'siege' | 'diplomacy' | 'lore';
+type MapLensId = 'all' | 'owned' | 'forces' | 'loot' | 'trade';
+type SheetTabId =
+  | 'assets'
+  | 'forces'
+  | 'buildings'
+  | 'actions'
+  | 'raid'
+  | 'siege'
+  | 'diplomacy'
+  | 'lore';
 
 /**
  * Faded classic cartographic country/realm names rendered directly on the map landmasses.
@@ -383,6 +396,287 @@ function SettlementGlyph({
   );
 }
 
+interface SettlementForceData {
+  localGarrison: number;
+  activeWarband: number;
+  totalGuards: number;
+  snekkjas: number;
+  drakkars: number;
+  knarrs: number;
+  totalShips: number;
+  dominantShipType: 'drakkar' | 'snekkja' | 'knarr';
+  warhorses: number;
+  packHorses: number;
+  totalHorses: number;
+  warGearTier: number;
+  totalStrength: number;
+  hasAnyForces: boolean;
+}
+
+/**
+ * Distinct miniature SVG silhouettes for map badges and fleet-at-sea:
+ * - Snekkja: slim low hull
+ * - Drakkar: dragon-prow high stem
+ * - Knarr: broad deep cargo hull
+ */
+function MapHullSilhouetteSvg({
+  shipType,
+  strokeColor,
+}: {
+  shipType: 'drakkar' | 'snekkja' | 'knarr';
+  strokeColor: string;
+}) {
+  if (shipType === 'snekkja') {
+    return (
+      <g
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M -4.2 1.2 C -2.2 2.4 2.2 2.4 4.2 1.2 L 4.8 0.1 L -4.8 0.1 Z" />
+        <path d="M 0 -2.6 L 0 0.2" />
+        <path d="M -1.8 -2.0 L 1.8 -2.0 L 1.4 -0.4 L -1.4 -0.4 Z" />
+      </g>
+    );
+  }
+  if (shipType === 'knarr') {
+    return (
+      <g
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M -3.8 0.3 C -3.8 2.6 -1.8 3.3 0 3.3 C 1.8 3.3 3.8 2.6 3.8 0.3 L 4.3 -0.7 C 2.4 -0.2 -2.4 -0.2 -4.3 -0.7 Z" />
+        <path d="M 0 -3.2 L 0 0.2" />
+        <path d="M -2.3 -2.3 C -0.8 -2.8 0.8 -2.8 2.3 -2.3 L 1.9 -0.5 L -1.9 -0.5 Z" />
+      </g>
+    );
+  }
+  // Drakkar (high dragon-prow stem)
+  return (
+    <g
+      fill="none"
+      stroke={strokeColor}
+      strokeWidth="1.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M -3.8 1.4 C -1.8 2.6 1.8 2.6 3.8 1.4 C 4.6 0.6 4.9 -0.9 4.5 -2.5 C 4.3 -3.2 3.6 -3.4 3.2 -2.9 L 3.8 -1.8 C 3.5 -0.8 2.9 0 1.9 0.1 L -2.1 0.1 C -3.1 0 -3.6 -1.0 -3.5 -2.2" />
+      <path d="M 0 -3.2 L 0 0.3" />
+      <path d="M -2.1 -2.2 L 2.1 -2.2 L 1.7 -0.4 L -1.7 -0.4 Z" />
+    </g>
+  );
+}
+
+/**
+ * Memoized Settlement Force Badge Cluster with 3-tier Level of Detail (LOD)
+ * and automatic label-collision avoidance (always placed opposite the label anchor/dy).
+ */
+const SettlementForceBadgeCluster = memo(function SettlementForceBadgeCluster({
+  forces,
+  zoom,
+  isSelected,
+  playerOwns,
+  isCurrent,
+  labelAnchor,
+  labelDy,
+  isLightTheme,
+}: {
+  forces: SettlementForceData;
+  zoom: number;
+  isSelected: boolean;
+  playerOwns: boolean;
+  isCurrent: boolean;
+  labelAnchor: 'start' | 'middle' | 'end';
+  labelDy: number;
+  isLightTheme: boolean;
+}) {
+  if (!forces.hasAnyForces) return null;
+
+  const invScale = 1 / Math.sqrt(zoom);
+  // Nudge badge away from the settlement name:
+  // If label is above the node (labelDy < 0), place badge below (+15);
+  // Otherwise place badge above (-15) and nudged opposite horizontal labelAnchor.
+  const placeBelow = labelDy < -1;
+  const nudgeX = labelAnchor === 'start' ? -7.5 : 7.5;
+  const nudgeY = placeBelow ? 14.5 : -14.5;
+
+  // LOD Tier 1: Zoomed out (zoom < 1.38) -> tiny dot + total strength number only
+  // LOD Tier 2: Mid zoom (1.38 <= zoom < 2.05) -> badge cluster for selected, owned, and current-port only
+  // LOD Tier 3: Zoomed in (zoom >= 2.05) -> full badge cluster with silhouettes
+  const isLowZoom = zoom < 1.38;
+  const isMidZoom = zoom >= 1.38 && zoom < 2.05;
+  const showFullCluster =
+    !isLowZoom && (zoom >= 2.05 || isSelected || playerOwns || isCurrent);
+
+  const bgFill = isLightTheme ? 'rgba(15, 23, 34, 0.92)' : 'rgba(10, 19, 32, 0.94)';
+  const strokeBorder = isCurrent
+    ? '#F59E0B'
+    : isSelected
+      ? '#38BDF8'
+      : '#34D399';
+
+  if (!showFullCluster) {
+    const pillText = `${forces.totalStrength}`;
+    const pillW = Math.max(18, 11 + pillText.length * 4.8);
+    return (
+      <g
+        transform={`translate(${nudgeX * invScale}, ${nudgeY * invScale}) scale(${invScale})`}
+        className="pointer-events-none select-none"
+      >
+        <rect
+          x={-pillW / 2}
+          y={-5.5}
+          width={pillW}
+          height={11}
+          rx={5.5}
+          fill={bgFill}
+          stroke={strokeBorder}
+          strokeWidth="0.95"
+        />
+        <circle
+          cx={-pillW / 2 + 4.5}
+          cy={0}
+          r={2}
+          fill={strokeBorder}
+        />
+        <text
+          x={2.2}
+          y={0.5}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill="#F8FAFC"
+          fontSize="7.4"
+          fontWeight="800"
+          className="font-mono"
+        >
+          {pillText}
+        </text>
+      </g>
+    );
+  }
+
+  // Full / Mid cluster pills: Shield+Guards, Ship+Ships (if >0), Horse+Mounts (if >0)
+  const segments: {
+    key: string;
+    kind: 'shield' | 'ship' | 'horse';
+    count: number;
+    color: string;
+  }[] = [];
+
+  if (forces.totalGuards > 0) {
+    segments.push({
+      key: 'guards',
+      kind: 'shield',
+      count: forces.totalGuards,
+      color: isCurrent ? '#FBBF24' : '#34D399',
+    });
+  }
+  if (forces.totalShips > 0) {
+    const shipColor =
+      forces.dominantShipType === 'drakkar'
+        ? '#38BDF8'
+        : forces.dominantShipType === 'snekkja'
+          ? '#22D3EE'
+          : '#34D399';
+    segments.push({
+      key: 'ships',
+      kind: 'ship',
+      count: forces.totalShips,
+      color: shipColor,
+    });
+  }
+  if (forces.totalHorses > 0 && (!isMidZoom || isCurrent || isSelected)) {
+    segments.push({
+      key: 'horses',
+      kind: 'horse',
+      count: forces.totalHorses,
+      color: '#F59E0B',
+    });
+  }
+
+  const segWidth = 22;
+  const totalW = segments.length * segWidth + 4;
+  const startX = -totalW / 2 + segWidth / 2 + 2;
+
+  return (
+    <g
+      transform={`translate(${nudgeX * invScale}, ${nudgeY * invScale}) scale(${invScale})`}
+      className="pointer-events-none select-none"
+    >
+      <rect
+        x={-totalW / 2}
+        y={-6.8}
+        width={totalW}
+        height={13.6}
+        rx={6.8}
+        fill={bgFill}
+        stroke={strokeBorder}
+        strokeWidth="1.05"
+      />
+      {segments.map((seg, idx) => {
+        const cx = startX + idx * segWidth;
+        return (
+          <g key={seg.key} transform={`translate(${cx}, 0)`}>
+            {idx > 0 && (
+              <line
+                x1={-segWidth / 2}
+                y1={-4.2}
+                x2={-segWidth / 2}
+                y2={4.2}
+                stroke="#23364C"
+                strokeWidth="0.8"
+              />
+            )}
+            <g transform="translate(-4.8, 0)">
+              {seg.kind === 'shield' && (
+                <path
+                  d="M 0 -3.5 L 3.1 -2.1 L 3.1 0.5 C 3.1 2.4 1.7 3.7 0 4.3 C -1.7 3.7 -3.1 2.4 -3.1 0.5 L -3.1 -2.1 Z"
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                />
+              )}
+              {seg.kind === 'ship' && (
+                <MapHullSilhouetteSvg
+                  shipType={forces.dominantShipType}
+                  strokeColor={seg.color}
+                />
+              )}
+              {seg.kind === 'horse' && (
+                <path
+                  d="M -2.4 3.5 L -2.4 0.5 L -3.2 -1.2 L -1.8 -3.4 L 0.6 -3.8 L 2.5 -2.6 L 3.1 -0.6 L 0.8 0.4 L 0.4 1.8 L 2.0 3.5 Z"
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              )}
+            </g>
+            <text
+              x={3.6}
+              y={0.5}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="#F8FAFC"
+              fontSize="7.4"
+              fontWeight="800"
+              className="font-mono"
+            >
+              {seg.count}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+});
+
 export function VikingMap({
   state,
   onSailTo,
@@ -405,6 +699,7 @@ export function VikingMap({
   const isFa = lang === 'fa';
 
   const currentLoc = SETTLEMENTS_BY_ID[state.character.locationId] ?? SETTLEMENTS[0];
+  const forcesUi = MAP_FORCES_UI[lang];
 
   const [selectedId, setSelectedId] = useState<string>(state.character.locationId);
   const [activeLens, setActiveLens] = useState<MapLensId>('all');
@@ -412,7 +707,11 @@ export function VikingMap({
   const [activeSheetTab, setActiveSheetTab] = useState<SheetTabId>('assets');
   const [showUnexplored, setShowUnexplored] = useState<boolean>(false);
   const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
-  const [legendSection, setLegendSection] = useState<'all' | 'settlements' | 'weather'>('all');
+  const [legendSection, setLegendSection] = useState<
+    'all' | 'settlements' | 'forces' | 'weather'
+  >('all');
+  const [isForcesDrawerOpen, setIsForcesDrawerOpen] = useState<boolean>(false);
+  const [isSeaFleetCardOpen, setIsSeaFleetCardOpen] = useState<boolean>(false);
   const [mapTactic, setMapTactic] = useState<RaidTactic>('shield_wall');
   const [siegeApproach, setSiegeApproach] = useState<SiegeApproach>('assault');
   const [diploApproach, setDiploApproach] = useState<DiplomacyApproach>('trade_pact');
@@ -690,8 +989,205 @@ export function VikingMap({
       : 0;
   const cityAnnualFood = cityHolding ? cityHolding.farms * 14 : 0;
 
+  // Single source of truth for per-settlement military forces
+  const settlementForcesById = useMemo<Record<string, SettlementForceData>>(() => {
+    const map: Record<string, SettlementForceData> = {};
+    const snekkjasPool = state.realm.snekkjas ?? 0;
+    const drakkarsPool = Math.max(0, state.realm.longships - snekkjasPool);
+    const knarrsPool = state.realm.knarrs;
+    const warhorsesPool = state.realm.warhorses ?? 0;
+    const packHorsesPool = state.realm.packHorses ?? 0;
+    const warGearPool = state.realm.warGearTier ?? 0;
+    const dominantShip: 'drakkar' | 'snekkja' | 'knarr' =
+      drakkarsPool > 0 ? 'drakkar' : snekkjasPool > 0 ? 'snekkja' : 'knarr';
+
+    for (const s of SETTLEMENTS) {
+      const holding = state.realm.holdings.find((h) => h.settlementId === s.id);
+      const isHeld = Boolean(holding && holding.farms > 0);
+      const isCurrentPort = s.id === currentLoc.id;
+
+      const localGarrison = isHeld ? (holding?.garrison ?? 4) : 0;
+      const activeWarband = isCurrentPort ? state.realm.hirdWarriors : 0;
+      const totalGuards = localGarrison + activeWarband;
+
+      const snekkjas = isCurrentPort ? snekkjasPool : 0;
+      const drakkars = isCurrentPort ? drakkarsPool : 0;
+      const knarrs = isCurrentPort ? knarrsPool : 0;
+      const totalShips = snekkjas + drakkars + knarrs;
+
+      const warhorses = isCurrentPort ? warhorsesPool : 0;
+      const packHorses = isCurrentPort ? packHorsesPool : 0;
+      const totalHorses = warhorses + packHorses;
+      const warGearTier = isCurrentPort ? warGearPool : 0;
+
+      const totalStrength = totalGuards + totalShips + totalHorses;
+      map[s.id] = {
+        localGarrison,
+        activeWarband,
+        totalGuards,
+        snekkjas,
+        drakkars,
+        knarrs,
+        totalShips,
+        dominantShipType: dominantShip,
+        warhorses,
+        packHorses,
+        totalHorses,
+        warGearTier,
+        totalStrength,
+        hasAnyForces: totalStrength > 0,
+      };
+    }
+    return map;
+  }, [
+    state.realm.holdings,
+    state.realm.hirdWarriors,
+    state.realm.longships,
+    state.realm.snekkjas,
+    state.realm.knarrs,
+    state.realm.warhorses,
+    state.realm.packHorses,
+    state.realm.warGearTier,
+    currentLoc.id,
+  ]);
+
+  const inspectedForces = settlementForcesById[inspected.id] ?? {
+    localGarrison: 0,
+    activeWarband: 0,
+    totalGuards: 0,
+    snekkjas: 0,
+    drakkars: 0,
+    knarrs: 0,
+    totalShips: 0,
+    dominantShipType: 'drakkar' as const,
+    warhorses: 0,
+    packHorses: 0,
+    totalHorses: 0,
+    warGearTier: 0,
+    totalStrength: 0,
+    hasAnyForces: false,
+  };
+
+  // Detailed unit/ship/mount items stationed at the currently inspected settlement,
+  // reading directly from MILITARY_CATALOG_BY_ID
+  const inspectedForceItems = useMemo(() => {
+    const isCurrentPort = inspected.id === currentLoc.id;
+    const bondiCount = state.realm.bondiSpearmen ?? 0;
+    const archersCount = state.realm.norseArchers ?? 0;
+    const berserkersCount = state.realm.berserkers ?? 0;
+    const huscarlsCount = Math.max(
+      0,
+      state.realm.hirdWarriors - bondiCount - archersCount - berserkersCount
+    );
+
+    const warriors: { id: MilitaryCatalogItemId; count: number; displayCount: string }[] = [];
+    if (inspectedForces.localGarrison > 0) {
+      warriors.push({
+        id: 'local_garrison',
+        count: inspectedForces.localGarrison,
+        displayCount: `×${inspectedForces.localGarrison}`,
+      });
+    }
+    if (isCurrentPort) {
+      if (huscarlsCount > 0) {
+        warriors.push({
+          id: 'sworn_huscarls',
+          count: huscarlsCount,
+          displayCount: `×${huscarlsCount}`,
+        });
+      }
+      if (bondiCount > 0) {
+        warriors.push({
+          id: 'bondi_spearmen',
+          count: bondiCount,
+          displayCount: `×${bondiCount}`,
+        });
+      }
+      if (archersCount > 0) {
+        warriors.push({
+          id: 'norse_archers',
+          count: archersCount,
+          displayCount: `×${archersCount}`,
+        });
+      }
+      if (berserkersCount > 0) {
+        warriors.push({
+          id: 'berserkers',
+          count: berserkersCount,
+          displayCount: `×${berserkersCount}`,
+        });
+      }
+    }
+
+    const fleet: { id: MilitaryCatalogItemId; count: number; displayCount: string }[] = [];
+    if (isCurrentPort) {
+      if (inspectedForces.drakkars > 0) {
+        fleet.push({
+          id: 'drakkar',
+          count: inspectedForces.drakkars,
+          displayCount: `×${inspectedForces.drakkars}`,
+        });
+      }
+      if (inspectedForces.snekkjas > 0) {
+        fleet.push({
+          id: 'snekkja',
+          count: inspectedForces.snekkjas,
+          displayCount: `×${inspectedForces.snekkjas}`,
+        });
+      }
+      if (inspectedForces.knarrs > 0) {
+        fleet.push({
+          id: 'knarr',
+          count: inspectedForces.knarrs,
+          displayCount: `×${inspectedForces.knarrs}`,
+        });
+      }
+    }
+
+    const stables: { id: MilitaryCatalogItemId; count: number; displayCount: string }[] = [];
+    if (isCurrentPort) {
+      if (inspectedForces.warhorses > 0) {
+        stables.push({
+          id: 'warhorses',
+          count: inspectedForces.warhorses,
+          displayCount: `×${inspectedForces.warhorses}`,
+        });
+      }
+      if (inspectedForces.packHorses > 0) {
+        stables.push({
+          id: 'pack_horses',
+          count: inspectedForces.packHorses,
+          displayCount: `×${inspectedForces.packHorses}`,
+        });
+      }
+      if (inspectedForces.warGearTier > 0) {
+        stables.push({
+          id: 'war_gear',
+          count: inspectedForces.warGearTier,
+          displayCount: isFa
+            ? `سطح ${inspectedForces.warGearTier}`
+            : `Lv.${inspectedForces.warGearTier}`,
+        });
+      }
+    }
+
+    return { warriors, fleet, stables };
+  }, [
+    inspected.id,
+    currentLoc.id,
+    inspectedForces,
+    state.realm.bondiSpearmen,
+    state.realm.norseArchers,
+    state.realm.berserkers,
+    state.realm.hirdWarriors,
+    isFa,
+  ]);
+
   const matchesLens = (s: Settlement): boolean => {
     if (activeLens === 'all') return true;
+    if (activeLens === 'forces') {
+      return Boolean(settlementForcesById[s.id]?.hasAnyForces);
+    }
     if (activeLens === 'owned') {
       const owned = state.realm.holdings.some((h) => h.settlementId === s.id && h.farms > 0);
       const trib = (state.tributaries ?? []).includes(s.id);
@@ -725,6 +1221,7 @@ export function VikingMap({
     currentLoc.id,
     activeLens,
     state.realm.holdings,
+    settlementForcesById,
   ]);
 
   const handleCyclePort = (dir: -1 | 1) => {
@@ -788,7 +1285,13 @@ export function VikingMap({
   // Midpoint on quadratic bezier (t = 0.5) for the route waypoint ship icon
   const bezierMidX = 0.25 * currentPt.x + 0.5 * midX + 0.25 * targetPt.x;
   const bezierMidY = 0.25 * currentPt.y + 0.5 * midY + 0.25 * targetPt.y;
+  // Tangent angle along quadratic Bezier at t = 0.5 is P2 - P0
+  const courseAngleDeg = (Math.atan2(dyArc, dxArc) * 180) / Math.PI;
   const isLightTheme = (state.settings.theme ?? 'light') === 'light';
+
+  const currentPortForces = settlementForcesById[currentLoc.id];
+  const fleetSealiftCapacity =
+    (currentPortForces?.drakkars ?? 0) * 30 + (currentPortForces?.snekkjas ?? 0) * 20;
 
   return (
     <motion.div
@@ -834,6 +1337,24 @@ export function VikingMap({
               <Minus className="w-3.5 h-3.5" />
             </button>
             <div className="w-px h-4 bg-[#1E2E42] mx-0.5" />
+            {/* 1-Tap Quick Lens Toggle for "نیروها / Forces" */}
+            <button
+              type="button"
+              onClick={() =>
+                setActiveLens((prev) => (prev === 'forces' ? 'all' : 'forces'))
+              }
+              aria-pressed={activeLens === 'forces'}
+              title={forcesUi.lensTooltip}
+              className={`min-h-[28px] px-2 py-0.5 rounded-lg inline-flex items-center gap-1 text-[11px] font-bold transition-colors cursor-pointer ${
+                activeLens === 'forces'
+                  ? 'bg-[#F59E0B] text-[#0B1118]'
+                  : 'text-[#CBD5E1] hover:text-white hover:bg-[#162334]'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5 shrink-0" />
+              <span>{forcesUi.lensLabel}</span>
+            </button>
+            <div className="w-px h-4 bg-[#1E2E42] mx-0.5" />
             <button
               type="button"
               onClick={() => setIsLegendOpen((prev) => !prev)}
@@ -855,6 +1376,94 @@ export function VikingMap({
         </div>
 
         {/* ================================================================= */}
+        {/* FLOATING SEA FLEET MINI-CARD (WHEN SEA VESSEL MARKER IS TAPPED)   */}
+        {/* ================================================================= */}
+        <AnimatePresence>
+          {isSeaFleetCardOpen && inspected.id !== currentLoc.id && hasShips && (
+            <motion.div
+              key="sea-fleet-mini-card"
+              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="pointer-events-auto self-end w-[min(21rem,calc(100vw-1.25rem))] rounded-2xl bg-[#0A1320]/95 backdrop-blur-md border border-[#38BDF8]/50 shadow-[0_14px_34px_rgba(0,0,0,0.85)] p-3 space-y-2 text-xs"
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-[#1B2B3E] pb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/35 text-[#38BDF8] flex items-center justify-center shrink-0">
+                    <MilitaryUnitGlyph
+                      type={currentPortForces?.dominantShipType ?? 'drakkar'}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#F1F5F9] truncate">
+                      {forcesUi.seaFleetTitle}
+                    </div>
+                    <div className="text-[10px] text-[#38BDF8] truncate">
+                      {forcesUi.seaFleetDestination}: {inspectedDisplayName} ({voyage.sailingDays}
+                      {isFa ? ' روز' : 'd'} · {voyage.dangerPct}% {isFa ? 'خطر' : 'risk'})
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSeaFleetCardOpen(false)}
+                  className="w-6 h-6 rounded-lg flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-[#162436] cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(currentPortForces?.drakkars ?? 0) > 0 && (
+                  <span className="px-2 py-0.5 rounded-lg bg-[#131D2B] border border-[#233246] text-[11px] font-mono text-[#38BDF8] inline-flex items-center gap-1">
+                    <MilitaryUnitGlyph type="drakkar" className="w-3.5 h-3.5" />
+                    <span>
+                      {MILITARY_CATALOG_BY_ID.drakkar[lang].shortName} ×{currentPortForces.drakkars}
+                    </span>
+                  </span>
+                )}
+                {(currentPortForces?.snekkjas ?? 0) > 0 && (
+                  <span className="px-2 py-0.5 rounded-lg bg-[#131D2B] border border-[#233246] text-[11px] font-mono text-cyan-400 inline-flex items-center gap-1">
+                    <MilitaryUnitGlyph type="snekkja" className="w-3.5 h-3.5" />
+                    <span>
+                      {MILITARY_CATALOG_BY_ID.snekkja[lang].shortName} ×{currentPortForces.snekkjas}
+                    </span>
+                  </span>
+                )}
+                {(currentPortForces?.knarrs ?? 0) > 0 && (
+                  <span className="px-2 py-0.5 rounded-lg bg-[#131D2B] border border-[#233246] text-[11px] font-mono text-emerald-400 inline-flex items-center gap-1">
+                    <MilitaryUnitGlyph type="knarr" className="w-3.5 h-3.5" />
+                    <span>
+                      {MILITARY_CATALOG_BY_ID.knarr[lang].shortName} ×{currentPortForces.knarrs}
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
+                  <div className="text-[10px] text-[#94A3B8]">{forcesUi.seaFleetCrewCap}</div>
+                  <div className="font-mono font-bold text-[#F1F5F9] mt-0.5">
+                    {state.realm.hirdWarriors} / {fleetSealiftCapacity}{' '}
+                    {isFa ? 'جنگجو' : 'men'}
+                  </div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#131D2B] border border-[#233246]">
+                  <div className="text-[10px] text-[#94A3B8]">{forcesUi.seaFleetActiveEffect}</div>
+                  <div className="font-mono font-bold text-[#34D399] mt-0.5">
+                    {isFa
+                      ? `دریانوردی ${effectiveSeamanship} · سود +${state.realm.knarrs * 18}٪`
+                      : `Sail ${effectiveSeamanship} · +${state.realm.knarrs * 18}% Trade`}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ================================================================= */}
         {/* FLOATING LEGEND, FILTERS & WEATHER PANEL                          */}
         {/* ================================================================= */}
         <AnimatePresence>
@@ -872,7 +1481,8 @@ export function VikingMap({
                   {(
                     [
                       { id: 'all', fa: 'همه', en: 'All' },
-                      { id: 'settlements', fa: 'نوع بنادر', en: 'Settlements' },
+                      { id: 'forces', fa: 'نیروها', en: 'Forces' },
+                      { id: 'settlements', fa: 'بنادر', en: 'Ports' },
                       { id: 'weather', fa: 'آب‌وهوا', en: 'Weather' },
                     ] as const
                   ).map((tab) => {
@@ -932,6 +1542,7 @@ export function VikingMap({
                 {(
                   [
                     { id: 'all', fa: 'همه بنادر', en: 'All Ports' },
+                    { id: 'forces', fa: 'نیروها', en: 'Forces' },
                     { id: 'owned', fa: 'املاک شما', en: 'Your Realm' },
                     { id: 'loot', fa: 'اهداف غارت', en: 'Rich Loot' },
                     { id: 'trade', fa: 'مراکز تجاری', en: 'Trade Hubs' },
@@ -956,8 +1567,83 @@ export function VikingMap({
               </div>
 
               <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 text-xs">
-                {(legendSection === 'all' || legendSection === 'settlements') && (
+                {(legendSection === 'all' || legendSection === 'forces') && (
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#F59E0B]">
+                        {forcesUi.legendForcesHeader}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveLens(activeLens === 'forces' ? 'all' : 'forces')
+                        }
+                        className="text-[10px] text-[#38BDF8] hover:underline cursor-pointer"
+                      >
+                        {activeLens === 'forces'
+                          ? isFa
+                            ? 'نمایش همه بنادر'
+                            : 'Show all ports'
+                          : isFa
+                            ? 'فیلتر نیروها'
+                            : 'Filter forces'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {[
+                        {
+                          type: 'local_garrison' as const,
+                          color: 'text-emerald-400 border-emerald-500/35 bg-emerald-500/10',
+                          label: forcesUi.legendGarrison,
+                        },
+                        {
+                          type: 'drakkar' as const,
+                          color: 'text-[#38BDF8] border-[#38BDF8]/35 bg-[#38BDF8]/10',
+                          label: forcesUi.legendDrakkar,
+                        },
+                        {
+                          type: 'snekkja' as const,
+                          color: 'text-cyan-400 border-cyan-500/35 bg-cyan-500/10',
+                          label: forcesUi.legendSnekkja,
+                        },
+                        {
+                          type: 'knarr' as const,
+                          color: 'text-emerald-400 border-emerald-500/35 bg-emerald-500/10',
+                          label: forcesUi.legendKnarr,
+                        },
+                        {
+                          type: 'warhorses' as const,
+                          color: 'text-amber-400 border-amber-500/35 bg-amber-500/10',
+                          label: forcesUi.legendHorses,
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.type}
+                          className="p-2 rounded-xl bg-[#131D2B] border border-[#233246] flex items-center gap-2.5"
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${item.color}`}
+                          >
+                            <MilitaryUnitGlyph type={item.type} className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-semibold text-[#F1F5F9]">
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(legendSection === 'all' || legendSection === 'settlements') && (
+                  <div
+                    className={
+                      legendSection === 'all'
+                        ? 'pt-2.5 border-t border-[#1B2B3E] space-y-2'
+                        : 'space-y-2'
+                    }
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#94A3B8]">
                         {isFa ? 'نمادها و نوع سکونتگاه‌ها' : 'Settlement Types & Roles'}
@@ -1519,9 +2205,9 @@ export function VikingMap({
             })}
           </g>
 
-          {/* 13. Curved Sea Course from Current Port to Selected Port + Waypoint Ship */}
+          {/* 13. Curved Sea Course from Current Port to Selected Port + Interactive Fleet at Sea */}
           {inspected.id !== currentLoc.id && (
-            <g className="pointer-events-none">
+            <g>
               <path
                 d={curvedCoursePath}
                 fill="none"
@@ -1537,6 +2223,7 @@ export function VikingMap({
                 strokeOpacity="0.22"
                 strokeWidth={5.5 / Math.sqrt(zoom)}
                 strokeLinecap="round"
+                className="pointer-events-none"
               />
               <path
                 d={curvedCoursePath}
@@ -1553,24 +2240,88 @@ export function VikingMap({
                 strokeWidth={2.0 / Math.sqrt(zoom)}
                 strokeDasharray="4.5 3.5"
                 strokeLinecap="round"
+                className="pointer-events-none"
               />
-              {/* Mid-route Waypoint Badge */}
-              <g transform={`translate(${bezierMidX}, ${bezierMidY}) scale(${1 / Math.sqrt(zoom)})`}>
-                <circle
-                  cx="0"
-                  cy="0"
-                  r="6"
-                  fill={isLightTheme ? '#FFFDF8' : '#0F1722'}
-                  stroke={voyage.dangerPct >= 35 ? '#DC2626' : '#0284C7'}
-                  strokeWidth="1.4"
-                />
-                <path
-                  d="M -2.8 1.2 Q 0 2.8 2.8 1.2 L 3.2 -0.6 L -3.2 -0.6 Z M 0 0.6 L 0 -3.2"
-                  fill={voyage.dangerPct >= 35 ? '#DC2626' : '#0284C7'}
-                  stroke={voyage.dangerPct >= 35 ? '#DC2626' : '#0284C7'}
-                  strokeWidth="0.6"
-                />
-              </g>
+              {/* Mid-route Fleet at Sea Silhouette + Subtle Wake Line (Tappable) */}
+              {(() => {
+                const angleDeg = courseAngleDeg;
+                const flipY = Math.abs(angleDeg) > 90 ? -1 : 1;
+                const flagshipType: 'drakkar' | 'snekkja' | 'knarr' =
+                  currentPortForces?.dominantShipType ?? 'drakkar';
+                const totalFleetShips = currentPortForces?.totalShips ?? 0;
+                const strokeCol =
+                  voyage.dangerPct >= 35
+                    ? '#EF4444'
+                    : flagshipType === 'drakkar'
+                      ? '#F59E0B'
+                      : flagshipType === 'knarr'
+                        ? '#34D399'
+                        : '#38BDF8';
+
+                return (
+                  <g
+                    transform={`translate(${bezierMidX}, ${bezierMidY}) scale(${1 / Math.sqrt(zoom)})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!dragRef.current.moved) {
+                        setIsSeaFleetCardOpen((v) => !v);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {/* Generous Tap Hitbox */}
+                    <circle cx="0" cy="0" r="16" fill="transparent" />
+                    {/* Subtle Wake Line trailing behind the hull */}
+                    <g transform={`rotate(${angleDeg}) scale(1, ${flipY})`}>
+                      <path
+                        d="M -17 -2.4 Q -11 -0.9 -6.5 -0.6 M -19 0 L -7 0 M -17 2.4 Q -11 0.9 -6.5 0.6"
+                        fill="none"
+                        stroke={isLightTheme ? '#0284C7' : '#7DD3FC'}
+                        strokeWidth="1.15"
+                        strokeLinecap="round"
+                        opacity="0.78"
+                      />
+                    </g>
+                    {/* Medallion Plate */}
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="9.2"
+                      fill={isLightTheme ? '#FAF3E4' : '#0B131E'}
+                      stroke={strokeCol}
+                      strokeWidth="1.45"
+                    />
+                    {/* Oriented Hull Silhouette */}
+                    <g transform={`rotate(${angleDeg}) scale(0.95, ${0.95 * flipY})`}>
+                      <MapHullSilhouetteSvg shipType={flagshipType} strokeColor={strokeCol} />
+                    </g>
+                    {/* Total Ships Counter Pip */}
+                    {totalFleetShips > 0 && (
+                      <g transform="translate(7.5, -7.5)">
+                        <circle
+                          cx="0"
+                          cy="0"
+                          r="5"
+                          fill={strokeCol}
+                          stroke={isLightTheme ? '#FAF3E4' : '#0B131E'}
+                          strokeWidth="1"
+                        />
+                        <text
+                          x="0"
+                          y="1.8"
+                          textAnchor="middle"
+                          fill="#0B1118"
+                          fontSize="5.8"
+                          fontWeight="800"
+                          className="font-mono select-none"
+                        >
+                          {totalFleetShips}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })()}
             </g>
           )}
 
@@ -1587,6 +2338,7 @@ export function VikingMap({
             const status: SettlementStatus =
               state.settlementStatuses?.[s.id] ?? s.defaultStatus ?? 'independent';
             const inLens = matchesLens(s);
+            const forceData = settlementForcesById[s.id];
 
             const mapPortLabel = isFa
               ? (SETTLEMENTS_FA[s.id]?.name ?? s.name).split(' (')[0]
@@ -1594,25 +2346,39 @@ export function VikingMap({
 
             const hint = LABEL_ANCHOR_HINTS[s.id];
             const anchor = hint?.anchor ?? 'start';
+            const rawDy = hint?.dy ?? 3.5;
             const dx = (hint?.dx ?? 8) / Math.sqrt(zoom);
-            const dy = (hint?.dy ?? 3.5) / Math.sqrt(zoom);
+            const dy = rawDy / Math.sqrt(zoom);
 
+            // When 'forces' lens is active, settlement names stay legible even on dimmed unrelated ports
             const showLabel =
               isCurrent ||
               isSelected ||
               playerOwns ||
+              (activeLens === 'forces' && known && (s.settlementType === 'capital' || zoom >= 1.5)) ||
               (known && inLens && (s.settlementType === 'capital' || zoom >= 1.75));
+
+            const markerOpacity =
+              inLens || isCurrent || isSelected
+                ? 1
+                : activeLens === 'forces'
+                  ? 0.34
+                  : 0.22;
 
             return (
               <g
                 key={s.id}
                 transform={`translate(${x}, ${y})`}
-                opacity={inLens || isCurrent || isSelected ? 1 : 0.22}
+                opacity={markerOpacity}
                 onClick={() => {
                   if (!dragRef.current.moved) {
                     setSelectedId(s.id);
-                    setActiveSheetTab('assets');
-                    setIsSheetOpen(true);
+                    if (activeLens === 'forces') {
+                      setIsForcesDrawerOpen(true);
+                    } else {
+                      setActiveSheetTab('assets');
+                      setIsSheetOpen(true);
+                    }
                   }
                 }}
                 className="cursor-pointer transition-opacity"
@@ -1664,13 +2430,27 @@ export function VikingMap({
                     {mapPortLabel}
                   </text>
                 )}
+
+                {/* Settlement Force Badge Cluster (held settlements and current port only) */}
+                {forceData?.hasAnyForces && (
+                  <SettlementForceBadgeCluster
+                    forces={forceData}
+                    zoom={zoom}
+                    isSelected={isSelected}
+                    playerOwns={playerOwns}
+                    isCurrent={isCurrent}
+                    isLightTheme={isLightTheme}
+                    labelAnchor={anchor}
+                    labelDy={rawDy}
+                  />
+                )}
               </g>
             );
           })}
         </svg>
 
         {/* ================================================================= */}
-        {/* SLEEK 2-LINE CLASSIC BOTTOM PORT STRIP                            */}
+        {/* SLEEK BOTTOM PORT CARD WITH "FORCES HERE" CHIP ROW & DRAWER       */}
         {/* ================================================================= */}
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -1777,14 +2557,163 @@ export function VikingMap({
               </div>
             </div>
 
-            {/* Line 2: Contextual Actions */}
+            {/* Line 1.5: "Forces here" One-Line Chip Row (Under the stats line) */}
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => setIsForcesDrawerOpen((v) => !v)}
+                className={`w-full min-h-[34px] px-2.5 py-1 rounded-xl border text-[11px] flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                  inspectedForces.hasAnyForces
+                    ? isForcesDrawerOpen
+                      ? 'bg-[#172638] border-[#F59E0B]/55 text-[#F1F5F9]'
+                      : 'bg-[#111C2B]/90 hover:bg-[#162436] border-[#24364D] text-[#E2E8F0]'
+                    : 'bg-[#0D1724]/75 hover:bg-[#131F30] border-[#1B2A3D] text-[#64748B]'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0 truncate">
+                  <span className="font-bold text-[#F59E0B] shrink-0">
+                    {forcesUi.lensLabel}:
+                  </span>
+                  {inspectedForces.hasAnyForces ? (
+                    <span className="font-mono tabular-nums truncate text-[#F1F5F9]">
+                      <span className="text-[#FDE68A]">
+                        {forcesUi.guardsChip} × {inspectedForces.totalGuards}
+                      </span>
+                      <span className="text-[#64748B] mx-1.5">·</span>
+                      <span className="text-[#7DD3FC]">
+                        {forcesUi.shipsChip} × {inspectedForces.totalShips}
+                      </span>
+                      <span className="text-[#64748B] mx-1.5">·</span>
+                      <span className="text-[#6EE7B7]">
+                        {forcesUi.horsesChip} × {inspectedForces.totalHorses}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="truncate text-[#64748B]">
+                      {forcesUi.noForcesHere}
+                    </span>
+                  )}
+                </div>
+
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#94A3B8] shrink-0">
+                  <span className="hidden sm:inline">
+                    {isForcesDrawerOpen ? forcesUi.hideForces : forcesUi.tapToInspectForces}
+                  </span>
+                  {isForcesDrawerOpen ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
+                </span>
+              </button>
+
+              {/* Expandable "Forces here" Detailed Unit/Ship/Mount Breakdown */}
+              <AnimatePresence initial={false}>
+                {isForcesDrawerOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-1.5 pt-2 border-t border-[#1E2E42] max-h-56 overflow-y-auto space-y-2.5 pe-0.5">
+                      {/* Honest Location Note */}
+                      <div className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-[#0E1826] border border-[#1E2F44] text-[10px] text-[#94A3B8]">
+                        <span className="truncate">
+                          {inspected.id === currentLoc.id && isHeldByPlayer
+                            ? forcesUi.stationedContextCurrentOwned
+                            : inspected.id === currentLoc.id
+                              ? forcesUi.stationedContextCurrentPort
+                              : isHeldByPlayer
+                                ? forcesUi.stationedContextHeldGarrison
+                                : forcesUi.noForcesHere}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveSheetTab('forces');
+                            setIsSheetOpen(true);
+                          }}
+                          className="text-[#F59E0B] hover:underline font-bold shrink-0 cursor-pointer"
+                        >
+                          {isFa ? 'نمای کامل ←' : 'Full Sheet →'}
+                        </button>
+                      </div>
+
+                      {inspectedForces.hasAnyForces ? (
+                        (['warriors', 'fleet', 'stables'] as const).map((groupKey) => {
+                          const groupEntries = inspectedForceItems[groupKey];
+                          if (!groupEntries || groupEntries.length === 0) return null;
+
+                          const groupTitle =
+                            groupKey === 'warriors'
+                              ? forcesUi.groupWarriors
+                              : groupKey === 'fleet'
+                                ? forcesUi.groupFleet
+                                : forcesUi.groupStables;
+
+                          return (
+                            <div key={groupKey} className="space-y-1">
+                              <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#94A3B8] px-1">
+                                {groupTitle}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                {groupEntries.map(({ id, displayCount }) => {
+                                  const item = MILITARY_CATALOG_BY_ID[id];
+                                  return (
+                                    <div
+                                      key={id}
+                                      className="p-2 rounded-xl bg-[#121E2E] border border-[#23354C] flex items-center justify-between gap-2"
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-7 h-7 rounded-lg bg-[#1A293E] border border-[#2C425E] flex items-center justify-center text-[#F59E0B] shrink-0">
+                                          <MilitaryUnitGlyph
+                                            type={item.id}
+                                            className="w-4 h-4"
+                                          />
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="text-xs font-bold text-[#F1F5F9] truncate">
+                                            {item[lang].name}
+                                          </div>
+                                          <div className="text-[9px] font-mono text-[#94A3B8] truncate">
+                                            {item.norseName}
+                                          </div>
+                                          <div className="text-[10px] text-[#34D399] font-semibold truncate">
+                                            {item[lang].effectText}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <span className="px-2 py-0.5 rounded-lg bg-[#0B131E] border border-[#263952] text-xs font-mono font-extrabold text-[#F59E0B] shrink-0">
+                                        {displayCount}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="px-2.5 py-2 rounded-xl bg-[#111B29] border border-[#1E2E42] text-[11px] text-[#94A3B8]">
+                          {forcesUi.noForcesHere}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Line 2: Contextual Actions (Preserved Place & Mobile Tap Targets) */}
             <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#1C2C40]">
               {inspected.id !== currentLoc.id && onSailTo ? (
                 <button
                   type="button"
                   disabled={!hasShips || Boolean(used.travel)}
                   onClick={() => onSailTo(inspected.id)}
-                  className="flex-1 min-h-[36px] px-2.5 py-1 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#162232] disabled:text-[#64748B] text-white text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
+                  className="flex-1 min-h-[44px] px-2.5 py-1 rounded-xl bg-[#0284C7] hover:bg-[#38BDF8] hover:text-[#0B1118] disabled:bg-[#162232] disabled:text-[#64748B] text-white text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
                 >
                   <Ship className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">
@@ -1806,7 +2735,7 @@ export function VikingMap({
                   type="button"
                   disabled={Boolean(used.trade) || state.character.age < 15}
                   onClick={() => onTradeHere()}
-                  className="flex-1 min-h-[36px] px-2.5 py-1 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#162232] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
+                  className="flex-1 min-h-[44px] px-2.5 py-1 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:bg-[#162232] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
                 >
                   <Coins className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">
@@ -1829,7 +2758,7 @@ export function VikingMap({
                     setActiveSheetTab('raid');
                     setIsSheetOpen(true);
                   }}
-                  className="flex-1 min-h-[36px] px-2.5 py-1 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#162232] disabled:text-[#64748B] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
+                  className="flex-1 min-h-[44px] px-2.5 py-1 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#162232] disabled:text-[#64748B] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
                 >
                   <Swords className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">
@@ -1841,7 +2770,7 @@ export function VikingMap({
                   type="button"
                   disabled={Boolean(used.settle) || state.realm.silver < 30}
                   onClick={() => onSettle(inspected.id)}
-                  className="flex-1 min-h-[36px] px-2.5 py-1 rounded-xl bg-[#10B981] hover:bg-[#34D399] disabled:bg-[#162232] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
+                  className="flex-1 min-h-[44px] px-2.5 py-1 rounded-xl bg-[#10B981] hover:bg-[#34D399] disabled:bg-[#162232] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 cursor-pointer truncate transition-colors"
                 >
                   <Landmark className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">
@@ -1862,7 +2791,7 @@ export function VikingMap({
                   setActiveSheetTab('assets');
                   setIsSheetOpen(true);
                 }}
-                className="min-h-[36px] px-3 py-1 rounded-xl bg-[#131D2B] hover:bg-[#19283B] border border-[#24364D] text-xs font-bold text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                className="min-h-[44px] px-3 py-1 rounded-xl bg-[#131D2B] hover:bg-[#19283B] border border-[#24364D] text-xs font-bold text-[#F1F5F9] inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-colors"
               >
                 <Compass className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
                 <span>{isFa ? 'جزئیات شهر' : 'City Panel'}</span>
@@ -1958,25 +2887,42 @@ export function VikingMap({
           </div>
         }
       >
-        {/* Cohesive 4-Tab City Switcher (Warm Birch Stone in Light Mode / Slate in Dark Mode) */}
-        <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-[#131D2B] border border-[#233246]">
+        {/* Cohesive 5-Tab City Switcher (Warm Birch Stone in Light Mode / Slate in Dark Mode) */}
+        <div className="grid grid-cols-5 gap-1 p-1 rounded-xl bg-[#131D2B] border border-[#233246]">
           <button
             type="button"
             onClick={() => setActiveSheetTab('assets')}
-            className={`min-h-[38px] px-2 py-1 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+            className={`min-h-[38px] px-1.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
               activeSheetTab === 'assets'
                 ? 'bg-[#F59E0B] text-[#0B1118] shadow-xs'
                 : 'text-[#94A3B8] hover:text-[#F1F5F9]'
             }`}
           >
             <Landmark className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{isFa ? 'دارایی و وفاداری' : 'Estate & Loyalty'}</span>
+            <span className="truncate">{isFa ? 'دارایی' : 'Estate'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSheetTab('forces')}
+            className={`min-h-[38px] px-1.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+              activeSheetTab === 'forces'
+                ? 'bg-[#F59E0B] text-[#0B1118] shadow-xs'
+                : 'text-[#94A3B8] hover:text-[#F1F5F9]'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">
+              {isFa
+                ? `نیروها (${inspectedForces.totalStrength})`
+                : `Forces (${inspectedForces.totalStrength})`}
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSheetTab('buildings')}
-            className={`min-h-[38px] px-2 py-1 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+            className={`min-h-[38px] px-1.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
               activeSheetTab === 'buildings'
                 ? 'bg-[#F59E0B] text-[#0B1118] shadow-xs'
                 : 'text-[#94A3B8] hover:text-[#F1F5F9]'
@@ -1985,15 +2931,15 @@ export function VikingMap({
             <Hammer className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">
               {isFa
-                ? `ساختمان‌ها (${cityHolding?.buildings.length ?? 0})`
-                : `Buildings (${cityHolding?.buildings.length ?? 0})`}
+                ? `ساختمان (${cityHolding?.buildings.length ?? 0})`
+                : `Builds (${cityHolding?.buildings.length ?? 0})`}
             </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSheetTab('actions')}
-            className={`min-h-[38px] px-2 py-1 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+            className={`min-h-[38px] px-1.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
               activeSheetTab === 'actions' ||
               activeSheetTab === 'raid' ||
               activeSheetTab === 'siege' ||
@@ -2003,22 +2949,111 @@ export function VikingMap({
             }`}
           >
             <Swords className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{isFa ? 'عملیات شهر' : 'Operations'}</span>
+            <span className="truncate">{isFa ? 'عملیات' : 'Actions'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSheetTab('lore')}
-            className={`min-h-[38px] px-2 py-1 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+            className={`min-h-[38px] px-1.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer ${
               activeSheetTab === 'lore'
                 ? 'bg-[#F59E0B] text-[#0B1118] shadow-xs'
                 : 'text-[#94A3B8] hover:text-[#F1F5F9]'
             }`}
           >
             <Compass className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{isFa ? 'تاریخچه و مسیر' : 'Voyage & Lore'}</span>
+            <span className="truncate">{isFa ? 'تاریخچه' : 'Lore'}</span>
           </button>
         </div>
+
+        {/* =============================================================== */}
+        {/* TAB: FORCES HERE (WARRIORS · FLEET · STABLE & ARMORY)           */}
+        {/* =============================================================== */}
+        {activeSheetTab === 'forces' && (
+          <div className="space-y-3.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#111A26] border border-[#22344A] space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F59E0B]">
+                  <Shield className="w-4 h-4 shrink-0" />
+                  <span>{forcesUi.forcesHereTitle}</span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-lg bg-[#162334] border border-[#293E58] text-[10px] font-mono font-bold text-[#FDE68A]">
+                  {forcesUi.guardsChip} × {inspectedForces.totalGuards} · {forcesUi.shipsChip} ×{' '}
+                  {inspectedForces.totalShips} · {forcesUi.horsesChip} × {inspectedForces.totalHorses}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+                {inspected.id === currentLoc.id && isHeldByPlayer
+                  ? forcesUi.stationedContextCurrentOwned
+                  : inspected.id === currentLoc.id
+                    ? forcesUi.stationedContextCurrentPort
+                    : isHeldByPlayer
+                      ? forcesUi.stationedContextHeldGarrison
+                      : forcesUi.noForcesHere}
+              </p>
+
+              {inspectedForces.hasAnyForces ? (
+                <div className="space-y-3">
+                  {(['warriors', 'fleet', 'stables'] as const).map((groupKey) => {
+                    const groupEntries = inspectedForceItems[groupKey];
+                    if (!groupEntries || groupEntries.length === 0) return null;
+
+                    const groupTitle =
+                      groupKey === 'warriors'
+                        ? forcesUi.groupWarriors
+                        : groupKey === 'fleet'
+                          ? forcesUi.groupFleet
+                          : forcesUi.groupStables;
+
+                    return (
+                      <div key={groupKey} className="space-y-2">
+                        <div className="text-[11px] font-extrabold text-[#CBD5E1] border-b border-[#1E2E42] pb-1">
+                          {groupTitle}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {groupEntries.map(({ id, displayCount }) => {
+                            const item = MILITARY_CATALOG_BY_ID[id];
+                            return (
+                              <div
+                                key={id}
+                                className="p-2.5 rounded-xl bg-[#152232] border border-[#243750] flex items-start justify-between gap-2.5"
+                              >
+                                <div className="flex items-start gap-2.5 min-w-0">
+                                  <div className="w-9 h-9 rounded-xl bg-[#1C2D42] border border-[#2F4766] flex items-center justify-center text-[#F59E0B] shrink-0">
+                                    <MilitaryUnitGlyph type={item.id} className="w-5 h-5" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-extrabold text-[#F1F5F9] truncate">
+                                      {item[lang].name}
+                                    </div>
+                                    <div className="text-[10px] font-mono text-[#94A3B8] truncate">
+                                      {item.norseName} · {item[lang].role}
+                                    </div>
+                                    <div className="mt-1 text-[10px] font-bold text-[#34D399]">
+                                      {item[lang].effectText}
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="px-2.5 py-1 rounded-lg bg-[#0D1622] border border-[#293E58] text-xs font-mono font-extrabold text-[#F59E0B] shrink-0">
+                                  {displayCount}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-[#152232] border border-[#23344A] text-xs text-[#94A3B8]">
+                  {forcesUi.noForcesHere}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* =============================================================== */}
         {/* TAB 1: CITY ASSETS, ECONOMY & LOYALTY STATUS                    */}

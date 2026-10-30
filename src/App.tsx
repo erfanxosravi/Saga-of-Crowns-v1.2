@@ -62,6 +62,7 @@ import {
   executeFamilyMemberInteraction,
   executeGeneralAction,
   executeLocalMarriageAction,
+  executePayForLegendNewsAction,
   executePlotAction,
   executeRaidAction,
   executeSailAction,
@@ -511,6 +512,12 @@ export default function App() {
     if (!gameState) return;
     playSound('choice', settings.soundEnabled);
     setGameState(cancelBattle(gameState));
+  };
+
+  const handlePayForLegendNews = () => {
+    if (!gameState) return;
+    playSound('choice', settings.soundEnabled);
+    setGameState(executePayForLegendNewsAction(gameState));
   };
 
   const textScaleClass =
@@ -972,7 +979,12 @@ export default function App() {
               />
             )}
 
-            {activeTab === TabId.Saga && <SagaChroniclePanel state={gameState} />}
+            {activeTab === TabId.Saga && (
+              <SagaChroniclePanel
+                state={gameState}
+                onPayForLegendNews={handlePayForLegendNews}
+              />
+            )}
 
             {activeTab === TabId.More && (
               <MoreMenuPanel
@@ -996,6 +1008,7 @@ export default function App() {
                 onClaimSpecialTitle={handleClaimSpecialTitle}
                 onResolveBattleTactic={handleResolveBattleTactic}
                 onCancelBattle={handleCancelBattle}
+                onPayForLegendNews={handlePayForLegendNews}
               />
             )}
           </div>

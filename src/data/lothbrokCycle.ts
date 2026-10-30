@@ -231,6 +231,54 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     raidPowerBonus: 9,
     englishFameBonus: 8,
   },
+  {
+    id: 'ragnar_serpent_armring',
+    nameEn: "Ragnar's Ouroboros Arm-Ring",
+    nameFa: 'بازوبند زرین مارپیچ راگنار',
+    norseName: 'Ormbaugr Ragnars',
+    type: 'garment',
+    rune: 'ᛟ',
+    loreEn:
+      'A heavy twisted arm-ring of Frankish tribute gold, stamped with the tail-biting Lindworm. Drawn by Ragnar Lothbrok from his own forearm on the Seine to bind an oath-companion to his bench.',
+    loreFa:
+      'بازوبندی سنگین از طلای باجِ فرانکستان با نقش اژدهای دم‌به‌دهان (لیندورم). راگنار لُدبروک در سواحل رود سن آن را از ساعد خود بیرون کشید تا هم‌قسمِ نیمکت خود را جاودانه سازد.',
+    effectsLabelEn: '+10 Charisma · +8 Honor · +10 Raid Power',
+    effectsLabelFa: '+10 کاریزما · +8 شرافت · +10 قدرت یورش',
+    raidPowerBonus: 10,
+    englishFameBonus: 9,
+  },
+  {
+    id: 'lagertha_hlathgerd_spear',
+    nameEn: 'Wing-Spear of Gaular (Geirr Hlaðgerðar)',
+    nameFa: 'نیزه بال‌دار گولار (یادگار لاگرتا)',
+    norseName: 'Geirr Hlaðgerðar',
+    type: 'weapon',
+    rune: 'ᛏ',
+    loreEn:
+      'An ash-shafted lugged war-spear inlaid with silver knotwork, borne by Hlaðgerðr (Lagertha) when she wheeled around the Swedish flank and later defended the freedom of her Norwegian hall.',
+    loreFa:
+      'نیزه‌ای جنگی از چوب زبان‌گنجشک با گره‌نگارهای نقره‌کوب که لاگرتا (هلادگرد) در نبرد علیه سوئدی‌ها و دفاع از استقلال تالار خود در نروژ در دست داشت.',
+    effectsLabelEn: '+12 Combat · +6 Cunning · +9 Raid Power',
+    effectsLabelFa: '+12 مهارت رزم · +6 ذکاوت · +9 قدرت یورش',
+    raidPowerBonus: 9,
+    englishFameBonus: 6,
+  },
+  {
+    id: 'floki_raven_lodestone',
+    nameEn: "Hrafna-Flóki's Sunstone & Raven-Compass",
+    nameFa: 'سنگ خورشید و قطب‌نمای زاغ فلوکی',
+    norseName: 'Sólarsteinn Hrafna-Flóka',
+    type: 'ship',
+    rune: 'ᚲ',
+    loreEn:
+      'A cleaved Icelandic spar crystal set in whalebone beside an oak talisman carved with the three ravens of Smjörsund. Reveals the sun’s hidden bearing through the thickest North Atlantic fog.',
+    loreFa:
+      'بلور شفافی از کلسیت ایسلندی در قاب استخوان نهنگ به همراه نشان بلوطی سه زاغِ اسمیورسوند؛ حتی در غلیظ‌ترین مه اقیانوس اطلس شمالی جایگاه خورشید را آشکار می‌سازد.',
+    effectsLabelEn: '+14 Seamanship · +8 Craft · Safer Atlantic Voyages',
+    effectsLabelFa: '+14 دریانوردی · +8 صنعتگری · ایمنی سفرهای اقیانوس اطلس',
+    raidPowerBonus: 7,
+    englishFameBonus: 5,
+  },
 ];
 
 export const SAGA_HEIRLOOMS_MAP: Record<string, SagaHeirloomDef> = SAGA_HEIRLOOMS.reduce<

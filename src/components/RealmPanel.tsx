@@ -1,32 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import {
-  AlertTriangle,
-  Anchor,
-  Award,
+  ArrowUpDown,
   Castle,
   Check,
-  ChevronDown,
-  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Coins,
   Crown,
-  Eye,
   Flame,
   Hammer,
-  Heart,
   MapPin,
   Minus,
   Plus,
-  Scroll,
+  Search,
   Shield,
-  ShieldAlert,
   Ship,
   Skull,
-  Sparkles,
   Swords,
   Users,
+  Wheat,
 } from 'lucide-react';
 import { SETTLEMENTS_BY_ID } from '../data/geography';
-import { BUILDINGS_CATALOG, WIN_GOALS } from '../data/namesAndTraits';
+import { BUILDINGS_CATALOG, MILITARY_CATALOG_BY_ID, WIN_GOALS } from '../data/namesAndTraits';
 import {
   checkSpecialTitles,
   getClaimableNextTitle,
@@ -34,17 +30,34 @@ import {
   hasBoathouse,
   isFortifiedEnemyCity,
 } from '../engine/gameEngine';
-import { BUILDINGS_FA, SETTLEMENTS_FA, WIN_GOALS_FA } from '../i18n/gameDataFa';
-import { RELIGION_LABELS, SHORT_TITLE_LABELS, TITLE_LABELS } from '../i18n/ui';
+import {
+  BUILDINGS_FA,
+  SETTLEMENTS_FA,
+  WIN_GOALS_FA,
+  formatPersonName,
+} from '../i18n/gameDataFa';
+import {
+  ESTATES_LEDGER_UI,
+  TITLE_LABELS,
+  formatLedgerNumber,
+  toPersianDigits,
+} from '../i18n/ui';
 import {
   BattleTactic,
   BuildingType,
   FullGameState,
+  Holding,
+  Language,
   MilitaryPurchaseAction,
   PlotType,
   TributeBurden,
 } from '../types/game';
-import { NorseCornerOrnament } from './NorseMotifs';
+import { CityModal, CityModalTab } from './CityModal';
+import {
+  MilitaryUnitGlyph,
+  NorseCornerOrnament,
+  RuneDivider,
+} from './NorseMotifs';
 
 interface RealmPanelProps {
   state: FullGameState;
@@ -66,6 +79,132 @@ interface RealmPanelProps {
   onCancelBattle?: () => void;
 }
 
+type EstatesSubView = 'estates' | 'build' | 'opportunities';
+type HoldingsSortKey = 'attention' | 'farms' | 'garrison' | 'alpha';
+
+/**
+ * Animated compact stat tile for the 4-tile "Realm at a Glance" header.
+ * Supports abbreviated numbers (e.g. 26k / ۲۶هزار) with tap-to-reveal exact number,
+ * Persian tabular numerals, and a brief smooth count-up when values change.
+ */
+function AnimatedStatTile({
+  label,
+  value,
+  lang,
+  icon,
+  showExact,
+  onToggleExact,
+  reducedMotion,
+}: {
+  label: string;
+  value: number;
+  lang: Language;
+  icon: React.ReactNode;
+  showExact: boolean;
+  onToggleExact: () => void;
+  reducedMotion: boolean;
+}) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const [pulsing, setPulsing] = useState(false);
+  const prevValueRef = useRef(value);
+
+  useEffect(() => {
+    const prev = prevValueRef.current;
+    if (prev === value) return;
+    prevValueRef.current = value;
+
+    if (reducedMotion) {
+      setDisplayValue(value);
+      return;
+    }
+
+    setPulsing(true);
+    const start = performance.now();
+    const duration = 240;
+    let rafId = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(prev + (value - prev) * eased));
+      if (progress < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        setDisplayValue(value);
+        setPulsing(false);
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [value, reducedMotion]);
+
+  const formatted = formatLedgerNumber(displayValue, lang, showExact);
+  const exactFormatted = formatLedgerNumber(value, lang, true);
+  const isLongNumber = formatted.length >= 6;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggleExact}
+      title={`${label}: ${exactFormatted}`}
+      aria-label={`${label}: ${exactFormatted}`}
+      className="min-h-[60px] px-1.5 py-2 rounded-xl bg-[#111A26] hover:bg-[#131D2B] border border-[#233246] flex flex-col items-center justify-center gap-1 text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+    >
+      <div
+        className={`${
+          isLongNumber ? 'text-[15px] sm:text-[18px]' : 'text-[18px] sm:text-[20px]'
+        } font-semibold font-mono tabular-nums text-[#F1F5F9] leading-none whitespace-nowrap transition-transform duration-200 ${
+          pulsing ? 'scale-[1.04] text-[#F59E0B]' : ''
+        }`}
+      >
+        {formatted}
+      </div>
+      <div className="inline-flex items-center justify-center gap-1 text-xs font-normal text-[#94A3B8] leading-tight whitespace-nowrap">
+        <span className="shrink-0 opacity-90 [&>svg]:w-3.5 [&>svg]:h-3.5">{icon}</span>
+        <span>{label}</span>
+      </div>
+    </button>
+  );
+}
+
+
+function getUnrestStatus(unrest: number, lang: Language) {
+  const ui = ESTATES_LEDGER_UI[lang];
+  if (unrest >= 70) {
+    return {
+      level: 'critical' as const,
+      label: ui.statusCritical,
+      sentence: ui.unrestSentenceCritical,
+      dotClass: 'bg-rose-500',
+      barClass: 'bg-rose-500',
+      textClass: 'text-rose-400',
+    };
+  }
+  if (unrest >= 40) {
+    return {
+      level: 'uneasy' as const,
+      label: ui.statusUneasy,
+      sentence: ui.unrestSentenceUneasy,
+      dotClass: 'bg-[#F59E0B]',
+      barClass: 'bg-[#F59E0B]',
+      textClass: 'text-[#F59E0B]',
+    };
+  }
+  return {
+    level: 'calm' as const,
+    label: ui.statusCalm,
+    sentence: ui.unrestSentenceCalm,
+    dotClass: 'bg-emerald-500',
+    barClass: 'bg-emerald-500',
+    textClass: 'text-emerald-400',
+  };
+}
+
+function holdingNeedsAttention(h: Holding): boolean {
+  return (h.unrest ?? 15) >= 60 || (h.garrison ?? 4) <= 2;
+}
+
 export function RealmPanel({
   state,
   initialSection = 'holdings',
@@ -83,21 +222,189 @@ export function RealmPanel({
   onExecutePlot,
   onClaimSpecialTitle,
   onResolveBattleTactic,
-  onCancelBattle,
 }: RealmPanelProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
+  const ui = ESTATES_LEDGER_UI[lang];
+  const prefersReducedMotion = Boolean(useReducedMotion());
 
   const [tab, setTab] = useState<'holdings' | 'fleet' | 'politics'>('holdings');
   const [fleetCategory, setFleetCategory] = useState<'all' | 'soldiers' | 'ships' | 'stables'>('all');
+
+  // Inside-sheet 3-view segmented navigation for Estates, Cities & Buildings
+  const [estatesView, setEstatesView] = useState<EstatesSubView>('estates');
+  const [showExactNumbers, setShowExactNumbers] = useState(false);
+
+  // List controls & Dedicated City Modal state (NO inline accordion)
+  const [modalHoldingId, setModalHoldingId] = useState<string | null>(null);
+  const [cityModalTab, setCityModalTab] = useState<CityModalTab>('overview');
+  const [recentlyClosedHoldingId, setRecentlyClosedHoldingId] = useState<string | null>(null);
+
+  const [sortBy, setSortBy] = useState<HoldingsSortKey>('attention');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(30);
+
+  // Selected holding for the Build view
   const [selectedHoldingId, setSelectedHoldingId] = useState<string>(
     state.realm.holdings[0]?.settlementId ?? ''
   );
 
+  // Subtle inline feedback toast (shown both in modal and on sheet)
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const highlightTimerRef = useRef<number | null>(null);
+
+  // Refs for focus restoration and history handling
+  const rowButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const historyPushedRef = useRef(false);
+
+  // Preserve scroll position per sub-view and across CityModal open/close
+  const viewContainerRef = useRef<HTMLDivElement | null>(null);
+  const savedModalScrollTopRef = useRef<number>(0);
+  const scrollPositionsRef = useRef<Record<EstatesSubView, number>>({
+    estates: 0,
+    build: 0,
+    opportunities: 0,
+  });
+
+  const getScrollContainer = (): HTMLElement | null => {
+    if (!viewContainerRef.current) return null;
+    return (
+      (viewContainerRef.current.closest('.overflow-y-auto') as HTMLElement | null) ??
+      viewContainerRef.current
+    );
+  };
+
+  const triggerToast = (message: string) => {
+    setFeedbackToast(message);
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setFeedbackToast(null);
+    }, 2600);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+      if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (initialSection === 'fleet') setTab('fleet');
     else if (initialSection === 'politics' || initialSection === 'intrigue') setTab('politics');
+    else setTab('holdings');
   }, [initialSection]);
+
+  // Ensure selectedHoldingId stays valid if holdings change
+  useEffect(() => {
+    if (
+      state.realm.holdings.length > 0 &&
+      !state.realm.holdings.some((h) => h.settlementId === selectedHoldingId)
+    ) {
+      setSelectedHoldingId(state.realm.holdings[0].settlementId);
+    }
+  }, [state.realm.holdings, selectedHoldingId]);
+
+  const closeCityModal = (closedFromPopState = false) => {
+    const closingId = modalHoldingId;
+    setModalHoldingId(null);
+
+    if (historyPushedRef.current && !closedFromPopState) {
+      historyPushedRef.current = false;
+      try {
+        window.history.back();
+      } catch {
+        // Ignore history errors in restricted iframe environments
+      }
+    } else {
+      historyPushedRef.current = false;
+    }
+
+    if (closingId) {
+      setRecentlyClosedHoldingId(closingId);
+      if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = window.setTimeout(() => {
+        setRecentlyClosedHoldingId(null);
+      }, 1500);
+
+      const savedScrollTop = savedModalScrollTopRef.current;
+      requestAnimationFrame(() => {
+        const scrollEl = getScrollContainer();
+        if (scrollEl) {
+          scrollEl.scrollTop = savedScrollTop;
+        }
+        rowButtonRefs.current[closingId]?.focus({ preventScroll: true });
+      });
+    }
+  };
+
+  const openCityModal = (settlementId: string, initialTab: CityModalTab = 'overview') => {
+    const scrollEl = getScrollContainer();
+    if (scrollEl) {
+      savedModalScrollTopRef.current = scrollEl.scrollTop;
+      scrollPositionsRef.current[estatesView] = scrollEl.scrollTop;
+    }
+
+    setModalHoldingId(settlementId);
+    setSelectedHoldingId(settlementId);
+    setCityModalTab(initialTab);
+
+    if (!historyPushedRef.current) {
+      try {
+        window.history.pushState({ cityModal: settlementId }, '');
+        historyPushedRef.current = true;
+      } catch {
+        // Ignore in sandboxed contexts
+      }
+    }
+  };
+
+  // Close gracefully if the open holding is lost while modal is open
+  useEffect(() => {
+    if (!modalHoldingId) return;
+    const stillHeld = state.realm.holdings.some((h) => h.settlementId === modalHoldingId);
+    if (!stillHeld) {
+      closeCityModal(true);
+      triggerToast(ui.cityLostToast);
+    }
+  }, [state.realm.holdings, modalHoldingId]);
+
+  const handleSwitchEstatesView = (nextView: EstatesSubView) => {
+    const scrollEl = getScrollContainer();
+    if (scrollEl) {
+      scrollPositionsRef.current[estatesView] = scrollEl.scrollTop;
+    }
+    setEstatesView(nextView);
+    requestAnimationFrame(() => {
+      const nextScrollEl = getScrollContainer();
+      if (nextScrollEl) {
+        nextScrollEl.scrollTop = scrollPositionsRef.current[nextView] ?? 0;
+      }
+    });
+  };
+
+  const num = (val: number | string) => (isFa ? toPersianDigits(val) : String(val));
+
+  const getSettlementDisplayName = (settlementId: string) => {
+    const sData = SETTLEMENTS_BY_ID[settlementId];
+    const raw = isFa
+      ? SETTLEMENTS_FA[settlementId]?.name ?? sData?.name ?? settlementId
+      : sData?.name ?? settlementId;
+    return raw.split(' (')[0].trim();
+  };
+
+  const getSettlementRegionName = (settlementId: string) => {
+    const sData = SETTLEMENTS_BY_ID[settlementId];
+    const raw = isFa
+      ? SETTLEMENTS_FA[settlementId]?.name ?? sData?.name ?? ''
+      : sData?.name ?? '';
+    const match = raw.match(/\(([^)]+)\)/);
+    return match ? match[1].trim() : null;
+  };
 
   const allBuildingKeys = Object.keys(BUILDINGS_CATALOG) as BuildingType[];
   const claimableRank = getClaimableNextTitle(state);
@@ -109,12 +416,10 @@ export function RealmPanel({
   const shipUpkeep = boathouseActive ? Math.floor(rawShipUpkeep * 0.5) : rawShipUpkeep;
   const warriorUpkeep = Math.floor(Math.max(0, state.realm.hirdWarriors - 4) * 0.45);
   const totalUpkeep = shipUpkeep + warriorUpkeep;
+  const totalShips = state.realm.longships + state.realm.knarrs;
 
   const currentLocId = state.character.locationId;
-  const currentLoc = SETTLEMENTS_BY_ID[currentLocId];
-  const currentLocName = isFa
-    ? SETTLEMENTS_FA[currentLocId]?.name ?? currentLoc?.name ?? currentLocId
-    : currentLoc?.name.split(' (')[0] ?? currentLocId;
+  const currentLocName = getSettlementDisplayName(currentLocId);
   const locIsFortified = isFortifiedEnemyCity(state, currentLocId);
   const used = state.yearlyActivitiesUsed ?? {};
   const builtThisYear = Boolean(state.builtThisYear);
@@ -125,97 +430,188 @@ export function RealmPanel({
 
   const specialTitles = checkSpecialTitles(state);
 
+  // Filter & sort holdings for the Estates ledger view
+  const sortedHoldings = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const list = state.realm.holdings.filter((h) => {
+      if (!query) return true;
+      const sData = SETTLEMENTS_BY_ID[h.settlementId];
+      const faName = SETTLEMENTS_FA[h.settlementId]?.name ?? '';
+      const enName = sData?.name ?? h.settlementId;
+      const jarlRaw = h.appointedJarl ?? '';
+      const jarlFa = jarlRaw ? formatPersonName(jarlRaw, 'fa') : '';
+      return (
+        faName.toLowerCase().includes(query) ||
+        enName.toLowerCase().includes(query) ||
+        jarlRaw.toLowerCase().includes(query) ||
+        jarlFa.toLowerCase().includes(query)
+      );
+    });
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'attention') {
+        const aAttn = holdingNeedsAttention(a) ? 1 : 0;
+        const bAttn = holdingNeedsAttention(b) ? 1 : 0;
+        if (bAttn !== aAttn) return bAttn - aAttn;
+        const aUnrest = a.unrest ?? 15;
+        const bUnrest = b.unrest ?? 15;
+        if (bUnrest !== aUnrest) return bUnrest - aUnrest;
+        return (a.garrison ?? 4) - (b.garrison ?? 4);
+      }
+      if (sortBy === 'farms') {
+        return b.farms - a.farms;
+      }
+      if (sortBy === 'garrison') {
+        return (a.garrison ?? 4) - (b.garrison ?? 4);
+      }
+      const nameA = getSettlementDisplayName(a.settlementId);
+      const nameB = getSettlementDisplayName(b.settlementId);
+      return nameA.localeCompare(nameB, isFa ? 'fa' : 'en');
+    });
+  }, [state.realm.holdings, searchQuery, sortBy, isFa]);
+
+  const windowedHoldings = useMemo(
+    () => sortedHoldings.slice(0, visibleLimit),
+    [sortedHoldings, visibleLimit]
+  );
+
+  const attentionCount = useMemo(
+    () => state.realm.holdings.filter(holdingNeedsAttention).length,
+    [state.realm.holdings]
+  );
+
+  // Active holding for the City Modal + Prev/Next navigation within sortedHoldings
+  const modalHoldingIndex = useMemo(() => {
+    if (!modalHoldingId) return -1;
+    const idxInSorted = sortedHoldings.findIndex((h) => h.settlementId === modalHoldingId);
+    if (idxInSorted !== -1) return idxInSorted;
+    return state.realm.holdings.findIndex((h) => h.settlementId === modalHoldingId);
+  }, [modalHoldingId, sortedHoldings, state.realm.holdings]);
+
+  const modalNavList = sortedHoldings.length > 0 ? sortedHoldings : state.realm.holdings;
+  const modalHolding = modalHoldingId
+    ? state.realm.holdings.find((h) => h.settlementId === modalHoldingId) ?? null
+    : null;
+
+  const stepModalCity = (delta: number) => {
+    if (modalNavList.length <= 1 || modalHoldingIndex === -1) return;
+    const nextIdx = (modalHoldingIndex + delta + modalNavList.length) % modalNavList.length;
+    const nextHolding = modalNavList[nextIdx];
+    if (nextHolding) {
+      setModalHoldingId(nextHolding.settlementId);
+      setSelectedHoldingId(nextHolding.settlementId);
+    }
+  };
+
+  const showTopSectionSwitcher =
+    initialSection === 'fleet' || initialSection === 'politics' || initialSection === 'intrigue';
+
   return (
-    <div className="flex flex-col overflow-hidden space-y-4 text-start">
-      {/* 3-Way Segmented Navigation Header */}
-      <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#111A26] border border-[#233246]">
-        <button
-          type="button"
-          onClick={() => setTab('holdings')}
-          className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-            tab === 'holdings'
-              ? 'bg-[#F59E0B] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
-          }`}
+    <div className="flex flex-col overflow-hidden space-y-3.5 text-start">
+      {/* Optional Section Switcher when opened via Fleet or Intrigue */}
+      {showTopSectionSwitcher && (
+        <div
+          role="tablist"
+          aria-label={isFa ? 'بخش‌های قلمرو' : 'Realm Sections'}
+          className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#111A26] border border-[#233246]"
         >
-          <Castle className="w-4 h-4 shrink-0" />
-          <span className="whitespace-normal leading-tight">
-            {isFa ? 'املاک و قلمرو' : 'Holdings & Realm'}
-          </span>
-        </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'holdings'}
+            onClick={() => setTab('holdings')}
+            className={`min-h-[44px] px-2.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              tab === 'holdings'
+                ? 'bg-[#F59E0B] text-[#0B1118]'
+                : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
+            }`}
+          >
+            <Castle className="w-4 h-4 shrink-0" />
+            <span>{isFa ? 'املاک و شهرها' : 'Estates'}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setTab('fleet')}
-          className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-            tab === 'fleet'
-              ? 'bg-[#38BDF8] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
-          }`}
-        >
-          <Ship className="w-4 h-4 shrink-0" />
-          <span className="whitespace-normal leading-tight">
-            {isFa ? 'ناوگان و سپاه' : 'Fleet & Warband'}
-          </span>
-        </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'fleet'}
+            onClick={() => setTab('fleet')}
+            className={`min-h-[44px] px-2.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              tab === 'fleet'
+                ? 'bg-[#F59E0B] text-[#0B1118]'
+                : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
+            }`}
+          >
+            <Ship className="w-4 h-4 shrink-0" />
+            <span>{isFa ? 'ناوگان و سپاه' : 'Fleet & Warband'}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setTab('politics')}
-          className={`min-h-[44px] px-2 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-            tab === 'politics'
-              ? 'bg-[#F59E0B] text-[#0B1118]'
-              : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
-          }`}
-        >
-          <Crown className="w-4 h-4 shrink-0" />
-          <span className="whitespace-normal leading-tight">
-            {isFa ? 'سیاست و توطئه‌ها' : 'Intrigue & Crown'}
-          </span>
-        </button>
-      </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'politics'}
+            onClick={() => setTab('politics')}
+            className={`min-h-[44px] px-2.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+              tab === 'politics'
+                ? 'bg-[#F59E0B] text-[#0B1118]'
+                : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
+            }`}
+          >
+            <Crown className="w-4 h-4 shrink-0" />
+            <span>{isFa ? 'سیاست و توطئه' : 'Intrigue'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Active Battle Card (If Ongoing) */}
       {state.activeBattle && (
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2A0E12] via-[#1B1422] to-[#0F1722] border-2 border-rose-500 flex flex-col overflow-hidden space-y-3.5 shadow-xl">
-          <div className="flex items-center justify-between gap-2 border-b border-rose-500/30 pb-2">
+        <div className="p-4 rounded-2xl bg-[#131D2B] border border-rose-500/60 flex flex-col overflow-hidden space-y-3">
+          <div className="flex items-center justify-between gap-2 border-b border-[#233246] pb-2.5">
             <div className="flex items-center gap-2">
-              <Swords className="w-5 h-5 text-rose-400 animate-pulse" />
-              <div className="font-saga text-lg font-bold text-rose-100">
+              <Swords className="w-5 h-5 text-rose-400" />
+              <div className="font-saga text-[15px] font-semibold text-[#F1F5F9]">
                 {isFa
                   ? `میدان نبرد: یورش به «${state.activeBattle.targetNameFa}»`
                   : `Battlefield: Assault on ${state.activeBattle.targetName}`}
               </div>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-              {isFa ? `راند ${state.activeBattle.round}` : `Round ${state.activeBattle.round}`}
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/35">
+              {isFa
+                ? `راند ${toPersianDigits(state.activeBattle.round)}`
+                : `Round ${state.activeBattle.round}`}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-emerald-500/35 space-y-1">
-              <div className="text-emerald-400 font-bold flex items-center justify-between">
+          <div className="grid grid-cols-2 gap-2.5 text-xs">
+            <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] space-y-1">
+              <div className="text-emerald-400 font-semibold flex items-center justify-between">
                 <span>{isFa ? 'سپاه شما' : 'Your Warband'}</span>
-                <span className="font-mono">{state.activeBattle.playerWarriors}</span>
+                <span className="font-mono tabular-nums">
+                  {num(state.activeBattle.playerWarriors)}
+                </span>
               </div>
-              <div className="text-[11px] text-[#94A3B8]">
-                {isFa ? `روحیه: ${state.activeBattle.playerMorale}٪` : `Morale: ${state.activeBattle.playerMorale}%`}
+              <div className="text-xs text-[#94A3B8]">
+                {isFa
+                  ? `روحیه: ${num(state.activeBattle.playerMorale)}٪`
+                  : `Morale: ${state.activeBattle.playerMorale}%`}
               </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-rose-500/35 space-y-1">
-              <div className="text-rose-400 font-bold flex items-center justify-between">
+            <div className="p-2.5 rounded-xl bg-[#131D2B] border border-[#233246] space-y-1">
+              <div className="text-rose-400 font-semibold flex items-center justify-between">
                 <span>{isFa ? 'مدافعان دژ' : 'Garrison Defenders'}</span>
-                <span className="font-mono">{state.activeBattle.enemyWarriors}</span>
+                <span className="font-mono tabular-nums">
+                  {num(state.activeBattle.enemyWarriors)}
+                </span>
               </div>
-              <div className="text-[11px] text-[#94A3B8]">
-                {isFa ? `روحیه دشمن: ${state.activeBattle.enemyMorale}٪` : `Enemy Morale: ${state.activeBattle.enemyMorale}%`}
+              <div className="text-xs text-[#94A3B8]">
+                {isFa
+                  ? `روحیه دشمن: ${num(state.activeBattle.enemyMorale)}٪`
+                  : `Enemy Morale: ${state.activeBattle.enemyMorale}%`}
               </div>
             </div>
           </div>
 
-          {/* Battle Log */}
-          <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246] text-xs font-mono text-[#CBD5E1] space-y-1 max-h-24 overflow-y-auto">
+          <div className="p-3 rounded-xl bg-[#111A26] border border-[#233246] text-xs text-[#CBD5E1] space-y-1 max-h-24 overflow-y-auto">
             {(isFa ? state.activeBattle.logFa : state.activeBattle.log).map((entry, idx) => (
               <div key={idx} className="leading-relaxed">
                 ⚔️ {entry}
@@ -223,54 +619,53 @@ export function RealmPanel({
             ))}
           </div>
 
-          {/* Tactical Command Choices */}
           {onResolveBattleTactic && (
-            <div className="space-y-1.5 pt-1">
-              <div className="text-xs font-bold text-[#F59E0B]">
+            <div className="space-y-2 pt-1">
+              <div className="text-xs font-semibold text-[#F59E0B]">
                 {isFa ? 'دستور تاکتیکی فرمانده:' : 'Choose Commander Tactic:'}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('shield_wall')}
-                  className="p-2.5 rounded-xl bg-[#142636] border border-[#38BDF8] hover:bg-[#1E3A52] text-xs font-bold text-[#F1F5F9] cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F1F5F9] cursor-pointer"
                 >
-                  🛡️ {isFa ? 'دیوار سپرها (اسکیالدبورگ)' : 'Shield Wall'}
+                  🛡️ {isFa ? 'دیوار سپرها' : 'Shield Wall'}
                 </button>
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('svinfylking')}
-                  className="p-2.5 rounded-xl bg-[#2D1B1B] border border-rose-500 hover:bg-[#3D2525] text-xs font-bold text-rose-200 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F1F5F9] cursor-pointer"
                 >
-                  🐗 {isFa ? 'پوزه گراز (یورش گُوه‌ای)' : "Boar's Snout"}
+                  🐗 {isFa ? 'پوزه گراز' : "Boar's Snout"}
                 </button>
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('ambush')}
-                  className="p-2.5 rounded-xl bg-[#142922] border border-emerald-500 hover:bg-[#1E3B32] text-xs font-bold text-emerald-200 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F1F5F9] cursor-pointer"
                 >
                   🌲 {isFa ? 'شبیخون از دل مه' : 'Mist Ambush'}
                 </button>
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('flank_assault')}
-                  className="p-2.5 rounded-xl bg-[#1F2438] border border-indigo-400 hover:bg-[#2C344E] text-xs font-bold text-indigo-200 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F1F5F9] cursor-pointer"
                 >
                   ⛵ {isFa ? 'دور زدن از جناحین' : 'Flank Assault'}
                 </button>
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('berserk_charge')}
-                  className="p-2.5 rounded-xl bg-[#331828] border border-fuchsia-500 hover:bg-[#482239] text-xs font-bold text-fuchsia-200 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F1F5F9] cursor-pointer"
                 >
                   ⚡ {isFa ? 'حمله برزرکرها' : 'Berserk Charge'}
                 </button>
                 <button
                   type="button"
                   onClick={() => onResolveBattleTactic('orderly_retreat')}
-                  className="p-2.5 rounded-xl bg-[#1E232A] border border-[#64748B] hover:bg-[#2A323D] text-xs font-bold text-[#94A3B8] cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl bg-[#111A26] border border-[#233246] hover:border-[#64748B] text-xs font-semibold text-[#94A3B8] cursor-pointer"
                 >
-                  📯 {isFa ? 'عقب‌نشینی به کشتی‌ها' : 'Sound Retreat'}
+                  📯 {isFa ? 'عقب‌نشینی' : 'Sound Retreat'}
                 </button>
               </div>
             </div>
@@ -278,1421 +673,1455 @@ export function RealmPanel({
         </div>
       )}
 
-      {/* TAB 1: HOLDINGS & GOVERNANCE */}
+      {/* ===================================================================== */}
+      {/* TAB 1: ESTATES, CITIES & BUILDINGS ("QUIET SAGA LEDGER" REDESIGN)     */}
+      {/* ===================================================================== */}
       {tab === 'holdings' && (
-        <div className="flex flex-col overflow-hidden space-y-4">
-          {/* Ruling Rank & Progression Banner */}
-          <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#1D1913] via-[#131D2B] to-[#0F1722] border border-[#F59E0B]/45 space-y-3 overflow-hidden">
-            <NorseCornerOrnament accent="amber" />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-[#F59E0B]/15 text-[#F59E0B] ring-1 ring-[#F59E0B]/35 flex items-center justify-center shrink-0">
-                  <Crown className="w-6 h-6" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs text-[#94A3B8]">
-                    {isFa ? 'مقام و جایگاه کنونی' : 'Current Ruling Rank'}
-                  </div>
-                  <div className="font-saga text-xl sm:text-2xl font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
-                    {TITLE_LABELS[lang][state.character.title]}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-end font-mono tabular-nums text-xs shrink-0 space-y-0.5">
-                <div className="text-[#F59E0B] font-bold">
-                  {isFa ? `${state.realm.fame} شهرت` : `${state.realm.fame} Fame`}
-                </div>
-                <div className="text-[#CBD5E1]">
-                  {isFa ? `ثبات ${state.realm.stability}%` : `Stability ${state.realm.stability}%`}
-                </div>
-              </div>
-            </div>
-
-            <p className="text-xs text-[#CBD5E1] leading-relaxed whitespace-normal break-words">
-              {getNextTitleRequirementText(state.character.title, lang)}
-            </p>
-
-            {claimableRank && (
-              <button
-                type="button"
-                onClick={onClaimRank}
-                className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] hover:brightness-110 active:scale-[0.99] text-[#0B1118] font-saga text-sm sm:text-base font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md shadow-[#F59E0B]/20"
-              >
-                <Crown className="w-5 h-5 shrink-0" />
-                <span>
-                  {isFa
-                    ? `جشن ارتقا: تاج‌گذاری به عنوان «${TITLE_LABELS.fa[claimableRank]}»!`
-                    : `Claim Title: Crown as ${TITLE_LABELS.en[claimableRank]}!`}
-                </span>
-              </button>
-            )}
+        <div ref={viewContainerRef} className="flex flex-col space-y-3.5">
+          {/* 1) HEADER — REALM AT A GLANCE (4 COMPACT STAT TILES) */}
+          <div className="grid grid-cols-2 min-[340px]:grid-cols-4 gap-2">
+            <AnimatedStatTile
+              label={ui.statSilver}
+              value={state.realm.silver}
+              lang={lang}
+              icon={<Coins className="w-4 h-4 text-[#F59E0B]" />}
+              showExact={showExactNumbers}
+              onToggleExact={() => setShowExactNumbers((v) => !v)}
+              reducedMotion={prefersReducedMotion}
+            />
+            <AnimatedStatTile
+              label={ui.statFarms}
+              value={state.realm.landFarms}
+              lang={lang}
+              icon={<Wheat className="w-4 h-4 text-emerald-400" />}
+              showExact={showExactNumbers}
+              onToggleExact={() => setShowExactNumbers((v) => !v)}
+              reducedMotion={prefersReducedMotion}
+            />
+            <AnimatedStatTile
+              label={ui.statShips}
+              value={totalShips}
+              lang={lang}
+              icon={<Ship className="w-4 h-4 text-[#38BDF8]" />}
+              showExact={showExactNumbers}
+              onToggleExact={() => setShowExactNumbers((v) => !v)}
+              reducedMotion={prefersReducedMotion}
+            />
+            <AnimatedStatTile
+              label={ui.statWarriors}
+              value={state.realm.hirdWarriors}
+              lang={lang}
+              icon={<Swords className="w-4 h-4 text-[#CBD5E1]" />}
+              showExact={showExactNumbers}
+              onToggleExact={() => setShowExactNumbers((v) => !v)}
+              reducedMotion={prefersReducedMotion}
+            />
           </div>
 
-          {/* Quick Farm/Conquer at Current Location */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#131D2B] border border-[#233246] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  locIsFortified
-                    ? 'bg-[#EF4444]/15 text-[#F87171] ring-1 ring-[#EF4444]/35'
-                    : 'bg-[#34D399]/15 text-[#34D399] ring-1 ring-[#34D399]/35'
-                }`}
-              >
-                {locIsFortified ? <Castle className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
-              </div>
-              <div className="min-w-0 space-y-1">
-                <div className="text-sm font-bold text-[#F1F5F9] whitespace-normal break-words leading-snug">
-                  {locIsFortified
-                    ? isFa
-                      ? `تسخیر دژ مستحکم ${currentLocName}`
-                      : `Conquer Fortified ${currentLocName}`
-                    : isFa
-                      ? `خرید مزرعه جدید در ${currentLocName}`
-                      : `Buy Farmland in ${currentLocName}`}
-                </div>
-                <div className="text-xs text-[#CBD5E1] whitespace-normal break-words leading-relaxed">
-                  {locIsFortified
-                    ? isFa
-                      ? 'دژ مستحکم دشمن · نیازمند ۱ لانگ‌شیپ و ۱۲+ جنگجو'
-                      : 'Enemy stronghold · Requires 1 Longship & 12+ Warriors'
-                    : isFa
-                      ? `آذوقه انبار: ${state.realm.foodStores} · هزینه: ۳۵ نقره`
-                      : `Food stores: ${state.realm.foodStores} · Cost: 35 Silver`}
-                </div>
-              </div>
-            </div>
-
-            {locIsFortified && onConquerCity ? (
-              <button
-                type="button"
-                disabled={Boolean(used.settle) || state.realm.longships <= 0 || state.realm.hirdWarriors < 12}
-                onClick={() => onConquerCity(currentLocId)}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#DC2626] hover:bg-[#EF4444] disabled:bg-[#1E293B] disabled:text-[#64748B] text-white font-bold text-xs shrink-0 cursor-pointer transition-colors"
-              >
-                {used.settle ? (isFa ? 'انجام شد ✓' : 'Done ✓') : isFa ? 'یورش برای فتح' : 'Storm Stronghold'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={Boolean(used.settle) || state.realm.silver < 35}
-                onClick={onClearFirstFarm}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#34D399] hover:bg-[#6EE7B7] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] font-extrabold text-xs shrink-0 cursor-pointer transition-colors"
-              >
-                {used.settle ? (isFa ? 'انجام شد ✓' : 'Claimed ✓') : isFa ? 'خرید (۳۵ نقره)' : 'Buy Farm (35 Silver)'}
-              </button>
-            )}
-          </div>
-
-          {/* ALL HOLDINGS GOVERNANCE & REBELLION MANAGERS */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold text-[#F59E0B]">
-              <span>{isFa ? 'مدیریت متصرفات و املاک (شورش و خراج):' : 'Holdings Governance & Rebellion:'}</span>
-              <span className="font-mono text-[#CBD5E1]">
-                {state.realm.holdings.length} {isFa ? 'مقر فعال' : 'holdings'}
-              </span>
-            </div>
-
-            {state.realm.holdings.map((h) => {
-              const sData = SETTLEMENTS_BY_ID[h.settlementId];
-              const sName = isFa ? SETTLEMENTS_FA[h.settlementId]?.name ?? sData?.name ?? h.settlementId : sData?.name.split(' (')[0] ?? h.settlementId;
-              const isDangerUnrest = (h.unrest ?? 15) >= 70;
-              const isCriticalUnrest = (h.unrest ?? 15) >= 90;
-              const isSelected = h.settlementId === activeHolding?.settlementId;
-
+          {/* 2) SEGMENTED CONTROL: ESTATES · BUILD · OPPORTUNITIES */}
+          <div
+            role="tablist"
+            aria-label={isFa ? 'نمای مدیریت املاک' : 'Estates Ledger Views'}
+            className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#111A26] border border-[#233246]"
+          >
+            {(
+              [
+                {
+                  id: 'estates' as const,
+                  label: ui.viewEstates,
+                  count: state.realm.holdings.length,
+                  hasAlert: attentionCount > 0,
+                },
+                {
+                  id: 'build' as const,
+                  label: ui.viewBuild,
+                  count: activeHolding ? activeHolding.buildings.length : 0,
+                  hasAlert: false,
+                },
+                {
+                  id: 'opportunities' as const,
+                  label: ui.viewOpportunities,
+                  count: claimableRank ? 1 : 0,
+                  hasAlert: Boolean(claimableRank) || (!used.settle && state.realm.silver >= 35),
+                },
+              ] as const
+            ).map((seg) => {
+              const isSelected = estatesView === seg.id;
               return (
-                <div
-                  key={h.settlementId}
-                  className={`p-4 rounded-2xl border transition-colors space-y-3 ${
-                    isCriticalUnrest
-                      ? 'bg-rose-950/40 border-rose-500 shadow-md shadow-rose-950/50'
-                      : isDangerUnrest
-                        ? 'bg-amber-950/30 border-amber-500'
-                        : isSelected
-                          ? 'bg-[#152335] border-[#F59E0B]'
-                          : 'bg-[#131D2B] border-[#233246]'
+                <button
+                  key={seg.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => handleSwitchEstatesView(seg.id)}
+                  className={`min-h-[44px] px-2 py-2 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                    isSelected
+                      ? 'bg-[#F59E0B] text-[#0B1118]'
+                      : 'text-[#CBD5E1] hover:text-[#F1F5F9] hover:bg-[#162232]'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
-                        <span>{sName}</span>
-                        {isCriticalUnrest && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" />
-                            {isFa ? 'خطر شورش مسلحانه!' : 'Imminent Revolt!'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-[#94A3B8]">
-                        {isFa ? `${h.farms} مزرعه · پادگان: ${h.garrison ?? 4} جنگجو` : `${h.farms} Farms · Garrison: ${h.garrison ?? 4} warriors`}
-                        {h.appointedJarl && (
-                          <span className="text-[#38BDF8] ms-2">
-                            · {isFa ? `یارل: ${h.appointedJarl}` : `Jarl: ${h.appointedJarl}`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedHoldingId(h.settlementId)}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#162232] border border-[#233246] hover:border-[#38BDF8] text-[#38BDF8] cursor-pointer"
+                  <span className="whitespace-nowrap">{seg.label}</span>
+                  {seg.id === 'estates' && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded-md text-xs font-mono tabular-nums ${
+                        isSelected
+                          ? 'bg-[#0B1118]/15 text-[#0B1118]'
+                          : 'bg-[#162232] text-[#94A3B8]'
+                      }`}
                     >
-                      {isFa ? 'ساخت بنا' : 'Build'}
-                    </button>
-                  </div>
-
-                  {/* Unrest & Demographics Meters */}
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-[#CBD5E1] flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5 text-rose-400" />
-                        {isFa ? 'میزان ناآرامی محلی:' : 'Local Unrest:'}
-                      </span>
-                      <span className={`font-mono font-bold ${isDangerUnrest ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {h.unrest ?? 15}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-[#182638] overflow-hidden">
-                      <div
-                        className={`h-full transition-all ${
-                          isCriticalUnrest
-                            ? 'bg-rose-500'
-                            : isDangerUnrest
-                              ? 'bg-amber-400'
-                              : 'bg-emerald-400'
-                        }`}
-                        style={{ width: `${Math.min(100, h.unrest ?? 15)}%` }}
-                      />
-                    </div>
-
-                    <div className="flex justify-between text-[11px] text-[#94A3B8] pt-0.5">
-                      <span>{isFa ? `جمعیت نورس: ${h.norsePopulationShare ?? 65}%` : `Norse Pop: ${h.norsePopulationShare ?? 65}%`}</span>
-                      <span>{isFa ? `گروگان‌های اشرافی: ${h.hostagesCount ?? 0}` : `Hostages: ${h.hostagesCount ?? 0}`}</span>
-                    </div>
-                  </div>
-
-                  {/* Governance Tool Buttons */}
-                  <div className="pt-2 border-t border-[#1E2D40] flex flex-wrap items-center gap-2">
-                    {/* Garrison Transfer */}
-                    {onStationGarrison && (
-                      <div className="flex items-center gap-1 bg-[#162232] px-2 py-1 rounded-xl border border-[#233246]">
-                        <span className="text-[11px] text-[#CBD5E1] me-1">{isFa ? 'پادگان:' : 'Garrison:'}</span>
-                        <button
-                          type="button"
-                          disabled={(h.garrison ?? 0) <= 0}
-                          onClick={() => onStationGarrison(h.settlementId, -2)}
-                          className="w-6 h-6 rounded bg-[#131D2B] hover:bg-[#1E2D40] text-[#F1F5F9] flex items-center justify-center cursor-pointer disabled:opacity-30"
-                          title={isFa ? 'انتقال ۲ جنگجو به سپاه شخصی' : 'Withdraw 2 warriors'}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-xs font-mono font-bold px-1.5">{h.garrison ?? 4}</span>
-                        <button
-                          type="button"
-                          disabled={state.realm.hirdWarriors < 2}
-                          onClick={() => onStationGarrison(h.settlementId, 2)}
-                          className="w-6 h-6 rounded bg-[#131D2B] hover:bg-[#1E2D40] text-[#34D399] flex items-center justify-center cursor-pointer disabled:opacity-30"
-                          title={isFa ? 'استقرار ۲ جنگجو در پادگان' : 'Station 2 warriors'}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Send Settlers */}
-                    {onSendSettlers && (
-                      <button
-                        type="button"
-                        disabled={state.realm.silver < 28}
-                        onClick={() => onSendSettlers(h.settlementId)}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#131D2B] hover:bg-[#1E2D40] border border-[#233246] hover:border-[#38BDF8] text-xs font-semibold text-[#38BDF8] disabled:opacity-30 cursor-pointer"
-                        title={isFa ? 'ارسال مهاجران نورس (-۲۸ نقره، ناآرامی -۱۴٪)' : 'Send Norse settlers (-28 silver, -14% unrest)'}
-                      >
-                        ⛵ {isFa ? 'ارسال مهاجران (۲۸ نقره)' : 'Send Settlers (28 Silv)'}
-                      </button>
-                    )}
-
-                    {/* Appoint Jarl */}
-                    {onAppointJarl && !h.appointedJarl && (
-                      <button
-                        type="button"
-                        disabled={state.realm.silver < 20}
-                        onClick={() => onAppointJarl(h.settlementId)}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#131D2B] hover:bg-[#1E2D40] border border-[#233246] hover:border-[#F59E0B] text-xs font-semibold text-[#F59E0B] disabled:opacity-30 cursor-pointer"
-                        title={isFa ? 'انتصاب یارل وفادار (-۲۰ نقره، ناآرامی -۲۰٪)' : 'Appoint loyal Jarl (-20 silver, -20% unrest)'}
-                      >
-                        👑 {isFa ? 'انتصاب یارل (۲۰ نقره)' : 'Appoint Jarl (20 Silv)'}
-                      </button>
-                    )}
-
-                    {/* Take Hostages */}
-                    {onTakeHostages && (
-                      <button
-                        type="button"
-                        disabled={(h.garrison ?? 0) < 6 && state.realm.hirdWarriors < 10}
-                        onClick={() => onTakeHostages(h.settlementId)}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#131D2B] hover:bg-[#1E2D40] border border-[#233246] hover:border-indigo-400 text-xs font-semibold text-indigo-300 disabled:opacity-30 cursor-pointer"
-                        title={isFa ? 'گرفتن گروگان‌های اشرافی از بزرگان محلی' : 'Demand noble hostages to suppress unrest'}
-                      >
-                        ⛓️ {isFa ? 'گرفتن گروگان اشرافی' : 'Take Hostages'}
-                      </button>
-                    )}
-
-                    {/* Tribute Burden Selector */}
-                    {onSetTributeBurden && (
-                      <div className="flex items-center gap-1 text-[11px] ms-auto">
-                        <span className="text-[#94A3B8]">{isFa ? 'خراج:' : 'Tribute:'}</span>
-                        {(['none', 'light', 'normal', 'heavy', 'extortionate'] as TributeBurden[]).map((tb) => (
-                          <button
-                            key={tb}
-                            type="button"
-                            onClick={() => onSetTributeBurden(h.settlementId, tb)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
-                              (h.tributeBurden ?? 'normal') === tb
-                                ? 'bg-[#F59E0B] text-[#0B1118]'
-                                : 'bg-[#162232] text-[#94A3B8] hover:text-[#F1F5F9]'
-                            }`}
-                          >
-                            {tb === 'none' ? (isFa ? 'هیچ' : '0') : tb === 'light' ? (isFa ? 'کم' : 'Lt') : tb === 'normal' ? (isFa ? 'متوسط' : 'Med') : tb === 'heavy' ? (isFa ? 'سنگین' : 'Hvy') : (isFa ? 'ظالمانه' : 'Max')}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                      {num(seg.count)}
+                    </span>
+                  )}
+                  {seg.hasAlert && !isSelected && (
+                    <span
+                      className="w-2 h-2 rounded-full bg-[#F59E0B] shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
               );
             })}
           </div>
 
-          {/* Construction in Active Holding */}
-          {activeHolding && (
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between text-xs text-[#94A3B8]">
-                <span>
-                  {isFa
-                    ? `بناهای قابل ساخت در «${SETTLEMENTS_FA[activeHolding.settlementId]?.name ?? SETTLEMENTS_BY_ID[activeHolding.settlementId]?.name ?? activeHolding.settlementId}»`
-                    : `Construct Structures at ${SETTLEMENTS_BY_ID[activeHolding.settlementId]?.name ?? activeHolding.settlementId}`}
-                </span>
-                <span className="font-mono text-[#CBD5E1]">
-                  {builtThisYear ? (isFa ? 'سهمیه امسال ساخته شد ✓' : 'Built This Year ✓') : isFa ? '۱ بنا در سال' : '1 Build / Year'}
-                </span>
-              </div>
+          {/* Gentle Inline Action Toast (when City Modal is closed) */}
+          {feedbackToast && !modalHolding && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="px-3.5 py-2.5 rounded-xl bg-[#111A26] border border-[#F59E0B]/45 flex items-center gap-2 text-xs font-semibold text-[#F1F5F9] transition-opacity"
+            >
+              <span className="w-5 h-5 rounded-full bg-[#F59E0B]/20 text-[#F59E0B] flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5" />
+              </span>
+              <span>{feedbackToast}</span>
+            </div>
+          )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {allBuildingKeys.map((bKey) => {
-                  const bDef = BUILDINGS_CATALOG[bKey];
-                  const bFa = BUILDINGS_FA[bKey];
-                  const built = activeHolding.buildings.includes(bKey);
-                  const wrongFaith = bDef.religionReq !== undefined && state.character.religion !== bDef.religionReq;
-                  const canBuild = !built && !wrongFaith && !builtThisYear && state.realm.silver >= bDef.costSilver;
-
-                  return (
-                    <div
-                      key={bKey}
-                      className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-3 ${
-                        built ? 'bg-[#112220] border-[#34D399]/50' : 'bg-[#131D2B] border-[#233246]'
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <div className="font-bold text-sm text-[#F1F5F9]">
-                            {isFa ? bFa?.name ?? bDef.name : bDef.name}
-                          </div>
-                          {built ? (
-                            <span className="text-xs text-[#34D399] font-bold flex items-center gap-1">
-                              <Check className="w-3.5 h-3.5" />
-                              {isFa ? 'ساخته‌شده' : 'Built'}
-                            </span>
-                          ) : (
-                            <span className="text-xs font-mono font-bold text-[#F59E0B]">
-                              {bDef.costSilver} {isFa ? 'نقره' : 'Silver'}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed">
-                          {isFa ? bFa?.description ?? bDef.description : bDef.description}
-                        </p>
+          {/* =============================================================== */}
+          {/* VIEW A: ESTATES LEDGER (COMPACT ROWS -> OPENS CITY MODAL)       */}
+          {/* =============================================================== */}
+          {estatesView === 'estates' && (
+            <div className="space-y-3">
+              {state.realm.holdings.length === 0 ? (
+                <div className="p-6 rounded-2xl bg-[#111A26] border border-[#233246] text-center space-y-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#162232] text-[#F59E0B] flex items-center justify-center mx-auto">
+                    <Castle className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1 max-w-md mx-auto">
+                    <h4 className="text-[15px] font-semibold text-[#F1F5F9]">
+                      {ui.emptyHoldingsTitle}
+                    </h4>
+                    <p className="text-sm font-normal text-[#94A3B8] leading-relaxed">
+                      {ui.emptyHoldingsDesc}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchEstatesView('opportunities')}
+                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span>{ui.emptyHoldingsCta}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Sort / Filter Bar + Optional Search Toggle */}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <ArrowUpDown className="w-3.5 h-3.5 text-[#94A3B8] shrink-0 me-0.5" />
+                        {(
+                          [
+                            { id: 'attention' as const, label: ui.sortAttention },
+                            { id: 'farms' as const, label: ui.sortFarms },
+                            { id: 'garrison' as const, label: ui.sortGarrison },
+                            { id: 'alpha' as const, label: ui.sortAlpha },
+                          ] as const
+                        ).map((s) => {
+                          const active = sortBy === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setSortBy(s.id)}
+                              className={`min-h-[36px] px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                                active
+                                  ? 'bg-[#162232] text-[#F59E0B] border border-[#F59E0B]/45'
+                                  : 'bg-[#111A26] text-[#94A3B8] hover:text-[#F1F5F9] border border-[#233246]'
+                              }`}
+                            >
+                              {s.label}
+                              {s.id === 'attention' && attentionCount > 0 && (
+                                <span className="ms-1 font-mono tabular-nums text-[#F59E0B]">
+                                  ({num(attentionCount)})
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      {!built && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSearchBar((v) => !v)}
+                        aria-expanded={showSearchBar || state.realm.holdings.length >= 15}
+                        aria-label={ui.searchPlaceholder}
+                        className={`min-h-[36px] min-w-[36px] px-2 py-1 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                          showSearchBar || searchQuery
+                            ? 'bg-[#162232] text-[#F59E0B] border-[#F59E0B]/45'
+                            : 'bg-[#111A26] text-[#94A3B8] hover:text-[#F1F5F9] border-[#233246]'
+                        }`}
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {(showSearchBar || state.realm.holdings.length >= 15) && (
+                      <div className="relative">
+                        <Search className="w-4 h-4 text-[#94A3B8] absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder={ui.searchPlaceholder}
+                          className="w-full min-h-[44px] ps-9 pe-3 py-2 rounded-xl bg-[#111A26] border border-[#233246] focus:border-[#F59E0B] text-sm text-[#F1F5F9] placeholder:text-[#64748B] focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stable-Height Holdings List (Tapping Any Row Opens the City Modal) */}
+                  <div className="rounded-2xl bg-[#111A26] border border-[#233246] divide-y divide-[#1E2D40] overflow-hidden">
+                    {windowedHoldings.map((h) => {
+                      const sName = getSettlementDisplayName(h.settlementId);
+                      const sRegion = getSettlementRegionName(h.settlementId);
+                      const unrest = h.unrest ?? 15;
+                      const garrison = h.garrison ?? 4;
+                      const status = getUnrestStatus(unrest, lang);
+                      const needsAttn = holdingNeedsAttention(h);
+                      const isRecentlyClosed = recentlyClosedHoldingId === h.settlementId;
+
+                      const jarlFaName = h.appointedJarl
+                        ? formatPersonName(h.appointedJarl, lang)
+                        : null;
+
+                      return (
                         <button
+                          key={h.settlementId}
+                          ref={(el) => {
+                            rowButtonRefs.current[h.settlementId] = el;
+                          }}
                           type="button"
-                          disabled={!canBuild}
-                          onClick={() => onBuildHoldingStructure(activeHolding.settlementId, bKey)}
-                          className="w-full min-h-[38px] py-1.5 rounded-xl bg-[#1E3A52] hover:bg-[#254A6B] disabled:bg-[#1E293B] disabled:text-[#64748B] text-xs font-bold text-[#38BDF8] cursor-pointer transition-colors"
+                          onClick={() => openCityModal(h.settlementId, 'overview')}
+                          className={`relative w-full min-h-[58px] px-3 py-2.5 flex items-center justify-between gap-2 text-start cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F59E0B] ${
+                            isRecentlyClosed
+                              ? 'bg-[#162232] ring-1 ring-inset ring-[#F59E0B]/60'
+                              : 'hover:bg-[#131D2B]/70 active:bg-[#162232]'
+                          }`}
                         >
-                          {wrongFaith
-                            ? isFa ? 'نیازمند آیین دیگر' : 'Requires Different Faith'
-                            : isFa ? `احداث (${bDef.costSilver} نقره)` : `Build (${bDef.costSilver} Silver)`}
+                          {/* Subtle attention accent bar on the start edge */}
+                          {needsAttn && (
+                            <span
+                              className={`absolute top-2 bottom-2 start-0 w-1 rounded-e-full ${
+                                unrest >= 70 ? 'bg-rose-500' : 'bg-[#F59E0B]'
+                              }`}
+                              aria-hidden="true"
+                            />
+                          )}
+
+                          {/* Start: Settlement Name + Jarl Line */}
+                          <div className="min-w-0 flex-1 pe-1">
+                            <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                              <span className="text-[15px] font-semibold text-[#F1F5F9] leading-snug">
+                                {sName}
+                              </span>
+                              {sRegion && (
+                                <span className="text-xs font-normal text-[#94A3B8]">
+                                  ({sRegion})
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="text-xs font-normal text-[#94A3B8] mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug">
+                              {h.appointedJarl ? (
+                                <>
+                                  <span className="text-[#CBD5E1]">
+                                    {ui.jarlPrefix}: {jarlFaName}
+                                  </span>
+                                  {isFa && (
+                                    <bdi
+                                      dir="ltr"
+                                      className="text-xs text-[#64748B] font-mono"
+                                    >
+                                      ({h.appointedJarl})
+                                    </bdi>
+                                  )}
+                                </>
+                              ) : (
+                                <span>{ui.noJarlAssigned}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* End: 3 Mini-Metrics (Farms, Garrison, Unrest Bar + Dot) + RTL-Correct Open Chevron */}
+                          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                            {/* Metric 1: Farms */}
+                            <div className="text-center font-mono tabular-nums min-w-[32px]">
+                              <div className="text-sm font-semibold text-[#F1F5F9] leading-tight">
+                                {num(h.farms)}
+                              </div>
+                              <div className="text-xs font-normal text-[#94A3B8] whitespace-nowrap">
+                                {ui.farmsShort}
+                              </div>
+                            </div>
+
+                            {/* Metric 2: Garrison */}
+                            <div className="text-center font-mono tabular-nums min-w-[36px]">
+                              <div
+                                className={`text-sm font-semibold leading-tight ${
+                                  garrison <= 2 ? 'text-[#F59E0B]' : 'text-[#F1F5F9]'
+                                }`}
+                              >
+                                {num(garrison)}
+                              </div>
+                              <div className="text-xs font-normal text-[#94A3B8] whitespace-nowrap">
+                                {ui.garrisonShort}
+                              </div>
+                            </div>
+
+                            {/* Metric 3: Unrest thin bar + status dot + word */}
+                            <div className="w-[58px] flex flex-col items-end gap-1">
+                              <div className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
+                                <span
+                                  className={`w-2 h-2 rounded-full ${status.dotClass} shrink-0`}
+                                  aria-hidden="true"
+                                />
+                                <span className={status.textClass}>{status.label}</span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-[#182638] overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${status.barClass}`}
+                                  style={{ width: `${Math.min(100, unrest)}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* RTL-correct "open" chevron (pointing left in Persian, right in English) */}
+                            <div className="text-[#94A3B8] ps-0.5">
+                              {isFa ? (
+                                <ChevronLeft className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                            </div>
+                          </div>
                         </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Windowing "Load More" for 30+ holdings */}
+                  {sortedHoldings.length > visibleLimit && (
+                    <button
+                      type="button"
+                      onClick={() => setVisibleLimit((v) => v + 30)}
+                      className="w-full min-h-[44px] py-2 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] text-xs font-semibold text-[#CBD5E1] cursor-pointer"
+                    >
+                      {isFa
+                        ? `نمایش املاک بیشتر (${num(sortedHoldings.length - visibleLimit)} مورد باقی‌مانده)`
+                        : `Show more estates (${sortedHoldings.length - visibleLimit} remaining)`}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* =============================================================== */}
+          {/* VIEW B: BUILD (CONSTRUCTION IN SELECTED HOLDING)                */}
+          {/* =============================================================== */}
+          {estatesView === 'build' && (
+            <div className="space-y-3.5">
+              {!activeHolding ? (
+                <div className="p-6 rounded-2xl bg-[#111A26] border border-[#233246] text-center space-y-3">
+                  <p className="text-sm text-[#94A3B8]">{ui.emptyHoldingsDesc}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchEstatesView('opportunities')}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] text-[#0B1118] text-sm font-semibold cursor-pointer"
+                  >
+                    {ui.emptyHoldingsCta}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Estate Selector Strip + Yearly Quota Status Pill */}
+                  <div className="p-3.5 rounded-2xl bg-[#111A26] border border-[#233246] space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#94A3B8]">
+                        {ui.buildSelectCityLabel}
+                      </span>
+                      {builtThisYear ? (
+                        <span
+                          aria-disabled="true"
+                          className="px-2.5 py-1 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{ui.doneThisSeason}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs font-normal text-[#CBD5E1]">
+                          {ui.buildQuotaAvailable}
+                        </span>
                       )}
                     </div>
-                  );
-                })}
+
+                    <div className="flex flex-wrap items-center gap-1.5 max-h-[120px] overflow-y-auto p-0.5">
+                      {state.realm.holdings.map((h) => {
+                        const sName = getSettlementDisplayName(h.settlementId);
+                        const selected = h.settlementId === activeHolding.settlementId;
+                        return (
+                          <button
+                            key={h.settlementId}
+                            type="button"
+                            onClick={() => setSelectedHoldingId(h.settlementId)}
+                            className={`min-h-[38px] px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] ${
+                              selected
+                                ? 'bg-[#F59E0B] text-[#0B1118]'
+                                : 'bg-[#162232] text-[#CBD5E1] hover:text-[#F1F5F9]'
+                            }`}
+                          >
+                            <span>{sName}</span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-xs font-mono tabular-nums ${
+                                selected
+                                  ? 'bg-[#0B1118]/15 text-[#0B1118]'
+                                  : 'bg-[#111A26] text-[#94A3B8]'
+                              }`}
+                            >
+                              {num(h.buildings.length)}/{num(allBuildingKeys.length)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Buildings Catalog List */}
+                  <div className="rounded-2xl bg-[#111A26] border border-[#233246] divide-y divide-[#1E2D40] overflow-hidden">
+                    {allBuildingKeys.map((bKey) => {
+                      const bDef = BUILDINGS_CATALOG[bKey];
+                      const bFa = BUILDINGS_FA[bKey];
+                      const bName = isFa ? bFa?.name ?? bDef.name : bDef.name;
+                      const bDesc = isFa
+                        ? bFa?.description ?? bDef.description
+                        : bDef.description;
+                      const built = activeHolding.buildings.includes(bKey);
+                      const wrongFaith =
+                        bDef.religionReq !== undefined &&
+                        state.character.religion !== bDef.religionReq;
+                      const missingSilver = Math.max(0, bDef.costSilver - state.realm.silver);
+                      const canBuild =
+                        !built && !wrongFaith && !builtThisYear && missingSilver === 0;
+                      const activeCityName = getSettlementDisplayName(
+                        activeHolding.settlementId
+                      );
+
+                      return (
+                        <div
+                          key={bKey}
+                          className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[15px] font-semibold text-[#F1F5F9]">
+                                {bName}
+                              </span>
+                              {!built && (
+                                <span className="px-2 py-0.5 rounded-md bg-[#162232] text-xs font-mono font-semibold tabular-nums text-[#F59E0B]">
+                                  {num(bDef.costSilver)} {ui.chipSilver}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-normal text-[#94A3B8] leading-relaxed">
+                              {bDesc}
+                            </p>
+                          </div>
+
+                          {/* Right / End Action or Calm Non-Interactive Done Pill */}
+                          <div className="shrink-0">
+                            {built ? (
+                              <span
+                                aria-disabled="true"
+                                className="min-h-[40px] px-3 py-1.5 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                              >
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>{ui.builtPermanent}</span>
+                              </span>
+                            ) : builtThisYear ? (
+                              <span
+                                aria-disabled="true"
+                                className="min-h-[40px] px-3 py-1.5 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                              >
+                                <Check className="w-3.5 h-3.5 text-[#94A3B8]" />
+                                <span>{ui.doneThisSeason}</span>
+                              </span>
+                            ) : wrongFaith ? (
+                              <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                                {ui.needDifferentFaith}
+                              </span>
+                            ) : missingSilver > 0 ? (
+                              <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                                {ui.needMoreSilver(missingSilver)}
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={!canBuild}
+                                onClick={() => {
+                                  onBuildHoldingStructure(activeHolding.settlementId, bKey);
+                                  triggerToast(ui.toastBuiltStructure(bName, activeCityName));
+                                }}
+                                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+                              >
+                                <Hammer className="w-4 h-4" />
+                                <span>
+                                  {isFa
+                                    ? `احداث (${num(bDef.costSilver)} نقره)`
+                                    : `Build (${bDef.costSilver} Silver)`}
+                                </span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* =============================================================== */}
+          {/* VIEW C: OPPORTUNITIES (BUY FARM / CONQUER / RANK / DYNASTY GOAL)*/}
+          {/* =============================================================== */}
+          {estatesView === 'opportunities' && (
+            <div className="space-y-3.5">
+              {/* 1. Current Port Opportunity (Buy Farmland or Storm Stronghold) */}
+              <div className="p-4 rounded-2xl bg-[#111A26] border border-[#233246] space-y-3">
+                <div className="text-xs font-semibold text-[#94A3B8]">
+                  {ui.oppCurrentPortHeader}
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#162232] text-[#F59E0B] flex items-center justify-center shrink-0">
+                      {locIsFortified ? (
+                        <Castle className="w-5 h-5" />
+                      ) : (
+                        <MapPin className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0 space-y-1">
+                      <div className="text-[15px] font-semibold text-[#F1F5F9]">
+                        {locIsFortified
+                          ? isFa
+                            ? `تسخیر دژ مستحکم ${currentLocName}`
+                            : `Conquer Fortified ${currentLocName}`
+                          : isFa
+                            ? `خرید مزرعه جدید در ${currentLocName}`
+                            : `Buy Farmland in ${currentLocName}`}
+                      </div>
+                      <div className="text-xs font-normal text-[#94A3B8] leading-relaxed">
+                        {locIsFortified
+                          ? isFa
+                            ? 'دژ مستحکم دشمن · نیازمند ۱ لانگ‌شیپ و ۱۲+ جنگجو'
+                            : 'Enemy stronghold · Requires 1 Longship & 12+ Warriors'
+                          : isFa
+                            ? `آذوقه انبار: ${num(state.realm.foodStores)} · هزینه: ${num(35)} نقره`
+                            : `Food stores: ${state.realm.foodStores} · Cost: 35 Silver`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action or Calm Non-Interactive Done Pill */}
+                  <div className="shrink-0">
+                    {used.settle ? (
+                      <span
+                        aria-disabled="true"
+                        className="min-h-[40px] px-3.5 py-1.5 rounded-full bg-[#162232] border border-[#233246] text-xs font-normal text-[#94A3B8] inline-flex items-center gap-1.5 select-none"
+                      >
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{ui.doneThisSeason}</span>
+                      </span>
+                    ) : locIsFortified && onConquerCity ? (
+                      state.realm.longships <= 0 || state.realm.hirdWarriors < 12 ? (
+                        <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                          {ui.needShipsAndWarriors}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onConquerCity(currentLocId)}
+                          className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Swords className="w-4 h-4" />
+                          <span>{isFa ? 'یورش برای فتح' : 'Storm Stronghold'}</span>
+                        </button>
+                      )
+                    ) : state.realm.silver < 35 ? (
+                      <span className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#162232] text-xs font-normal text-[#94A3B8] inline-flex items-center">
+                        {ui.needMoreSilver(35 - state.realm.silver)}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClearFirstFarm();
+                          triggerToast(ui.toastFarmBought(currentLocName));
+                        }}
+                        className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>
+                          {isFa
+                            ? `خرید مزرعه (${num(35)} نقره)`
+                            : 'Buy Farm (35 Silver)'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <RuneDivider className="my-1" />
+
+              {/* 2. Ruling Rank & Progression */}
+              <div className="p-4 rounded-2xl bg-[#111A26] border border-[#233246] space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#162232] text-[#F59E0B] flex items-center justify-center shrink-0">
+                      <Crown className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-normal text-[#94A3B8]">
+                        {ui.oppCrownHeader}
+                      </div>
+                      <div className="font-saga text-[20px] font-semibold text-[#F1F5F9] leading-snug mt-0.5">
+                        {TITLE_LABELS[lang][state.character.title]}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-end font-mono tabular-nums text-xs shrink-0 space-y-0.5">
+                    <div className="text-[#F59E0B] font-semibold">
+                      {isFa
+                        ? `${num(state.realm.fame)} شهرت`
+                        : `${state.realm.fame} Fame`}
+                    </div>
+                    <div className="text-[#94A3B8]">
+                      {isFa
+                        ? `ثبات ${num(state.realm.stability)}٪`
+                        : `Stability ${state.realm.stability}%`}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs font-normal text-[#CBD5E1] leading-relaxed">
+                  {getNextTitleRequirementText(state.character.title, lang)}
+                </p>
+
+                {claimableRank && (
+                  <button
+                    type="button"
+                    onClick={onClaimRank}
+                    className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118] text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <Crown className="w-4 h-4 shrink-0" />
+                    <span>
+                      {isFa
+                        ? `تاج‌گذاری به عنوان «${TITLE_LABELS.fa[claimableRank]}»`
+                        : `Claim Title: ${TITLE_LABELS.en[claimableRank]}`}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* 3. Dynasty Saga Goal */}
+              <div className="p-4 rounded-2xl bg-[#111A26] border border-[#233246] space-y-1.5">
+                <div className="text-xs font-normal text-[#94A3B8]">
+                  {ui.oppGoalHeader}
+                </div>
+                <div className="text-[15px] font-semibold text-[#F1F5F9]">
+                  {isFa ? winGoalFa?.title ?? winGoal.title : winGoal.title}
+                </div>
+                <p className="text-xs font-normal text-[#94A3B8] leading-relaxed">
+                  {isFa ? winGoalFa?.description ?? winGoal.description : winGoal.description}
+                </p>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* TAB 2: FLEET, WARBAND, SHIPYARD & STABLES (SLEEK MINIMALIST COMMAND) */}
-      {tab === 'fleet' && (() => {
-        const totalGarrison = state.realm.holdings.reduce(
-          (sum, h) => sum + (h.garrison ?? 4),
-          0
-        );
-        const totalShips = state.realm.longships + state.realm.knarrs;
-        const snekkjasCount = state.realm.snekkjas ?? 0;
-        const drakkarsCount = Math.max(0, state.realm.longships - snekkjasCount);
-        const bondiCount = state.realm.bondiSpearmen ?? 0;
-        const archersCount = state.realm.norseArchers ?? 0;
-        const berserkersCount = state.realm.berserkers ?? 0;
-        const huscarlsCount = Math.max(
-          0,
-          state.realm.hirdWarriors - bondiCount - archersCount - berserkersCount
-        );
-        const warhorsesCount = state.realm.warhorses ?? 0;
-        const packHorsesCount = state.realm.packHorses ?? 0;
-        const totalHorses = warhorsesCount + packHorsesCount;
-        const warGearTier = state.realm.warGearTier ?? 0;
+      {/* ===================================================================== */}
+      {/* DEDICATED CITY MODAL (LAYERED ABOVE ESTATES SHEET)                    */}
+      {/* ===================================================================== */}
+      {modalHolding && (
+        <CityModal
+          holding={modalHolding}
+          settlementName={getSettlementDisplayName(modalHolding.settlementId)}
+          settlementRegion={getSettlementRegionName(modalHolding.settlementId)}
+          state={state}
+          currentIndex={modalHoldingIndex}
+          totalCount={modalNavList.length}
+          initialTab={cityModalTab}
+          feedbackToast={feedbackToast}
+          onTriggerToast={triggerToast}
+          onClose={closeCityModal}
+          onStepCity={stepModalCity}
+          onBuildHoldingStructure={onBuildHoldingStructure}
+          onSendSettlers={onSendSettlers}
+          onStationGarrison={onStationGarrison}
+          onSetTributeBurden={onSetTributeBurden}
+          onAppointJarl={onAppointJarl}
+          onTakeHostages={onTakeHostages}
+          onToggleTolerance={onToggleTolerance}
+          onExecutePlot={onExecutePlot}
+        />
+      )}
 
-        const sealiftCapacity = drakkarsCount * 30 + snekkjasCount * 20;
-        const sealiftUsagePct =
-          sealiftCapacity > 0
-            ? Math.min(100, Math.round((state.realm.hirdWarriors / sealiftCapacity) * 100))
-            : state.realm.hirdWarriors > 0
-              ? 100
-              : 0;
-        const combatPower = Math.round(
-          state.realm.hirdWarriors * 2 +
-            berserkersCount * 1.5 +
-            archersCount * 1 +
-            state.realm.longships * 12 +
-            warhorsesCount * 2 +
-            warGearTier * 10 +
-            state.character.skills.combat +
-            (state.ragnarBloodline ? 12 : 0)
-        );
-        const raidReady = state.realm.longships >= 1 && state.realm.hirdWarriors >= 1;
-        const siegeReady = state.realm.longships >= 1 && state.realm.hirdWarriors >= 12;
+      {/* ===================================================================== */}
+      {/* TAB 2: FLEET, WARBAND, SHIPYARD & STABLES                             */}
+      {/* ===================================================================== */}
+      {tab === 'fleet' &&
+        (() => {
+          const totalGarrison = state.realm.holdings.reduce(
+            (sum, h) => sum + (h.garrison ?? 4),
+            0
+          );
+          const snekkjasCount = state.realm.snekkjas ?? 0;
+          const drakkarsCount = Math.max(0, state.realm.longships - snekkjasCount);
+          const bondiCount = state.realm.bondiSpearmen ?? 0;
+          const archersCount = state.realm.norseArchers ?? 0;
+          const berserkersCount = state.realm.berserkers ?? 0;
+          const huscarlsCount = Math.max(
+            0,
+            state.realm.hirdWarriors - bondiCount - archersCount - berserkersCount
+          );
+          const warhorsesCount = state.realm.warhorses ?? 0;
+          const packHorsesCount = state.realm.packHorses ?? 0;
+          const totalHorses = warhorsesCount + packHorsesCount;
+          const warGearTier = state.realm.warGearTier ?? 0;
 
-        const showSoldiers = fleetCategory === 'all' || fleetCategory === 'soldiers';
-        const showShips = fleetCategory === 'all' || fleetCategory === 'ships';
-        const showStables = fleetCategory === 'all' || fleetCategory === 'stables';
+          const sealiftCapacity = drakkarsCount * 30 + snekkjasCount * 20;
+          const sealiftUsagePct =
+            sealiftCapacity > 0
+              ? Math.min(100, Math.round((state.realm.hirdWarriors / sealiftCapacity) * 100))
+              : state.realm.hirdWarriors > 0
+                ? 100
+                : 0;
+          const combatPower = Math.round(
+            state.realm.hirdWarriors * 2 +
+              berserkersCount * 1.5 +
+              archersCount * 1 +
+              state.realm.longships * 12 +
+              warhorsesCount * 2 +
+              warGearTier * 10 +
+              state.character.skills.combat +
+              (state.ragnarBloodline ? 12 : 0)
+          );
+          const raidReady = state.realm.longships >= 1 && state.realm.hirdWarriors >= 1;
+          const siegeReady = state.realm.longships >= 1 && state.realm.hirdWarriors >= 12;
 
-        return (
-          <div className="flex flex-col overflow-hidden space-y-4">
-            {/* Minimalist Tactical Command Overview Header */}
-            <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border border-[#38BDF8]/40 space-y-3.5 overflow-hidden">
-              <NorseCornerOrnament accent="ice" />
+          const showSoldiers = fleetCategory === 'all' || fleetCategory === 'soldiers';
+          const showShips = fleetCategory === 'all' || fleetCategory === 'ships';
+          const showStables = fleetCategory === 'all' || fleetCategory === 'stables';
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/35 flex items-center justify-center shrink-0">
-                    <Ship className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-saga text-lg sm:text-xl font-bold text-[#F1F5F9] leading-snug">
-                        {isFa
-                          ? 'فرماندهی سپاه، کشتی‌سازی و اصطبل'
-                          : 'Warband, Shipyard & Stables'}
-                      </h3>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                          siegeReady
-                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
-                            : raidReady
-                              ? 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/35'
-                              : 'bg-rose-500/15 text-rose-300 border-rose-500/35'
-                        }`}
-                      >
-                        {siegeReady
-                          ? isFa
-                            ? 'آماده فتح و محاصره'
-                            : 'Siege Ready'
-                          : raidReady
+          return (
+            <div className="flex flex-col overflow-hidden space-y-4">
+              {/* Minimalist Tactical Command Overview Header */}
+              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#102338] via-[#131D2B] to-[#0F1722] border border-[#38BDF8]/40 space-y-3.5 overflow-hidden">
+                <NorseCornerOrnament accent="ice" />
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl bg-[#38BDF8]/15 text-[#38BDF8] ring-1 ring-[#38BDF8]/35 flex items-center justify-center shrink-0">
+                      <Ship className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-saga text-lg sm:text-xl font-semibold text-[#F1F5F9] leading-snug">
+                          {isFa
+                            ? 'فرماندهی سپاه، کشتی‌سازی و اصطبل'
+                            : 'Warband, Shipyard & Stables'}
+                        </h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                            siegeReady
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
+                              : raidReady
+                                ? 'bg-[#38BDF8]/15 text-[#7DD3FC] border-[#38BDF8]/35'
+                                : 'bg-rose-500/15 text-rose-300 border-rose-500/35'
+                          }`}
+                        >
+                          {siegeReady
                             ? isFa
-                              ? 'آماده یورش دریایی'
-                              : 'Raid Ready'
-                            : isFa
-                              ? 'نیازمند تجهیز'
-                              : 'Needs Forces'}
-                      </span>
+                              ? 'آماده فتح و محاصره'
+                              : 'Siege Ready'
+                            : raidReady
+                              ? isFa
+                                ? 'آماده یورش دریایی'
+                                : 'Raid Ready'
+                              : isFa
+                                ? 'نیازمند تجهیز'
+                                : 'Needs Forces'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#94A3B8] mt-0.5">
+                        {isFa
+                          ? `رزم ${num(state.character.skills.combat)} · دریانوردی ${num(state.character.skills.seamanship)} · سطح زره ${num(warGearTier)}${boathouseActive ? ' · اسکله فعال ✓' : ''}`
+                          : `Combat ${state.character.skills.combat} · Sailing ${state.character.skills.seamanship} · Armory Lv.${warGearTier}${boathouseActive ? ' · Dock Active ✓' : ''}`}
+                      </p>
                     </div>
-                    <p className="text-xs text-[#94A3B8] mt-0.5">
-                      {isFa
-                        ? `رزم ${state.character.skills.combat} · دریانوردی ${state.character.skills.seamanship} · سطح زره ${warGearTier}${boathouseActive ? ' · اسکله فعال ✓' : ''}`
-                        : `Combat ${state.character.skills.combat} · Sailing ${state.character.skills.seamanship} · Armory Lv.${warGearTier}${boathouseActive ? ' · Dock Active ✓' : ''}`}
-                    </p>
+                  </div>
+
+                  {/* Top Right Treasury vs Upkeep Pill */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="px-3 py-1.5 rounded-xl bg-[#111A26] border border-[#233246] text-end font-mono tabular-nums">
+                      <div className="text-xs text-[#94A3B8]">
+                        {isFa ? 'خزانه / نگهداری سالانه' : 'Treasury / Upkeep'}
+                      </div>
+                      <div className="text-xs font-semibold flex items-center justify-end gap-1.5 mt-0.5">
+                        <span className="text-[#F59E0B]">
+                          {num(state.realm.silver)} {isFa ? 'نقره' : 'Ag'}
+                        </span>
+                        <span className="text-[#64748B]">·</span>
+                        <span className="text-rose-400">
+                          -{num(totalUpkeep)}/{isFa ? 'سال' : 'yr'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Top Right Treasury vs Upkeep Pill */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="px-3 py-1.5 rounded-xl bg-[#111A26] border border-[#233246] text-end font-mono tabular-nums">
-                    <div className="text-[10px] text-[#94A3B8]">
-                      {isFa ? 'خزانه / نگهداری سالانه' : 'Treasury / Upkeep'}
-                    </div>
-                    <div className="text-xs font-bold flex items-center justify-end gap-1.5 mt-0.5">
-                      <span className="text-[#F59E0B]">
-                        {state.realm.silver} {isFa ? 'نقره' : 'Ag'}
-                      </span>
-                      <span className="text-[#64748B]">·</span>
-                      <span className="text-rose-400">
-                        -{totalUpkeep}/{isFa ? 'سال' : 'yr'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4-Column Minimalist Telemetry Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
-                  <span className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'قدرت رزمی کل' : 'Combat Power'}
-                  </span>
-                  <div className="flex items-baseline justify-between gap-1 mt-1">
-                    <span className="text-lg font-mono font-extrabold tabular-nums text-[#F59E0B]">
-                      {combatPower}
+                {/* 4-Column Minimalist Telemetry Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
+                    <span className="text-xs text-[#94A3B8]">
+                      {isFa ? 'قدرت رزمی کل' : 'Combat Power'}
                     </span>
-                    <span className="text-[10px] text-[#CBD5E1]">
-                      {warGearTier > 0
-                        ? isFa
-                          ? `زره +${warGearTier * 10}`
-                          : `Gear +${warGearTier * 10}`
+                    <div className="flex items-baseline justify-between gap-1 mt-1">
+                      <span className="text-lg font-mono font-semibold tabular-nums text-[#F59E0B]">
+                        {num(combatPower)}
+                      </span>
+                      <span className="text-xs text-[#CBD5E1]">
+                        {warGearTier > 0
+                          ? isFa
+                            ? `زره +${num(warGearTier * 10)}`
+                            : `Gear +${warGearTier * 10}`
+                          : isFa
+                            ? 'شاخص نبرد'
+                            : 'Rating'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
+                    <span className="text-xs text-[#94A3B8]">
+                      {isFa ? 'کل سربازان سپاه' : 'Active Warband'}
+                    </span>
+                    <div className="flex items-baseline justify-between gap-1 mt-1">
+                      <span className="text-lg font-mono font-semibold tabular-nums text-[#F1F5F9]">
+                        {num(state.realm.hirdWarriors)}
+                      </span>
+                      <span className="text-xs text-[#94A3B8]">
+                        {isFa
+                          ? `+${num(totalGarrison)} در پادگان`
+                          : `+${totalGarrison} garrison`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
+                    <span className="text-xs text-[#94A3B8]">
+                      {isFa ? 'ناوگان دریایی' : 'Naval Fleet'}
+                    </span>
+                    <div className="flex items-baseline justify-between gap-1 mt-1">
+                      <span className="text-lg font-mono font-semibold tabular-nums text-[#38BDF8]">
+                        {num(totalShips)}
+                      </span>
+                      <span className="text-xs text-[#94A3B8]">
+                        {isFa
+                          ? `${num(state.realm.longships)} جنگی · ${num(state.realm.knarrs)} تجاری`
+                          : `${state.realm.longships} War · ${state.realm.knarrs} Trade`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
+                    <span className="text-xs text-[#94A3B8]">
+                      {isFa ? 'اسب‌ها و ظرفیت حمل' : 'Horses & Sealift'}
+                    </span>
+                    <div className="flex items-baseline justify-between gap-1 mt-1">
+                      <span className="text-lg font-mono font-semibold tabular-nums text-emerald-400">
+                        {num(totalHorses)}
+                      </span>
+                      <span className="text-xs text-[#94A3B8]">
+                        {isFa
+                          ? `ظرفیت کشتی: ${num(sealiftCapacity)}`
+                          : `Ship cap: ${sealiftCapacity}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Minimal Sealift & Readiness Bar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#CBD5E1]">
+                      {isFa
+                        ? `ظرفیت حمل دریایی سپاه (${num(state.realm.hirdWarriors)} از ${num(sealiftCapacity)} جنگجو)`
+                        : `Fleet Troop Sealift (${state.realm.hirdWarriors} / ${sealiftCapacity} warriors)`}
+                    </span>
+                    <span className="font-mono font-semibold text-[#38BDF8] tabular-nums">
+                      {sealiftCapacity > 0
+                        ? `${num(sealiftUsagePct)}%`
                         : isFa
-                          ? 'شاخص نبرد'
-                          : 'Rating'}
+                          ? 'نیازمند ساخت کشتی جنگی'
+                          : 'Build a Warship'}
                     </span>
                   </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
-                  <span className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'کل سربازان سپاه' : 'Active Warband'}
-                  </span>
-                  <div className="flex items-baseline justify-between gap-1 mt-1">
-                    <span className="text-lg font-mono font-extrabold tabular-nums text-[#F1F5F9]">
-                      {state.realm.hirdWarriors}
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8]">
-                      {isFa ? `+${totalGarrison} در پادگان` : `+${totalGarrison} garrison`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
-                  <span className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'ناوگان دریایی' : 'Naval Fleet'}
-                  </span>
-                  <div className="flex items-baseline justify-between gap-1 mt-1">
-                    <span className="text-lg font-mono font-extrabold tabular-nums text-[#38BDF8]">
-                      {totalShips}
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8]">
-                      {isFa
-                        ? `${state.realm.longships} جنگی · ${state.realm.knarrs} تجاری`
-                        : `${state.realm.longships} War · ${state.realm.knarrs} Trade`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#111A26] border border-[#233246] flex flex-col justify-between">
-                  <span className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'اسب‌ها و ظرفیت حمل' : 'Horses & Sealift'}
-                  </span>
-                  <div className="flex items-baseline justify-between gap-1 mt-1">
-                    <span className="text-lg font-mono font-extrabold tabular-nums text-emerald-400">
-                      {totalHorses}
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8]">
-                      {isFa
-                        ? `ظرفیت کشتی: ${sealiftCapacity}`
-                        : `Ship cap: ${sealiftCapacity}`}
-                    </span>
+                  <div className="w-full h-1.5 rounded-full bg-[#090E15] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        sealiftCapacity === 0
+                          ? 'bg-rose-500'
+                          : state.realm.hirdWarriors > sealiftCapacity
+                            ? 'bg-[#F59E0B]'
+                            : 'bg-gradient-to-r from-[#38BDF8] to-emerald-400'
+                      }`}
+                      style={{ width: `${sealiftCapacity === 0 ? 15 : sealiftUsagePct}%` }}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Minimal Sealift & Readiness Bar */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-[#CBD5E1]">
-                    {isFa
-                      ? `ظرفیت حمل دریایی سپاه (${state.realm.hirdWarriors} از ${sealiftCapacity} جنگجو)`
-                      : `Fleet Troop Sealift (${state.realm.hirdWarriors} / ${sealiftCapacity} warriors)`}
-                  </span>
-                  <span className="font-mono font-bold text-[#38BDF8] tabular-nums">
-                    {sealiftCapacity > 0
-                      ? `${sealiftUsagePct}%`
-                      : isFa
-                        ? 'نیازمند ساخت کشتی جنگی'
-                        : 'Build a Warship'}
-                  </span>
-                </div>
-                <div className="w-full h-1.5 rounded-full bg-[#090E15] overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      sealiftCapacity === 0
-                        ? 'bg-rose-500'
-                        : state.realm.hirdWarriors > sealiftCapacity
-                          ? 'bg-[#F59E0B]'
-                          : 'bg-gradient-to-r from-[#38BDF8] to-emerald-400'
-                    }`}
-                    style={{ width: `${sealiftCapacity === 0 ? 15 : sealiftUsagePct}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sleek Minimalist Sub-Category Filter Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-[#111A26] border border-[#233246]">
-              {[
-                {
-                  id: 'all' as const,
-                  labelFa: 'همه بخش‌ها',
-                  labelEn: 'All Forces',
-                  badge: `${state.realm.hirdWarriors + totalShips + totalHorses}`,
-                },
-                {
-                  id: 'soldiers' as const,
-                  labelFa: 'سربازان و گارد',
-                  labelEn: 'Soldiers',
-                  badge: `${state.realm.hirdWarriors}`,
-                },
-                {
-                  id: 'ships' as const,
-                  labelFa: 'کارگاه کشتی‌سازی',
-                  labelEn: 'Shipyard',
-                  badge: `${totalShips}`,
-                },
-                {
-                  id: 'stables' as const,
-                  labelFa: 'اصطبل و اسلحه‌خانه',
-                  labelEn: 'Horses & Gear',
-                  badge: `${totalHorses}`,
-                },
-              ].map((cat) => {
-                const active = fleetCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setFleetCategory(cat.id)}
-                    className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center justify-between gap-1.5 cursor-pointer transition-all ${
-                      active
-                        ? 'bg-[#19283B] text-[#F1F5F9] border border-[#38BDF8]/50 shadow-sm'
-                        : 'text-[#94A3B8] hover:text-[#F1F5F9] border border-transparent'
-                    }`}
-                  >
-                    <span className="truncate">{isFa ? cat.labelFa : cat.labelEn}</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded-md font-mono text-[10px] tabular-nums ${
+              {/* Sleek Minimalist Sub-Category Filter Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-[#111A26] border border-[#233246]">
+                {[
+                  {
+                    id: 'all' as const,
+                    labelFa: 'همه بخش‌ها',
+                    labelEn: 'All Forces',
+                    badge: num(state.realm.hirdWarriors + totalShips + totalHorses),
+                  },
+                  {
+                    id: 'soldiers' as const,
+                    labelFa: 'سربازان و گارد',
+                    labelEn: 'Soldiers',
+                    badge: num(state.realm.hirdWarriors),
+                  },
+                  {
+                    id: 'ships' as const,
+                    labelFa: 'کارگاه کشتی‌سازی',
+                    labelEn: 'Shipyard',
+                    badge: num(totalShips),
+                  },
+                  {
+                    id: 'stables' as const,
+                    labelFa: 'اصطبل و اسلحه‌خانه',
+                    labelEn: 'Horses & Gear',
+                    badge: num(totalHorses),
+                  },
+                ].map((cat) => {
+                  const active = fleetCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setFleetCategory(cat.id)}
+                      className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between gap-1.5 cursor-pointer transition-all ${
                         active
-                          ? 'bg-[#38BDF8]/20 text-[#38BDF8]'
-                          : 'bg-[#131D2B] text-[#64748B]'
+                          ? 'bg-[#19283B] text-[#F1F5F9] border border-[#38BDF8]/50 shadow-sm'
+                          : 'text-[#94A3B8] hover:text-[#F1F5F9] border border-transparent'
                       }`}
                     >
-                      {cat.badge}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* ========================================================= */}
-            {/* SECTION 1: SOLDIERS & VIKING WARBAND ARCHETYPES           */}
-            {/* ========================================================= */}
-            {showSoldiers && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <Swords className="w-4 h-4 text-[#F59E0B]" />
-                    <h4 className="font-saga text-sm sm:text-base font-bold text-[#F1F5F9]">
-                      {isFa
-                        ? 'سربازگیری و واحدهای رزمی وایکینگ'
-                        : 'Viking Warband & Soldier Recruitment'}
-                    </h4>
-                  </div>
-                  <span className="text-[11px] text-[#94A3B8] font-mono">
-                    {isFa
-                      ? `مجموع سپاه همراه: ${state.realm.hirdWarriors} نفر`
-                      : `Total Active: ${state.realm.hirdWarriors} men`}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* SOLDIER 1: BONDI LEVY SPEARMEN */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-[#38BDF8]/55 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/35 text-[#38BDF8] flex items-center justify-center shrink-0">
-                            {/* Minimalist Norse Spear & Round Shield SVG */}
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M5 19L19 5" />
-                              <path d="M15 5h4v4" />
-                              <circle cx="11" cy="13" r="5" className="fill-[#131D2B]" />
-                              <circle cx="11" cy="13" r="5" />
-                              <circle cx="11" cy="13" r="1.5" />
-                            </svg>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-sm text-[#F1F5F9] truncate">
-                              {isFa ? 'نیزه‌داران آزاد (بوندِه)' : 'Bondi Levy Spearmen'}
-                            </div>
-                            <div className="text-[11px] text-[#38BDF8] font-medium">
-                              {isFa ? 'پیاده‌نظام سبک و پادگان' : 'Light Shield-Levy'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-end font-mono tabular-nums shrink-0">
-                          <div className="text-xl font-extrabold text-[#F1F5F9] leading-none">
-                            {bondiCount}
-                          </div>
-                          <div className="text-[10px] text-[#94A3B8] mt-0.5">
-                            {isFa ? 'نفر' : 'men'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#94A3B8] leading-relaxed">
-                        {isFa
-                          ? 'مردان آزاد مسلح به نیزه زبان‌گنجشک و سپر چوبی؛ کم‌هزینه‌ترین نیرو برای پر کردن صفوف و نگهبانی از املاک.'
-                          : 'Freemen armed with ash-spears and wooden shields; economical troops for swelling ranks and holding garrisons.'}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۵ جنگجو' : 'Batch: +5 Warriors'}</span>
-                        <span className="text-[#38BDF8]">
-                          {isFa ? 'قدرت پایه: +۱۰' : 'Power: +10'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 12}
-                      onClick={() => onBuildShipOrHird('recruit_bondi')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'جذب ۵ نیزه‌دار بوندِه' : 'Recruit 5 Bondi'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۱۲ نقره' : '12 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* SOLDIER 2: SWORN HUSCARLS & HIRD */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-[#F59E0B]/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/35 text-[#F59E0B] flex items-center justify-center shrink-0">
-                            {/* Minimalist Crossed Dane-Axes & Boss Shield SVG */}
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M4 20L20 4M4 4l16 16" />
-                              <circle cx="12" cy="12" r="6" className="fill-[#131D2B]" />
-                              <circle cx="12" cy="12" r="6" />
-                              <circle cx="12" cy="12" r="2" />
-                            </svg>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-sm text-[#F1F5F9] truncate">
-                              {isFa ? 'هوسکارل‌های سپردار (هیرد)' : 'Sworn Huscarls (Hird)'}
-                            </div>
-                            <div className="text-[11px] text-[#F59E0B] font-medium">
-                              {isFa ? 'گارد زبده دیوار سپرها' : 'Heavy Shield-Wall Elite'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-end font-mono tabular-nums shrink-0">
-                          <div className="text-xl font-extrabold text-[#F59E0B] leading-none">
-                            {huscarlsCount}
-                          </div>
-                          <div className="text-[10px] text-[#94A3B8] mt-0.5">
-                            {isFa ? 'نفر' : 'men'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#94A3B8] leading-relaxed">
-                        {isFa
-                          ? 'جنگجویان حرفه‌ای با تبرهای دانمارکی و زره؛ ستون اصلی یورش‌ها و شکستن دروازه شهرها (+۱ مهارت رزم).'
-                          : 'Veteran household guards with Dane-axes; backbone of the Skjaldborg shield-wall and city sieges (+1 Combat).'}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۶ هوسکارل' : 'Batch: +6 Huscarls'}</span>
-                        <span className="text-[#F59E0B]">
-                          {isFa ? 'رزم +۱ · قدرت +۱۲' : 'Combat +1 · Pwr +12'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 18}
-                      onClick={() => onBuildShipOrHird('recruit_hird')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'استخدام ۶ هوسکارل' : 'Recruit 6 Huscarls'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۱۸ نقره' : '18 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* SOLDIER 3: NORSE YEW-BOWMEN (ARCHERS) */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-emerald-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 flex items-center justify-center shrink-0">
-                            {/* Minimalist Norse Longbow & Arrow SVG */}
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M5 4c7 4 7 12 0 16" />
-                              <path d="M5 4v16" />
-                              <path d="M4 12h16" />
-                              <path d="M16 8l4 4-4 4" />
-                            </svg>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-sm text-[#F1F5F9] truncate">
-                              {isFa ? 'کمانداران شکاری شمال' : 'Norse Yew-Bowmen'}
-                            </div>
-                            <div className="text-[11px] text-emerald-400 font-medium">
-                              {isFa ? 'پشتیبانی تیرباران و کمین' : 'Ranged Volley & Skirmish'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-end font-mono tabular-nums shrink-0">
-                          <div className="text-xl font-extrabold text-emerald-400 leading-none">
-                            {archersCount}
-                          </div>
-                          <div className="text-[10px] text-[#94A3B8] mt-0.5">
-                            {isFa ? 'نفر' : 'men'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#94A3B8] leading-relaxed">
-                        {isFa
-                          ? 'تیراندازان ماهر با کمان‌های چوب سرخدار که پیش از نبرد تن‌به‌تن، عرشه کشتی‌ها و باروی قلعه‌ها را تیرباران می‌کنند.'
-                          : 'Sharpshooters with heavy yew longbows who rain broadhead arrows upon enemy decks and ramparts before the clash.'}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۵ کماندار' : 'Batch: +5 Bowmen'}</span>
-                        <span className="text-emerald-400">
-                          {isFa ? 'رزم +۲ · ذکاوت +۲' : 'Combat +2 · Cunning +2'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 20}
-                      onClick={() => onBuildShipOrHird('recruit_archers')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#34D399] hover:bg-[#6EE7B7] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'استخدام ۵ کماندار' : 'Recruit 5 Bowmen'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۲۰ نقره' : '20 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* SOLDIER 4: BERSERKERS & ULFHEDNAR */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-rose-500/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-400 flex items-center justify-center shrink-0">
-                            <Flame className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-sm text-[#F1F5F9] truncate">
-                              {isFa ? 'برزرکرها و اولف‌هدنار' : 'Berserkers & Ulfhednar'}
-                            </div>
-                            <div className="text-[11px] text-rose-400 font-medium">
-                              {isFa ? 'جنگجویان خشم اودین (خط‌شکن)' : 'Shock Terror Champions'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-end font-mono tabular-nums shrink-0">
-                          <div className="text-xl font-extrabold text-rose-400 leading-none">
-                            {berserkersCount}
-                          </div>
-                          <div className="text-[10px] text-[#94A3B8] mt-0.5">
-                            {isFa ? 'نفر' : 'men'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#94A3B8] leading-relaxed">
-                        {isFa
-                          ? 'دلاوران بی‌باک در پوست خرس و گرگ که بدون ترس از مرگ، دیوار سپرهای دشمن را متلاشی می‌کنند (+۳ قدرت بدنی و +۸ شهرت).'
-                          : 'Bear-coat and wolf-skin shock warriors whose furious charge shatters enemy shield-walls (+3 Strength, +8 Fame).'}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۴ برزرکر' : 'Batch: +4 Berserkers'}</span>
-                        <span className="text-rose-400">
-                          {isFa ? 'قدرت +۳ · شهرت +۸' : 'Str +3 · Fame +8'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 28}
-                      onClick={() => onBuildShipOrHird('recruit_berserkers')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'جذب ۴ برزرکر خشمگین' : 'Recruit 4 Berserkers'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۲۸ نقره' : '28 Ag'}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* SECTION 2: NAVAL SHIPYARD (3 VIKING VESSEL CLASSES)       */}
-            {/* ========================================================= */}
-            {showShips && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <Ship className="w-4 h-4 text-[#38BDF8]" />
-                    <h4 className="font-saga text-sm sm:text-base font-bold text-[#F1F5F9]">
-                      {isFa
-                        ? 'کارگاه کشتی‌سازی و ناوگان دریایی'
-                        : 'Naval Shipyard & Vessel Construction'}
-                    </h4>
-                  </div>
-                  <span className="text-[11px] text-[#94A3B8] font-mono">
-                    {isFa
-                      ? `${state.realm.longships} جنگی · ${state.realm.knarrs} تجاری`
-                      : `${state.realm.longships} Warships · ${state.realm.knarrs} Knarrs`}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* SHIP 1: SWIFT SNEKKJA SCOUT WAR-GALLEY */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-cyan-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/35 text-cyan-400 flex items-center justify-center shrink-0">
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 16c3 2 15 2 18 0l1-3H4l-1 3z" />
-                            <path d="M12 6v7" />
-                            <path d="M9 8h6l-1 4H10L9 8z" />
-                          </svg>
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-cyan-400 leading-none">
-                            {snekkjasCount}
-                          </div>
-                          <div className="text-[10px] font-semibold text-cyan-300 mt-0.5">
-                            {isFa ? 'اسنکیا تندرو' : 'Swift Snekkja'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'کشتی گشتی اسنکیا' : 'Snekkja Raider'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'کشتی باریک و چابک با ۲۰ پاروزن؛ عالی برای شبیخون سحرگاهی، رودخانه‌های کم‌عمق و افزایش مهارت دریانوردی (+۲).'
-                            : 'Light, shallow-draft 20-oar warship ideal for river strikes, dawn ambushes (+6 Raid) & +2 Seamanship.'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'ظرفیت: ۲۰ جنگجو' : 'Cap: 20 men'}</span>
-                        <span className="text-cyan-400">
-                          {isFa ? 'دریانوردی +۲' : 'Sailing +2'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 32}
-                      onClick={() => onBuildShipOrHird('build_snekkja')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'ساخت اسنکیا' : 'Build Snekkja'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۳۲ نقره' : '32 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* SHIP 2: DRAGON LONGSHIP (DRAKKAR) */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-[#38BDF8]/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/35 text-[#38BDF8] flex items-center justify-center shrink-0">
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 15c2.5 2.5 15.5 2.5 18 0l1.5-4.5c-1.5 0-2.5 1-3.5 2H5c-1-1-1.5-2.5-1.5-4.5 0-1.5 1-2.5 2-2.5" />
-                            <path d="M12 4v11" />
-                            <path d="M8 7h8l-1 5H9L8 7z" />
-                          </svg>
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-[#38BDF8] leading-none">
-                            {drakkarsCount}
-                          </div>
-                          <div className="text-[10px] font-semibold text-[#7DD3FC] mt-0.5">
-                            {isFa ? 'لانگ‌شیپ اژدهانشان' : 'Dragon Drakkar'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'ناو جنگی دراکار (لانگ‌شیپ)' : 'Dragon Longship'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'ناو سرفرماندهی با سرِ اژدهای منبت‌کاری‌شده؛ حمل ۳۰ جنگجو، +۱۵ شهرت و قدرت محاصره بالا.'
-                            : 'Flagship dragon warship carrying 30 warriors; grants +15 Fame, +3 Craft & heavy siege power.'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'ظرفیت: ۳۰ جنگجو' : 'Cap: 30 men'}</span>
-                        <span className="text-[#38BDF8]">
-                          {isFa ? 'شهرت +۱۵' : 'Fame +15'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 55}
-                      onClick={() => onBuildShipOrHird('build_longship')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'ساخت لانگ‌شیپ' : 'Launch Longship'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۵۵ نقره' : '55 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* SHIP 3: OCEAN TRADE KNARR */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-emerald-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 flex items-center justify-center shrink-0">
-                          <Anchor className="w-5 h-5" />
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-emerald-400 leading-none">
-                            {state.realm.knarrs}
-                          </div>
-                          <div className="text-[10px] font-semibold text-emerald-300 mt-0.5">
-                            {isFa ? 'کِنار اقیانوس‌پیما' : 'Merchant Knarr'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'کشتی تجاری کِنار' : 'Ocean Trade Knarr'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'کشتی پهن‌پیکر و مقاوم در برابر طوفان برای گشودن مسیرهای تجاری جدید (+۱ مسیر) و افزایش سود سالانه.'
-                            : 'Broad-hulled ocean cargo ship that reduces storm peril and opens +1 active Trade Network.'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>
-                          {isFa
-                            ? `سود تجارت: +${state.realm.knarrs * 18}٪`
-                            : `Trade: +${state.realm.knarrs * 18}%`}
-                        </span>
-                        <span className="text-emerald-400">
-                          {isFa ? '+۱ مسیر تجاری' : '+1 Trade Route'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 45}
-                      onClick={() => onBuildShipOrHird('build_knarr')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#34D399] hover:bg-[#6EE7B7] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'ساخت کِنار تجاری' : 'Launch Knarr'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۴۵ نقره' : '45 Ag'}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* SECTION 3: STABLES, HORSES & ROYAL ARMORY                 */}
-            {/* ========================================================= */}
-            {showStables && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-amber-400" />
-                    <h4 className="font-saga text-sm sm:text-base font-bold text-[#F1F5F9]">
-                      {isFa
-                        ? 'اصطبل سلطنتی، خرید اسب و اسلحه‌خانه'
-                        : 'Royal Stables, Horses & Forged Armory'}
-                    </h4>
-                  </div>
-                  <span className="text-[11px] text-[#94A3B8] font-mono">
-                    {isFa
-                      ? `${totalHorses} راس اسب · سطح زره ${warGearTier}`
-                      : `${totalHorses} Horses · Gear Lv.${warGearTier}`}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* STABLE 1: NORSE WARHORSES */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-amber-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-400 flex items-center justify-center shrink-0">
-                          {/* Minimalist Norse Stallion Head SVG */}
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M7 20v-5l-2-3 2-5 4-3 5 1 2 4-4 2-1 3 3 2v4H7z" />
-                            <circle cx="13.5" cy="7.5" r="0.8" fill="currentColor" />
-                          </svg>
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-amber-400 leading-none">
-                            {warhorsesCount}
-                          </div>
-                          <div className="text-[10px] font-semibold text-amber-300 mt-0.5">
-                            {isFa ? 'اسب جنگی نوردیک' : 'War Stallions'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'اسب‌های جنگی نوردیک' : 'Norse Warhorses'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'اسب‌های چابک برای پیشروی برق‌آسای سپاه در خشکی، محاصره سریع و تاکتیک فرار ساختگی (+۳ رزم، +۱۰ شهرت).'
-                            : 'Sturdy stallions for rapid overland strikes, flanking maneuvers, and +3 Combat & +10 Fame.'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۴ اسب جنگی' : 'Batch: +4 Warhorses'}</span>
-                        <span className="text-amber-400">
-                          {isFa ? 'قدرت +۸ · رزم +۳' : 'Pwr +8 · Combat +3'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 24}
-                      onClick={() => onBuildShipOrHird('buy_warhorses')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'خرید ۴ اسب جنگی' : 'Buy 4 Warhorses'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۲۴ نقره' : '24 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* STABLE 2: CARAVAN PACK HORSES */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-teal-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/35 text-teal-400 flex items-center justify-center shrink-0">
-                          <Coins className="w-5 h-5" />
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-teal-400 leading-none">
-                            {packHorsesCount}
-                          </div>
-                          <div className="text-[10px] font-semibold text-teal-300 mt-0.5">
-                            {isFa ? 'ستور بارکش کاروان' : 'Pack Horses'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'اسب‌های بارکش و کاروانی' : 'Caravan Pack Horses'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'ستورهای مقاوم با خورجین‌های چرمی؛ افزایش +۱۰٪ غنیمت یورش‌ها، +۱۲ آذوقه انبار و +۳ مهارت تجارت.'
-                            : 'Fjord pack horses that haul +10% extra raid plunder, add +12 Food Stores, and grant +3 Trade.'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'دسته: +۴ اسب بارکش' : 'Batch: +4 Pack Horses'}</span>
-                        <span className="text-teal-400">
-                          {isFa ? '+۱۲ آذوقه · غنیمت+' : '+12 Food · +Loot'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 16}
-                      onClick={() => onBuildShipOrHird('buy_pack_horses')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'خرید ۴ اسب بارکش' : 'Buy 4 Pack Horses'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۱۶ نقره' : '16 Ag'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* STABLE 3: FORGED RING-MAIL & ULFBERHT ARMORY */}
-                  <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] hover:border-violet-400/60 flex flex-col justify-between gap-3 transition-colors">
-                    <div className="space-y-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-500/35 text-violet-400 flex items-center justify-center shrink-0">
-                          <Hammer className="w-5 h-5" />
-                        </div>
-                        <div className="text-end font-mono tabular-nums">
-                          <div className="text-xl font-extrabold text-violet-400 leading-none">
-                            {isFa ? `سطح ${warGearTier}` : `Lv.${warGearTier}`}
-                          </div>
-                          <div className="text-[10px] font-semibold text-violet-300 mt-0.5">
-                            {isFa ? 'زره و فولاد اولف‌برهت' : 'Ulfberht Armory'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="font-bold text-sm text-[#F1F5F9]">
-                          {isFa ? 'زره حلقه‌ای و سلاح فولادی' : 'Ring-Mail & Steel Blades'}
-                        </div>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed mt-0.5">
-                          {isFa
-                            ? 'تجهیز سپاه به زره‌های زنجیری، کلاه‌خودهای چشمی و شمشیرهای فولادی آبدیده (+۴ رزم، +۳ قدرت بدنی).'
-                            : 'Outfit your champions with riveted ring-mail and crucible steel (+4 Combat, +3 Strength, +10 Power).'}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-[11px] font-mono text-[#CBD5E1]">
-                        <span>{isFa ? 'ارتقا: +۱ سطح زره' : 'Upgrade: +1 Tier'}</span>
-                        <span className="text-violet-400">
-                          {isFa ? 'رزم +۴ · قدرت +۱۰' : 'Combat +4 · Pwr +10'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={state.realm.silver < 30}
-                      onClick={() => onBuildShipOrHird('buy_war_gear')}
-                      className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-violet-400 hover:bg-violet-300 active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-extrabold flex items-center justify-between gap-2 cursor-pointer transition-all"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Plus className="w-4 h-4 shrink-0" />
-                        <span>{isFa ? 'تجهیز زره و سلاح' : 'Forge War-Gear'}</span>
-                      </span>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#0B1118]/15">
-                        {isFa ? '۳۰ نقره' : '30 Ag'}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Minimalist Garrison Allocation & Naval Logistics Strip */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-xs font-bold text-[#F1F5F9] flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#38BDF8]" />
-                  <span>
-                    {isFa
-                      ? 'تدارکات دریایی و تقسیم پادگان شهرها'
-                      : 'Naval Logistics & Holding Garrisons'}
-                  </span>
-                </div>
-                <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                    boathouseActive
-                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
-                      : 'bg-[#111A26] text-[#94A3B8] border-[#233246]'
-                  }`}
-                >
-                  {boathouseActive
-                    ? isFa
-                      ? 'اسکله کشتی‌سازی فعال: ۵۰٪ تخفیف نگهداری ناوگان ✓'
-                      : 'Boathouse Active: -50% Fleet Upkeep ✓'
-                    : isFa
-                      ? 'ساخت «اسکله کشتی‌سازی» در املاک هزینه نگهداری کشتی‌ها را نصف می‌کند'
-                      : 'Build a Boathouse in Holdings to halve ship upkeep'}
-                </span>
-              </div>
-
-              {state.realm.holdings.length > 0 && onStationGarrison && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  {state.realm.holdings.map((h) => {
-                    const sData = SETTLEMENTS_BY_ID[h.settlementId];
-                    const sName = isFa
-                      ? SETTLEMENTS_FA[h.settlementId]?.name ?? sData?.name ?? h.settlementId
-                      : sData?.name.split(' (')[0] ?? h.settlementId;
-                    const unrest = h.unrest ?? 15;
-                    return (
-                      <div
-                        key={h.settlementId}
-                        className="px-3 py-2 rounded-xl bg-[#111A26] border border-[#233246] flex items-center justify-between gap-2"
+                      <span className="truncate">{isFa ? cat.labelFa : cat.labelEn}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-md font-mono text-xs tabular-nums ${
+                          active
+                            ? 'bg-[#38BDF8]/20 text-[#38BDF8]'
+                            : 'bg-[#131D2B] text-[#64748B]'
+                        }`}
                       >
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-[#F1F5F9] truncate">{sName}</div>
-                          <div className="text-[10px] text-[#94A3B8]">
-                            {isFa
-                              ? `ناآرامی: ${unrest}٪ · مزارع: ${h.farms}`
-                              : `Unrest: ${unrest}% · Farms: ${h.farms}`}
-                          </div>
-                        </div>
+                        {cat.badge}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            disabled={(h.garrison ?? 0) <= 0}
-                            onClick={() => onStationGarrison(h.settlementId, -2)}
-                            className="w-7 h-7 rounded-lg bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-[#F1F5F9] flex items-center justify-center cursor-pointer disabled:opacity-30 transition-colors"
-                            title={isFa ? 'فراخوانی ۲ جنگجو به سپاه همراه' : 'Withdraw 2 warriors to Hird'}
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <div className="min-w-[44px] text-center font-mono text-xs font-bold text-[#38BDF8]">
-                            {h.garrison ?? 4}
+              {/* SECTION 1: SOLDIERS & VIKING WARBAND ARCHETYPES */}
+              {showSoldiers && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Swords className="w-4 h-4 text-[#F59E0B]" />
+                      <h4 className="font-saga text-sm sm:text-base font-semibold text-[#F1F5F9]">
+                        {isFa
+                          ? 'سربازگیری و واحدهای رزمی وایکینگ'
+                          : 'Viking Warband & Soldier Recruitment'}
+                      </h4>
+                    </div>
+                    <span className="text-xs text-[#94A3B8] font-mono tabular-nums">
+                      {isFa
+                        ? `مجموع سپاه همراه: ${num(state.realm.hirdWarriors)} نفر`
+                        : `Total Active: ${state.realm.hirdWarriors} men`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(
+                      [
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.bondi_spearmen,
+                          count: bondiCount,
+                          borderHover: 'hover:border-[#38BDF8]/55',
+                          iconBox: 'bg-[#38BDF8]/15 border-[#38BDF8]/35 text-[#38BDF8]',
+                          textAccent: 'text-[#38BDF8]',
+                          btnClass: 'bg-[#38BDF8] hover:bg-[#7DD3FC]',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.sworn_huscarls,
+                          count: huscarlsCount,
+                          borderHover: 'hover:border-[#F59E0B]/60',
+                          iconBox: 'bg-[#F59E0B]/15 border-[#F59E0B]/35 text-[#F59E0B]',
+                          textAccent: 'text-[#F59E0B]',
+                          btnClass: 'bg-[#F59E0B] hover:bg-[#FBBF24]',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.norse_archers,
+                          count: archersCount,
+                          borderHover: 'hover:border-emerald-400/60',
+                          iconBox: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-400',
+                          textAccent: 'text-emerald-400',
+                          btnClass: 'bg-[#34D399] hover:bg-[#6EE7B7]',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.berserkers,
+                          count: berserkersCount,
+                          borderHover: 'hover:border-rose-500/60',
+                          iconBox: 'bg-rose-500/15 border-rose-500/35 text-rose-400',
+                          textAccent: 'text-rose-400',
+                          btnClass: 'bg-rose-500 hover:bg-rose-400',
+                        },
+                      ] as const
+                    ).map(({ cat, count, borderHover, iconBox, textAccent, btnClass }) => {
+                      const copy = cat[lang];
+                      return (
+                        <div
+                          key={cat.id}
+                          className={`p-4 rounded-2xl bg-[#131D2B] border border-[#233246] ${borderHover} flex flex-col justify-between gap-3 transition-colors`}
+                        >
+                          <div className="space-y-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`w-10 h-10 rounded-xl border ${iconBox} flex items-center justify-center shrink-0`}
+                                >
+                                  <MilitaryUnitGlyph type={cat.id} className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-sm text-[#F1F5F9]">
+                                    {copy.name}
+                                  </div>
+                                  <div className={`text-xs ${textAccent} font-normal`}>
+                                    {copy.role} ·{' '}
+                                    <bdi dir="ltr" className="opacity-75 font-mono text-xs">
+                                      {cat.norseName}
+                                    </bdi>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-end font-mono tabular-nums shrink-0">
+                                <div className={`text-xl font-semibold ${textAccent} leading-none`}>
+                                  {num(count)}
+                                </div>
+                                <div className="text-xs text-[#94A3B8] mt-0.5">
+                                  {copy.unitSuffix}
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-[#94A3B8] leading-relaxed">
+                              {copy.description}
+                            </p>
+
+                            <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
+                              <span>{copy.batchLabel}</span>
+                              <span className={textAccent}>{copy.effectText}</span>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            disabled={state.realm.hirdWarriors < 2}
-                            onClick={() => onStationGarrison(h.settlementId, 2)}
-                            className="w-7 h-7 rounded-lg bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-emerald-400 flex items-center justify-center cursor-pointer disabled:opacity-30 transition-colors"
-                            title={isFa ? 'اعزام ۲ جنگجو به پادگان این شهر' : 'Station 2 warriors in garrison'}
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
+
+                          {cat.action && (
+                            <button
+                              type="button"
+                              disabled={state.realm.silver < cat.costSilver}
+                              onClick={() => onBuildShipOrHird(cat.action!)}
+                              className={`w-full min-h-[44px] px-3 py-2 rounded-xl ${btnClass} active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer transition-all`}
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <Plus className="w-4 h-4 shrink-0" />
+                                <span>{copy.ctaLabel}</span>
+                              </span>
+                              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#0B1118]/15">
+                                {isFa
+                                  ? `${num(cat.costSilver)} نقره`
+                                  : `${cat.costSilver} Ag`}
+                              </span>
+                            </button>
+                          )}
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
-        );
-      })()}
 
-      {/* TAB 3: POLITICS & INTRIGUE */}
+              {/* SECTION 2: NAVAL SHIPYARD */}
+              {showShips && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Ship className="w-4 h-4 text-[#38BDF8]" />
+                      <h4 className="font-saga text-sm sm:text-base font-semibold text-[#F1F5F9]">
+                        {isFa
+                          ? 'کارگاه کشتی‌سازی و ناوگان دریایی'
+                          : 'Naval Shipyard & Vessel Construction'}
+                      </h4>
+                    </div>
+                    <span className="text-xs text-[#94A3B8] font-mono tabular-nums">
+                      {isFa
+                        ? `${num(state.realm.longships)} جنگی · ${num(state.realm.knarrs)} تجاری`
+                        : `${state.realm.longships} Warships · ${state.realm.knarrs} Knarrs`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {(
+                      [
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.snekkja,
+                          count: snekkjasCount,
+                          borderHover: 'hover:border-cyan-400/60',
+                          iconBox: 'bg-cyan-500/15 border-cyan-500/35 text-cyan-400',
+                          textAccent: 'text-cyan-400',
+                          btnClass: 'bg-cyan-400 hover:bg-cyan-300',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.drakkar,
+                          count: drakkarsCount,
+                          borderHover: 'hover:border-[#38BDF8]/60',
+                          iconBox: 'bg-[#38BDF8]/15 border-[#38BDF8]/35 text-[#38BDF8]',
+                          textAccent: 'text-[#38BDF8]',
+                          btnClass: 'bg-[#38BDF8] hover:bg-[#7DD3FC]',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.knarr,
+                          count: state.realm.knarrs,
+                          borderHover: 'hover:border-emerald-400/60',
+                          iconBox: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-400',
+                          textAccent: 'text-emerald-400',
+                          btnClass: 'bg-[#34D399] hover:bg-[#6EE7B7]',
+                        },
+                      ] as const
+                    ).map(({ cat, count, borderHover, iconBox, textAccent, btnClass }) => {
+                      const copy = cat[lang];
+                      return (
+                        <div
+                          key={cat.id}
+                          className={`p-4 rounded-2xl bg-[#131D2B] border border-[#233246] ${borderHover} flex flex-col justify-between gap-3 transition-colors`}
+                        >
+                          <div className="space-y-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div
+                                className={`w-10 h-10 rounded-xl border ${iconBox} flex items-center justify-center shrink-0`}
+                              >
+                                <MilitaryUnitGlyph type={cat.id} className="w-5 h-5" />
+                              </div>
+                              <div className="text-end font-mono tabular-nums">
+                                <div className={`text-xl font-semibold ${textAccent} leading-none`}>
+                                  {num(count)}
+                                </div>
+                                <div className={`text-xs font-semibold ${textAccent} mt-0.5`}>
+                                  {copy.role}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="font-semibold text-sm text-[#F1F5F9]">
+                                {copy.name}
+                              </div>
+                              <bdi dir="ltr" className="text-xs font-mono text-[#64748B] block">
+                                {cat.norseName}
+                              </bdi>
+                              <p className="text-xs text-[#94A3B8] leading-relaxed mt-1">
+                                {copy.description}
+                              </p>
+                            </div>
+
+                            <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
+                              <span>{copy.batchLabel}</span>
+                              <span className={textAccent}>{copy.effectText}</span>
+                            </div>
+                          </div>
+
+                          {cat.action && (
+                            <button
+                              type="button"
+                              disabled={state.realm.silver < cat.costSilver}
+                              onClick={() => onBuildShipOrHird(cat.action!)}
+                              className={`w-full min-h-[44px] px-3 py-2 rounded-xl ${btnClass} active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer transition-all`}
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <Plus className="w-4 h-4 shrink-0" />
+                                <span>{copy.ctaLabel}</span>
+                              </span>
+                              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#0B1118]/15">
+                                {isFa
+                                  ? `${num(cat.costSilver)} نقره`
+                                  : `${cat.costSilver} Ag`}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 3: STABLES, HORSES & ROYAL ARMORY */}
+              {showStables && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-amber-400" />
+                      <h4 className="font-saga text-sm sm:text-base font-semibold text-[#F1F5F9]">
+                        {isFa
+                          ? 'اصطبل سلطنتی، خرید اسب و اسلحه‌خانه'
+                          : 'Royal Stables, Horses & Forged Armory'}
+                      </h4>
+                    </div>
+                    <span className="text-xs text-[#94A3B8] font-mono tabular-nums">
+                      {isFa
+                        ? `${num(totalHorses)} راس اسب · سطح زره ${num(warGearTier)}`
+                        : `${totalHorses} Horses · Gear Lv.${warGearTier}`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {(
+                      [
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.warhorses,
+                          countDisplay: num(warhorsesCount),
+                          borderHover: 'hover:border-amber-400/60',
+                          iconBox: 'bg-amber-500/15 border-amber-500/35 text-amber-400',
+                          textAccent: 'text-amber-400',
+                          btnClass: 'bg-[#F59E0B] hover:bg-[#FBBF24]',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.pack_horses,
+                          countDisplay: num(packHorsesCount),
+                          borderHover: 'hover:border-teal-400/60',
+                          iconBox: 'bg-teal-500/15 border-teal-500/35 text-teal-400',
+                          textAccent: 'text-teal-400',
+                          btnClass: 'bg-teal-400 hover:bg-teal-300',
+                        },
+                        {
+                          cat: MILITARY_CATALOG_BY_ID.war_gear,
+                          countDisplay: isFa ? `سطح ${num(warGearTier)}` : `Lv.${warGearTier}`,
+                          borderHover: 'hover:border-violet-400/60',
+                          iconBox: 'bg-violet-500/15 border-violet-500/35 text-violet-400',
+                          textAccent: 'text-violet-400',
+                          btnClass: 'bg-violet-400 hover:bg-violet-300',
+                        },
+                      ] as const
+                    ).map(({ cat, countDisplay, borderHover, iconBox, textAccent, btnClass }) => {
+                      const copy = cat[lang];
+                      return (
+                        <div
+                          key={cat.id}
+                          className={`p-4 rounded-2xl bg-[#131D2B] border border-[#233246] ${borderHover} flex flex-col justify-between gap-3 transition-colors`}
+                        >
+                          <div className="space-y-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div
+                                className={`w-10 h-10 rounded-xl border ${iconBox} flex items-center justify-center shrink-0`}
+                              >
+                                <MilitaryUnitGlyph type={cat.id} className="w-5 h-5" />
+                              </div>
+                              <div className="text-end font-mono tabular-nums">
+                                <div className={`text-xl font-semibold ${textAccent} leading-none`}>
+                                  {countDisplay}
+                                </div>
+                                <div className={`text-xs font-semibold ${textAccent} mt-0.5`}>
+                                  {copy.role}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="font-semibold text-sm text-[#F1F5F9]">
+                                {copy.name}
+                              </div>
+                              <bdi dir="ltr" className="text-xs font-mono text-[#64748B] block">
+                                {cat.norseName}
+                              </bdi>
+                              <p className="text-xs text-[#94A3B8] leading-relaxed mt-1">
+                                {copy.description}
+                              </p>
+                            </div>
+
+                            <div className="pt-2 border-t border-[#1E2D40] flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
+                              <span>{copy.batchLabel}</span>
+                              <span className={textAccent}>{copy.effectText}</span>
+                            </div>
+                          </div>
+
+                          {cat.action && (
+                            <button
+                              type="button"
+                              disabled={state.realm.silver < cat.costSilver}
+                              onClick={() => onBuildShipOrHird(cat.action!)}
+                              className={`w-full min-h-[44px] px-3 py-2 rounded-xl ${btnClass} active:scale-[0.99] disabled:bg-[#1E293B] disabled:text-[#64748B] text-[#0B1118] text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer transition-all`}
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <Plus className="w-4 h-4 shrink-0" />
+                                <span>{copy.ctaLabel}</span>
+                              </span>
+                              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#0B1118]/15">
+                                {isFa
+                                  ? `${num(cat.costSilver)} نقره`
+                                  : `${cat.costSilver} Ag`}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Minimalist Garrison Allocation & Naval Logistics Strip */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-[#F1F5F9] flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#38BDF8]" />
+                    <span>
+                      {isFa
+                        ? 'تدارکات دریایی و تقسیم پادگان شهرها'
+                        : 'Naval Logistics & Holding Garrisons'}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                      boathouseActive
+                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
+                        : 'bg-[#111A26] text-[#94A3B8] border-[#233246]'
+                    }`}
+                  >
+                    {boathouseActive
+                      ? isFa
+                        ? 'اسکله کشتی‌سازی فعال: ۵۰٪ تخفیف نگهداری ناوگان ✓'
+                        : 'Boathouse Active: -50% Fleet Upkeep ✓'
+                      : isFa
+                        ? 'ساخت «اسکله کشتی‌سازی» در املاک هزینه نگهداری کشتی‌ها را نصف می‌کند'
+                        : 'Build a Boathouse in Holdings to halve ship upkeep'}
+                  </span>
+                </div>
+
+                {state.realm.holdings.length > 0 && onStationGarrison && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {state.realm.holdings.map((h) => {
+                      const sName = getSettlementDisplayName(h.settlementId);
+                      const unrest = h.unrest ?? 15;
+                      return (
+                        <div
+                          key={h.settlementId}
+                          className="px-3 py-2 rounded-xl bg-[#111A26] border border-[#233246] flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-[#F1F5F9]">
+                              {sName}
+                            </div>
+                            <div className="text-xs text-[#94A3B8]">
+                              {isFa
+                                ? `ناآرامی: ${num(unrest)}٪ · مزارع: ${num(h.farms)}`
+                                : `Unrest: ${unrest}% · Farms: ${h.farms}`}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={(h.garrison ?? 0) <= 0}
+                              onClick={() => onStationGarrison(h.settlementId, -2)}
+                              className="w-9 h-9 rounded-lg bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-[#F1F5F9] flex items-center justify-center cursor-pointer disabled:opacity-30 transition-colors"
+                              title={
+                                isFa
+                                  ? 'فراخوانی ۲ جنگجو به سپاه همراه'
+                                  : 'Withdraw 2 warriors to Hird'
+                              }
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <div className="min-w-[44px] text-center font-mono text-xs font-semibold tabular-nums text-[#38BDF8]">
+                              {num(h.garrison ?? 4)}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={state.realm.hirdWarriors < 2}
+                              onClick={() => onStationGarrison(h.settlementId, 2)}
+                              className="w-9 h-9 rounded-lg bg-[#162232] hover:bg-[#1E2D40] border border-[#233246] text-emerald-400 flex items-center justify-center cursor-pointer disabled:opacity-30 transition-colors"
+                              title={
+                                isFa
+                                  ? 'اعزام ۲ جنگجو به پادگان این شهر'
+                                  : 'Station 2 warriors in garrison'
+                              }
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+      {/* ===================================================================== */}
+      {/* TAB 3: POLITICS & INTRIGUE                                            */}
+      {/* ===================================================================== */}
       {tab === 'politics' && (
         <div className="flex flex-col overflow-hidden space-y-4">
-          {/* Emergent Historical Titles (Jarl of Orkney, King of Norway, etc.) */}
+          {/* Emergent Historical Titles */}
           <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
-            <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
+            <div className="font-saga text-lg font-semibold text-[#F1F5F9] flex items-center gap-2">
               <Crown className="w-5 h-5 text-[#F59E0B]" />
-              <span>{isFa ? 'عناوین و تاج‌های تاریخی قابل احراز' : 'Emergent Historical Crowns & Titles'}</span>
+              <span>
+                {isFa
+                  ? 'عناوین و تاج‌های تاریخی قابل احراز'
+                  : 'Emergent Historical Crowns & Titles'}
+              </span>
             </div>
             <p className="text-xs text-[#94A3B8]">
               {isFa
@@ -1706,20 +2135,24 @@ export function RealmPanel({
                 return (
                   <div
                     key={st.id}
-                    className={`p-3 rounded-xl border flex flex-col justify-between gap-2.5 ${
+                    className={`p-3.5 rounded-xl border flex flex-col justify-between gap-2.5 ${
                       isClaimed
-                        ? 'bg-[#12241C] border-emerald-500/50'
+                        ? 'bg-[#111A26] border-emerald-500/40'
                         : st.canClaim
-                          ? 'bg-[#211E16] border-[#F59E0B]'
+                          ? 'bg-[#162232] border-[#F59E0B]'
                           : 'bg-[#111A26] border-[#233246]'
                     }`}
                   >
                     <div>
-                      <div className="font-bold text-sm text-[#F1F5F9] flex items-center justify-between">
+                      <div className="font-semibold text-sm text-[#F1F5F9] flex items-center justify-between gap-2">
                         <span>{isFa ? st.nameFa : st.name}</span>
                         {isClaimed && (
-                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
-                            {isFa ? 'احراز شده ✓' : 'Claimed ✓'}
+                          <span
+                            aria-disabled="true"
+                            className="text-xs font-normal text-[#94A3B8] bg-[#162232] border border-[#233246] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{isFa ? 'احراز شده' : 'Claimed'}</span>
                           </span>
                         )}
                       </div>
@@ -1733,15 +2166,19 @@ export function RealmPanel({
                         type="button"
                         disabled={!st.canClaim}
                         onClick={() => onClaimSpecialTitle(st.id)}
-                        className={`w-full py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                        className={`w-full min-h-[40px] py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
                           st.canClaim
                             ? 'bg-[#F59E0B] hover:bg-[#FBBF24] text-[#0B1118]'
-                            : 'bg-[#1E293B] text-[#64748B] cursor-not-allowed'
+                            : 'bg-[#162232] text-[#94A3B8] cursor-not-allowed'
                         }`}
                       >
                         {st.canClaim
-                          ? isFa ? 'تاج‌گذاری و اعلام این مقام!' : 'Claim This Title!'
-                          : isFa ? 'شرایط کامل نیست' : 'Conditions Unmet'}
+                          ? isFa
+                            ? 'تاج‌گذاری و اعلام این مقام!'
+                            : 'Claim This Title!'
+                          : isFa
+                            ? 'شرایط کامل نیست'
+                            : 'Conditions Unmet'}
                       </button>
                     )}
                   </div>
@@ -1753,7 +2190,7 @@ export function RealmPanel({
           {/* Intrigue & Dark Plots */}
           {onExecutePlot && (
             <div className="p-4 rounded-2xl bg-[#131D2B] border border-[#233246] space-y-3">
-              <div className="font-saga text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
+              <div className="font-saga text-lg font-semibold text-[#F1F5F9] flex items-center gap-2">
                 <Skull className="w-5 h-5 text-[#F59E0B]" />
                 <span>{isFa ? 'توطئه‌ها و دسیسه‌های درباری' : 'Intrigue & Dark Plots'}</span>
               </div>
@@ -1768,14 +2205,18 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 32}
                   onClick={() => onExecutePlot('assassination')}
-                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-45 transition-colors"
                 >
-                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                  <div className="font-semibold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
                     <span>🗡️ {isFa ? 'ترور شبانه رقیب' : 'Night Assassination'}</span>
-                    <span className="font-mono text-[11px] text-[#F59E0B]">{isFa ? '۳۲ نقره' : '32 Silv'}</span>
+                    <span className="font-mono text-xs text-[#F59E0B]">
+                      {isFa ? `${num(32)} نقره` : '32 Silv'}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'آدم‌کش اجیرشده برای قتل سردار یا دشمن خونی' : 'Hired shadow-blade strikes rival in the dark'}
+                  <div className="text-xs text-[#94A3B8]">
+                    {isFa
+                      ? 'آدم‌کش اجیرشده برای قتل سردار یا دشمن خونی'
+                      : 'Hired shadow-blade strikes rival in the dark'}
                   </div>
                 </button>
 
@@ -1783,14 +2224,18 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 22}
                   onClick={() => onExecutePlot('poisoning')}
-                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#F59E0B]/60 text-start space-y-1 cursor-pointer disabled:opacity-45 transition-colors"
                 >
-                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                  <div className="font-semibold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
                     <span>🧪 {isFa ? 'زهر شوکران در جام' : 'Poison Mead Horn'}</span>
-                    <span className="font-mono text-[11px] text-[#F59E0B]">{isFa ? '۲۲ نقره' : '22 Silv'}</span>
+                    <span className="font-mono text-xs text-[#F59E0B]">
+                      {isFa ? `${num(22)} نقره` : '22 Silv'}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'ریختن سم شوکران در جام بزم رقیب' : 'Distil hemlock to cause quiet heart failure'}
+                  <div className="text-xs text-[#94A3B8]">
+                    {isFa
+                      ? 'ریختن سم شوکران در جام بزم رقیب'
+                      : 'Distil hemlock to cause quiet heart failure'}
                   </div>
                 </button>
 
@@ -1798,14 +2243,18 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.silver < 25}
                   onClick={() => onExecutePlot('bribe_thing')}
-                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#38BDF8]/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-[#38BDF8]/60 text-start space-y-1 cursor-pointer disabled:opacity-45 transition-colors"
                 >
-                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                  <div className="font-semibold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
                     <span>⚖️ {isFa ? 'رشوه به شورای ثینگ' : 'Bribe Thing Speaker'}</span>
-                    <span className="font-mono text-[11px] text-[#38BDF8]">{isFa ? '۲۵ نقره' : '25 Silv'}</span>
+                    <span className="font-mono text-xs text-[#38BDF8]">
+                      {isFa ? `${num(25)} نقره` : '25 Silv'}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'تطمیع سخنگوی قانون و تبرئه از تبعید و جرم' : 'Weigh silver rings to clear outlawry & win rulings'}
+                  <div className="text-xs text-[#94A3B8]">
+                    {isFa
+                      ? 'تطمیع سخنگوی قانون و تبرئه از تبعید و جرم'
+                      : 'Weigh silver rings to clear outlawry & win rulings'}
                   </div>
                 </button>
 
@@ -1813,14 +2262,18 @@ export function RealmPanel({
                   type="button"
                   disabled={state.realm.hirdWarriors < 15}
                   onClick={() => onExecutePlot('mass_reprisal')}
-                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-rose-500/60 text-start space-y-1 cursor-pointer disabled:opacity-40 transition-colors"
+                  className="p-3.5 rounded-xl bg-[#111A26] hover:bg-[#162232] border border-[#233246] hover:border-rose-500/60 text-start space-y-1 cursor-pointer disabled:opacity-45 transition-colors"
                 >
-                  <div className="font-bold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
+                  <div className="font-semibold text-xs text-[#F1F5F9] flex items-center justify-between gap-2">
                     <span>🔥 {isFa ? 'سرکوب قاطع توطئه‌گران' : 'Mass Reprisal'}</span>
-                    <span className="font-mono text-[11px] text-rose-400">{isFa ? '۱۵+ جنگجو' : '15+ Hird'}</span>
+                    <span className="font-mono text-xs text-rose-400">
+                      {isFa ? `${num(15)}+ جنگجو` : '15+ Hird'}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-[#94A3B8]">
-                    {isFa ? 'سرکوب خونین بومیان و صفر کردن ناآرامی (-۱۸ شرافت)' : 'Preemptive terror wipeouts unrest to 0% (-18 Honor)'}
+                  <div className="text-xs text-[#94A3B8]">
+                    {isFa
+                      ? 'سرکوب خونین بومیان و صفر کردن ناآرامی (-۱۸ شرافت)'
+                      : 'Preemptive terror wipeouts unrest to 0% (-18 Honor)'}
                   </div>
                 </button>
               </div>

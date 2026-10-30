@@ -4,11 +4,13 @@ import {
   Castle,
   Check,
   Crown,
+  Feather,
   GitBranch,
   Ship,
   Trophy,
 } from 'lucide-react';
 import { BITLIFE_ACHIEVEMENTS } from '../data/deathsAndAchievements';
+import { LEGENDS_REGISTRY } from '../data/legendsRegistry';
 import { WIN_GOALS } from '../data/namesAndTraits';
 import {
   calculateLegacyScore,
@@ -26,6 +28,7 @@ import {
   TabId,
   TributeBurden,
 } from '../types/game';
+import { HallOfLegendsPanel } from './HallOfLegendsPanel';
 import {
   NorseAccent,
   NorseBottomSheet,
@@ -36,7 +39,7 @@ import { RealmPanel } from './RealmPanel';
 import { SagaChroniclePanel } from './SagaChroniclePanel';
 
 export type RealmSection = 'holdings' | 'fleet' | 'intrigue';
-type MoreSheetId = 'holdings' | 'fleet' | 'intrigue' | 'rank_goal' | 'badges' | 'lineage';
+type MoreSheetId = 'holdings' | 'fleet' | 'intrigue' | 'rank_goal' | 'badges' | 'lineage' | 'hall_of_legends';
 
 interface MoreMenuPanelProps {
   state: FullGameState;
@@ -56,6 +59,7 @@ interface MoreMenuPanelProps {
   onClaimSpecialTitle?: (titleId: string) => void;
   onResolveBattleTactic?: (tactic: BattleTactic) => void;
   onCancelBattle?: () => void;
+  onPayForLegendNews?: () => void;
 }
 
 interface MoreCardItem {
@@ -89,6 +93,7 @@ export function MoreMenuPanel({
   onClaimSpecialTitle,
   onResolveBattleTactic,
   onCancelBattle,
+  onPayForLegendNews,
 }: MoreMenuPanelProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
@@ -112,6 +117,28 @@ export function MoreMenuPanel({
     : winGoal.progressLabel(state);
 
   const cards: MoreCardItem[] = [
+    {
+      id: 'hall_of_legends',
+      categoryLabel: isFa ? 'افسانه‌های زنده شمال' : 'Living Saga World',
+      title: isFa ? 'تالار افسانه‌ها (راگنار و حلقه او)' : 'The Hall of Legends',
+      description: isFa
+        ? 'راگنار لُدبروک، لاگرتا، فلوکی، برادر آلدوین، رولو و ارتش بزرگ — پیگیری خبرهای رسیده، سوگندها و جایگاه شما'
+        : 'Ragnar Lothbrok, Lagertha, Floki, Brother Aldwin & the Great Army — track known news, oaths & standing',
+      costRiskBadge: isFa
+        ? `${LEGENDS_REGISTRY.length} چهره تاریخی و حماسی`
+        : `${LEGENDS_REGISTRY.length} Living Legends`,
+      costRiskTone: 'amber',
+      statusLabel: state.sagaMode
+        ? isFa
+          ? 'حالت حماسه فعال ✓'
+          : 'Saga Mode Active ✓'
+        : isFa
+          ? 'مشاهده دفتر افسانه‌ها'
+          : 'Open Saga Ledger',
+      isReadyHighlight: Boolean(state.sagaMode),
+      accent: 'amber',
+      icon: <Feather className="w-5 h-5" />,
+    },
     {
       id: 'holdings',
       categoryLabel: isFa ? 'مدیریت قلمرو' : 'Realm & Estates',
@@ -390,12 +417,7 @@ export function MoreMenuPanel({
                   : 'Intrigue & Historical Crowns'
                 : isFa
                   ? 'املاک، شهرها و ساختمان‌ها'
-                  : 'Holdings & Buildings'
-          }
-          subtitle={
-            isFa
-              ? `خزانه نقره: ${r.silver} · مزارع: ${r.landFarms} · کشتی‌ها: ${totalShips} · جنگجویان: ${r.hirdWarriors}`
-              : `Silver: ${r.silver} · Farms: ${r.landFarms} · Ships: ${totalShips} · Warriors: ${r.hirdWarriors}`
+                  : 'Estates, Cities & Buildings'
           }
         >
           <RealmPanel
@@ -535,6 +557,31 @@ export function MoreMenuPanel({
           <SagaChroniclePanel
             state={state}
             initialSubTab={activeModal === 'lineage' ? 'ancestors' : 'badges'}
+            onOpenHallOfLegends={() => setActiveModal('hall_of_legends')}
+          />
+        </NorseBottomSheet>
+      )}
+
+      {/* ================================================================= */}
+      {/* MODAL 7: THE HALL OF LEGENDS                                      */}
+      {/* ================================================================= */}
+      {activeModal === 'hall_of_legends' && (
+        <NorseBottomSheet
+          isOpen={true}
+          onClose={() => setActiveModal(null)}
+          maxWidthClass="max-w-3xl"
+          accent="amber"
+          closeLabel={isFa ? 'بستن' : 'Close'}
+          title={isFa ? 'تالار افسانه‌ها — خبر از سرزمین‌ها' : 'The Hall of Legends — Word from the Lands'}
+          subtitle={
+            isFa
+              ? `سال ${state.year} میلادی · هم‌روزگاران راگنار لُدبروک و عصر وایکینگ‌ها`
+              : `${state.year} AD · Ragnar Lothbrok & His Circle`
+          }
+        >
+          <HallOfLegendsPanel
+            state={state}
+            onPayForLegendNews={onPayForLegendNews}
           />
         </NorseBottomSheet>
       )}

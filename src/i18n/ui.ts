@@ -286,7 +286,7 @@ export const SKILL_LABELS: Record<Language, Record<SkillKey, string>> = {
 
 export const CATEGORY_LABELS: Record<
   Language,
-  Record<EventCategory | 'Chronicle' | 'Action' | 'Succession', string>
+  Record<EventCategory | 'Chronicle' | 'Action' | 'Succession' | 'Word from the Lands', string>
 > = {
   en: {
     Childhood: 'Childhood',
@@ -311,6 +311,7 @@ export const CATEGORY_LABELS: Record<
     Chronicle: 'World Chronicle',
     Action: 'Action',
     Succession: 'Dynasty Succession',
+    'Word from the Lands': 'Word from the Lands',
   },
   fa: {
     Childhood: 'دوران کودکی',
@@ -335,6 +336,7 @@ export const CATEGORY_LABELS: Record<
     Chronicle: 'وقایع‌نامه جهان',
     Action: 'اقدام',
     Succession: 'جانشینی خاندان',
+    'Word from the Lands': 'خبر از سرزمین‌ها',
   },
 };
 
@@ -445,5 +447,282 @@ export const QUICK_GUIDE: Record<
     closeLabel: 'بازگشت به بازی',
   },
 };
+
+export const MAP_FORCES_UI = {
+  en: {
+    lensLabel: 'Forces',
+    lensTooltip: 'Highlight held garrisons and your moored warband & fleet',
+    guardsChip: 'Guards',
+    shipsChip: 'Ships',
+    horsesChip: 'Horses',
+    noForcesHere: 'No player forces stationed at this port',
+    forcesHereTitle: 'Forces Stationed Here',
+    tapToInspectForces: 'Details',
+    hideForces: 'Hide',
+    groupWarriors: 'Warriors & Garrison',
+    groupFleet: 'Moored Fleet',
+    groupStables: 'Stable & Armory',
+    stationedContextCurrentOwned: 'Your main warband & fleet moored at port + local holding garrison',
+    stationedContextCurrentPort: 'Your main expeditionary warband, fleet & mounts moored at this port',
+    stationedContextHeldGarrison: 'Local holding shield-garrison (main warband & fleet moored with you at current port)',
+    seaFleetTitle: 'Active Sea Expedition',
+    seaFleetDestination: 'Course toward',
+    seaFleetCrewCap: 'Sealift Capacity',
+    seaFleetActiveEffect: 'Fleet Effect',
+    legendForcesHeader: 'Military & Naval Glyphs',
+    legendGarrison: 'Shield — Stationed Garrison & Warband',
+    legendDrakkar: 'Drakkar — Dragon Warship (High Prow)',
+    legendSnekkja: 'Snekkja — Swift Patrol Ship (Low Hull)',
+    legendKnarr: 'Knarr — Deep-Hulled Ocean Trader',
+    legendHorses: 'Stallion — Nordic Warhorses & Pack Mounts',
+  },
+  fa: {
+    lensLabel: 'نیروها',
+    lensTooltip: 'نمایش پادگان شهرهای شما و محل استقرار سپاه و ناوگان اصلی',
+    guardsChip: 'نگهبانان',
+    shipsChip: 'کشتی‌ها',
+    horsesChip: 'اسب‌ها',
+    noForcesHere: 'هیچ نیرویی از شما در این بندر مستقر نیست',
+    forcesHereTitle: 'آرایش نیروهای مستقر در این بندر',
+    tapToInspectForces: 'جزئیات نیروها',
+    hideForces: 'بستن',
+    groupWarriors: 'جنگجویان و پادگان',
+    groupFleet: 'ناوگان پهلوگرفته',
+    groupStables: 'اصطبل و اسلحه‌خانه',
+    stationedContextCurrentOwned: 'سپاه و ناوگان اصلی همراه شما در بندر + پادگان محافظ این شهر',
+    stationedContextCurrentPort: 'سپاه، ناوگان و اسب‌های همراه شما که در این بندر لنگر انداخته‌اند',
+    stationedContextHeldGarrison: 'پادگان محافظ مستقر در این شهر (سپاه و ناوگان اصلی همراه شما در بندر فعلی است)',
+    seaFleetTitle: 'ناوگان در مسیر دریایی',
+    seaFleetDestination: 'مقصد دریانوردی',
+    seaFleetCrewCap: 'ظرفیت حمل سپاه',
+    seaFleetActiveEffect: 'اثر فعال ناوگان',
+    legendForcesHeader: 'نمادهای نظامی و ناوگان',
+    legendGarrison: 'سپر — پادگان شهر و جنگجویان هیرد',
+    legendDrakkar: 'دراکار — ناو جنگی اژدهانشان (دماغه بلند)',
+    legendSnekkja: 'اسنکیا — کشتی گشتی تندرو (بدنه باریک)',
+    legendKnarr: 'کِنار — کشتی تجاری اقیانوس‌پیما (بدنه پهن)',
+    legendHorses: 'تکاور — اسب‌های جنگی و ستورهای کاروانی',
+  },
+} as const;
+
+const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] as const;
+
+export function toPersianDigits(input: string | number): string {
+  return String(input).replace(/\d/g, (d) => PERSIAN_DIGITS[Number(d)] ?? d);
+}
+
+/**
+ * Formats numbers for the Realm Ledger header and rows:
+ * - Abbreviates numbers >= 1,000 (e.g. 26.4k / ۲۶٫۴هزار) unless `showFull` is true.
+ * - Uses Persian digits when `lang === 'fa'`.
+ */
+export function formatLedgerNumber(
+  value: number,
+  lang: Language,
+  showFull = false
+): string {
+  const safeVal = Math.round(value);
+  if (showFull || Math.abs(safeVal) < 1000) {
+    const formatted = safeVal.toLocaleString('en-US');
+    return lang === 'fa' ? toPersianDigits(formatted.replace(/,/g, '٬')) : formatted;
+  }
+  const kVal = safeVal / 1000;
+  const rounded =
+    Math.abs(kVal) >= 10
+      ? Math.floor(kVal).toString()
+      : kVal.toFixed(1).replace(/\.0$/, '');
+  if (lang === 'fa') {
+    return `${toPersianDigits(rounded).replace('.', '٫')}هزار`;
+  }
+  return `${rounded}k`;
+}
+
+export const ESTATES_LEDGER_UI = {
+  en: {
+    statSilver: 'Silver',
+    statFarms: 'Farms',
+    statShips: 'Ships',
+    statWarriors: 'Warriors',
+    tapForExact: 'Tap any stat to toggle full exact value',
+    viewEstates: 'Estates',
+    viewBuild: 'Build',
+    viewOpportunities: 'Opportunities',
+    sortAttention: 'Needs attention',
+    sortFarms: 'Most farms',
+    sortGarrison: 'Garrison',
+    sortAlpha: 'A–Z',
+    searchPlaceholder: 'Search settlement or jarl…',
+    noJarlAssigned: 'No Jarl appointed',
+    jarlPrefix: 'Jarl',
+    farmsShort: 'farms',
+    garrisonShort: 'guards',
+    statusCalm: 'Calm',
+    statusUneasy: 'Uneasy',
+    statusCritical: 'Critical',
+    needsAttentionBadge: 'Needs attention',
+    stripUnrest: 'Local Unrest',
+    stripNorsePop: 'Norse Settlers',
+    stripFactions: 'Noble Factions',
+    hostagesLabel: 'hostages',
+    tributeLabel: 'Tribute',
+    garrisonStepperTitle: 'Stationed Garrison',
+    garrisonStepperSub: 'Transfer warriors between your Hird and this holding (±2)',
+    garrisonEmptyReason: 'No guards left to withdraw',
+    garrisonNoHirdReason: 'Need 2 warriors in active Hird',
+    actionSendSettlers: 'Send settlers',
+    actionAppointJarl: 'Appoint Jarl',
+    actionTakeHostage: 'Take noble hostage',
+    actionBuildHere: 'Build in city',
+    chipSilver: 'silver',
+    chipGuardsReq: '6+ guards',
+    chipStructures: 'structures',
+    doneThisSeason: 'Done this season',
+    builtPermanent: 'Built',
+    jarlAppointedDone: 'Jarl in office',
+    needMoreSilver: (missing: number) => `Need ${missing} more silver`,
+    needGuardsForHostage: 'Need 6 garrison or 10 Hird warriors',
+    needDifferentFaith: 'Requires different religion',
+    needShipsAndWarriors: 'Need 1 Longship & 12+ Warriors',
+    moreActionsBtn: '⋯ More',
+    hideMoreActionsBtn: 'Hide options',
+    tributeSectionTitle: 'Annual Tribute Burden',
+    toleranceSectionTitle: 'Religious Policy',
+    toleranceActive: 'Religious Tolerance (+Stability)',
+    toleranceStrict: 'Strict Orthodoxy (+Faith)',
+    toggleToleranceBtn: 'Switch Policy',
+    reprisalBtn: 'Harsh Crackdown (15+ Hird · -18 Honor)',
+    reprisalNeedWarriors: 'Need 15+ warriors in Hird',
+    emptyHoldingsTitle: 'No Estates Held Yet',
+    emptyHoldingsDesc:
+      'You do not own any farmland or cities yet. Open Opportunities to clear your first farm or conquer a coastal stronghold.',
+    emptyHoldingsCta: 'View Opportunities',
+    buildSelectCityLabel: 'Select estate to construct in:',
+    buildQuotaAvailable: '1 structure allowed per year',
+    oppCurrentPortHeader: 'Current Port Opportunity',
+    oppCrownHeader: 'Ruling Rank & Progression',
+    oppGoalHeader: 'Dynasty Saga Goal',
+    toastGarrisonAdded: (city: string) => `+2 warriors stationed in ${city}`,
+    toastGarrisonRemoved: (city: string) => `2 warriors returned to Hird from ${city}`,
+    toastSettlersSent: (city: string) => `Norse settlers dispatched to ${city} (-14% unrest)`,
+    toastJarlAppointed: (city: string) => `Loyal Jarl appointed in ${city} (-20% unrest)`,
+    toastHostagesTaken: (city: string) => `Noble hostages taken in ${city}`,
+    toastTributeChanged: (city: string) => `Tribute burden updated in ${city}`,
+    toastToleranceToggled: (city: string) => `Religious policy updated in ${city}`,
+    toastBuiltStructure: (bName: string, city: string) => `Constructed ${bName} in ${city}`,
+    toastFarmBought: (city: string) => `New farmland cleared in ${city}`,
+    modalTabOverview: 'Overview',
+    modalTabBuildings: 'Buildings',
+    modalPrevCity: 'Previous holding',
+    modalNextCity: 'Next holding',
+    modalClose: 'Close city details',
+    unrestSentenceCalm: 'Calm — Order and peace hold across the settlement.',
+    unrestSentenceUneasy: 'Uneasy — Grumbling among the locals; watch the garrison.',
+    unrestSentenceCritical: 'Critical — Armed uprising is imminent unless pacified!',
+    primaryReinforceGarrison: 'Reinforce garrison (+2 guards)',
+    primaryPacifySettlers: 'Pacify city · Send settlers (28 silver)',
+    primaryOpenBuildings: 'Construct in this city',
+    primaryConstructNext: (bName: string, cost: number) => `Build ${bName} (${cost} silver)`,
+    primaryAllBuilt: 'All city structures built',
+    emptyBuildingsNote:
+      'No structures built here yet. A Boathouse (-50% fleet upkeep) or Market Stall (+annual silver) is a strong first choice.',
+    zeroActionsNote:
+      'Immediate governance actions are currently unavailable — gather more silver or Hird warriors.',
+    cityLostToast: 'That settlement is no longer under your rule.',
+  },
+  fa: {
+    statSilver: 'نقره',
+    statFarms: 'مزارع',
+    statShips: 'کشتی‌ها',
+    statWarriors: 'جنگجویان',
+    tapForExact: 'برای مشاهده عدد دقیق روی هر شاخص بزنید',
+    viewEstates: 'املاک',
+    viewBuild: 'ساخت‌وساز',
+    viewOpportunities: 'فرصت‌ها',
+    sortAttention: 'نیازمند توجه',
+    sortFarms: 'بیشترین مزرعه',
+    sortGarrison: 'پادگان',
+    sortAlpha: 'الفبا',
+    searchPlaceholder: 'جستجوی نام شهر یا یارل…',
+    noJarlAssigned: 'بدون یارل منصوب',
+    jarlPrefix: 'یارل',
+    farmsShort: 'مزرعه',
+    garrisonShort: 'نگهبان',
+    statusCalm: 'آرام',
+    statusUneasy: 'ناآرام',
+    statusCritical: 'بحرانی',
+    needsAttentionBadge: 'نیازمند توجه',
+    stripUnrest: 'ناآرامی محلی',
+    stripNorsePop: 'جمعیت نورس',
+    stripFactions: 'اشراف و خراج',
+    hostagesLabel: 'گروگان',
+    tributeLabel: 'خراج',
+    garrisonStepperTitle: 'پادگان مستقر در شهر',
+    garrisonStepperSub: 'جابه‌جایی جنگجویان میان سپاه همراه و پادگان شهر (۲±)',
+    garrisonEmptyReason: 'پادگان شهر خالی است',
+    garrisonNoHirdReason: 'نیازمند ۲ جنگجو در سپاه همراه',
+    actionSendSettlers: 'ارسال مهاجران',
+    actionAppointJarl: 'انتصاب یارل',
+    actionTakeHostage: 'گرفتن گروگان اشرافی',
+    actionBuildHere: 'ساخت بنا در شهر',
+    chipSilver: 'نقره',
+    chipGuardsReq: '۶+ نگهبان',
+    chipStructures: 'بنا',
+    doneThisSeason: 'این فصل انجام شد',
+    builtPermanent: 'ساخته شده',
+    jarlAppointedDone: 'یارل منصوب شده',
+    needMoreSilver: (missing: number) => `نیازمند ${toPersianDigits(missing)} نقره بیشتر`,
+    needGuardsForHostage: 'نیازمند ۶ نگهبان یا ۱۰ جنگجو',
+    needDifferentFaith: 'نیازمند آیین دیگر',
+    needShipsAndWarriors: 'نیازمند ۱ کشتی جنگی و ۱۲+ جنگجو',
+    moreActionsBtn: '⋯ بیشتر',
+    hideMoreActionsBtn: 'بستن گزینه‌ها',
+    tributeSectionTitle: 'میزان خراج سالانه شهر',
+    toleranceSectionTitle: 'سیاست مذهبی محلی',
+    toleranceActive: 'مدارای مذهبی (+ثبات)',
+    toleranceStrict: 'سخت‌گیری مذهبی (+ایمان)',
+    toggleToleranceBtn: 'تغییر سیاست',
+    reprisalBtn: 'سرکوب قاطع شورش (۱۵+ جنگجو · ۱۸- شرافت)',
+    reprisalNeedWarriors: 'نیازمند ۱۵ جنگجو در سپاه همراه',
+    emptyHoldingsTitle: 'هنوز ملکی در اختیار ندارید',
+    emptyHoldingsDesc:
+      'شما هنوز هیچ مزرعه یا شهری در تملک ندارید. از بخش «فرصت‌ها» اولین مزرعه خود را بخرید یا دژی ساحلی را فتح کنید.',
+    emptyHoldingsCta: 'مشاهده فرصت‌ها',
+    buildSelectCityLabel: 'انتخاب شهر برای احداث بنا:',
+    buildQuotaAvailable: 'سهمیه ساخت: ۱ بنا در هر سال',
+    oppCurrentPortHeader: 'فرصت پیش‌رو در بندر فعلی',
+    oppCrownHeader: 'جایگاه فرمانروایی و ارتقای مقام',
+    oppGoalHeader: 'هدف نهایی حماسه دودمان',
+    toastGarrisonAdded: (city: string) => `+۲ جنگجو در پادگان ${city} مستقر شد`,
+    toastGarrisonRemoved: (city: string) => `۲ جنگجو از پادگان ${city} به سپاه بازگشت`,
+    toastSettlersSent: (city: string) => `مهاجران نورس به ${city} اعزام شدند (۱۴٪- ناآرامی)`,
+    toastJarlAppointed: (city: string) => `یارل وفادار در ${city} منصوب شد (۲۰٪- ناآرامی)`,
+    toastHostagesTaken: (city: string) => `گروگان‌های اشرافی در ${city} گرفته شدند`,
+    toastTributeChanged: (city: string) => `میزان خراج ${city} تغییر یافت`,
+    toastToleranceToggled: (city: string) => `سیاست مذهبی ${city} به‌روزرسانی شد`,
+    toastBuiltStructure: (bName: string, city: string) => `بنای «${bName}» در ${city} ساخته شد`,
+    toastFarmBought: (city: string) => `مزرعه جدید در ${city} خریداری شد`,
+    modalTabOverview: 'نمای کلی',
+    modalTabBuildings: 'ساختمان‌ها',
+    modalPrevCity: 'شهر قبلی',
+    modalNextCity: 'شهر بعدی',
+    modalClose: 'بستن جزئیات شهر',
+    unrestSentenceCalm: 'وضعیت آرام — نظم و آرامش در شهر برقرار است.',
+    unrestSentenceUneasy: 'وضعیت ناآرام — زمزمه‌های نارضایتی در میان بومیان دیده می‌شود.',
+    unrestSentenceCritical: 'وضعیت بحرانی — خطر شورش مسلحانه در شهر بسیار نزدیک است!',
+    primaryReinforceGarrison: 'تقویت پادگان (+۲ نگهبان)',
+    primaryPacifySettlers: 'آرام‌سازی شهر · ارسال مهاجران (۲۸ نقره)',
+    primaryOpenBuildings: 'مشاهده و ساخت بنا در شهر',
+    primaryConstructNext: (bName: string, cost: number) =>
+      `احداث «${bName}» (${toPersianDigits(cost)} نقره)`,
+    primaryAllBuilt: 'تمامی بناهای این شهر ساخته شده‌اند',
+    emptyBuildingsNote:
+      'هنوز هیچ بنایی در این شهر ساخته نشده است. پیشنهاد می‌شود با «اسکله کشتی‌سازی» (کاهش ۵۰٪ هزینه ناوگان) یا «بازارگاه» (درآمد نقره سالانه) آغاز کنید.',
+    zeroActionsNote:
+      'در حال حاضر برای اجرای اقدامات حکومتی بیشتر به نقره یا جنگجویان بیشتری در سپاه نیاز دارید.',
+    cityLostToast: 'این شهر دیگر در تملک شما نیست.',
+  },
+} as const;
+
+
 
 

@@ -368,8 +368,9 @@ export function CharacterCreation({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [bgFailed, setBgFailed] = useState(false);
 
-  const [selectedEra, setSelectedEra] = useState<1 | 2 | 3 | 4>(2);
-  const [year, setYear] = useState<number>(865);
+  const [selectedEra, setSelectedEra] = useState<1 | 2 | 3 | 4>(1);
+  const [year, setYear] = useState<number>(838);
+  const [sagaMode, setSagaMode] = useState<boolean>(true);
 
   const [homelandId, setHomelandId] = useState<StartingHomeland>('norway');
   const [birthplaceId, setBirthplaceId] = useState<string>('nidaros');
@@ -478,6 +479,7 @@ export function CharacterCreation({
         ragnarBloodline && branchDef?.startingHeirloomId
           ? [branchDef.startingHeirloomId]
           : undefined,
+      sagaMode,
     });
   };
 
@@ -504,6 +506,7 @@ export function CharacterCreation({
       bloodlineBranch: pm.bloodlineBranch,
       startingHeirlooms: pm.startingHeirlooms,
       signatureEventId: pm.signatureEventId,
+      sagaMode,
     });
   };
 
@@ -820,6 +823,62 @@ export function CharacterCreation({
                     : undefined,
                 }))}
               />
+
+              {/* Saga Mode — Living Legends Calendar (default ON) */}
+              <div
+                className={`p-3.5 rounded-xl border transition-colors space-y-2 ${
+                  sagaMode
+                    ? 'bg-gradient-to-r from-[#261B0D] via-[#171B26] to-[#111A27] border-[#F59E0B]/70'
+                    : 'bg-[#0B1118] border-[#233246]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                        {isFa
+                          ? 'حالت حماسه — تقویم افسانه‌های زنده (Saga Mode)'
+                          : 'Saga Mode — Living Legends Calendar'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#F59E0B]/20 border border-[#F59E0B]/55 text-[10px] font-mono font-bold text-[#FDE68A] uppercase">
+                        {isFa ? 'تالار افسانه‌ها' : 'HALL OF LEGENDS'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
+                      {isFa
+                        ? 'زندگی شما هم‌زمان با راگنار لُدبروک، لاگرتا، فلوکی، برادر آلدوین، رولو و ارتش بزرگ پیش می‌رود (شروع پیشنهادی: ۸۳۸ میلادی). خبرها با تأخیر مسافت به تالارتان می‌رسند و در سفرها با خودِ افسانه‌ها روبه‌رو می‌شوید.'
+                        : 'Aligns your life with Ragnar Lothbrok, Lagertha, Floki, Brother Aldwin, Rollo & the Great Army (838 AD start). Distance-delayed news reaches your hall, and you can cross paths with living legends.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !sagaMode;
+                      setSagaMode(nextVal);
+                      if (nextVal) {
+                        setSelectedEra(1);
+                        setYear(838);
+                      } else {
+                        setSelectedEra(2);
+                        setYear(865);
+                      }
+                    }}
+                    className={`min-h-[38px] px-3 rounded-lg text-xs font-bold border transition-colors shrink-0 cursor-pointer ${
+                      sagaMode
+                        ? 'bg-[#F59E0B] border-[#FBBF24] text-[#0B1118]'
+                        : 'bg-[#131D2B] border-[#283B52] text-[#94A3B8] hover:text-[#F1F5F9]'
+                    }`}
+                  >
+                    {sagaMode
+                      ? isFa
+                        ? 'فعال ✓ (۸۳۸ م)'
+                        : 'Active ✓ (838 AD)'
+                      : isFa
+                        ? 'غیرفعال'
+                        : 'Off'}
+                  </button>
+                </div>
+              </div>
 
               {/* Ragnarsættin — Blood of Ragnar Optional Lineage Claim */}
               <div

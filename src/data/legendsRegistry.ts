@@ -1,0 +1,1983 @@
+import {
+  CharacterAppearance,
+  LegendHistoricalStatus,
+  LegendOrdstirrRank,
+  NewsSourceType,
+  RegionGroup,
+  Season,
+  Sex,
+  SourceProvenance,
+} from '../types/game';
+import { SETTLEMENTS_BY_ID } from './geography';
+
+export interface LegendRelationshipRef {
+  legendId: string;
+  roleEn: string;
+  roleFa: string;
+  noteEn?: string;
+  noteFa?: string;
+}
+
+export interface LegendTimelineBeat {
+  id: string;
+  year: number;
+  season: Season;
+  settlementId: string;
+  region: RegionGroup;
+  title: string;
+  titleFa: string;
+  text: string;
+  textFa: string;
+  mildText?: string;
+  mildTextFa?: string;
+  skaldVerse?: string;
+  skaldVerseFa?: string;
+  tone: 'triumph' | 'voyage' | 'feud' | 'prophecy' | 'tragedy' | 'chronicle';
+  importance: 'minor' | 'major' | 'epic';
+  isCanonicalAnchor?: boolean;
+  isDeathBeat?: boolean;
+  ordstirrGain: number;
+  requiresFlags?: string[];
+  blockedByFlags?: string[];
+  setsFlags?: string[];
+  /** Optional alternate outcome when deterministic seed drift or player flags alter secondary beats */
+  driftVariant?: {
+    seedChance: number;
+    title: string;
+    titleFa: string;
+    text: string;
+    textFa: string;
+  };
+}
+
+export interface LegendRegistryEntry {
+  id: string;
+  phase: 1 | 2 | 3;
+  name: string;
+  nameFa: string;
+  norseName: string;
+  epithet: string;
+  epithetFa: string;
+  statusTag: LegendHistoricalStatus;
+  provenance: SourceProvenance;
+  historicalSourcesEn: string;
+  historicalSourcesFa: string;
+  role: string;
+  roleFa: string;
+  sex: Sex;
+  homeRegion: RegionGroup;
+  homeSettlementId: string;
+  birthYear: number;
+  deathYear: number;
+  activeYears: [number, number];
+  baseOrdstirr: number;
+  appearance: CharacterAppearance;
+  heirloomId?: string;
+  bioEn: string;
+  bioFa: string;
+  relationships: LegendRelationshipRef[];
+  timeline: LegendTimelineBeat[];
+}
+
+export const ORDSTIRR_RANK_LABELS: Record<
+  LegendOrdstirrRank,
+  { en: string; fa: string; norse: string }
+> = {
+  UNHEARD_OF: {
+    en: 'Unheard-of Beyond the Fjord',
+    fa: 'ناشناخته در ورای آبدره',
+    norse: 'Ókunnr',
+  },
+  HEARTH_KNOWN: {
+    en: 'Hearth-Known Name',
+    fa: 'نام‌آشنا در کنار آتش تالارها',
+    norse: 'Arin-kunnr',
+  },
+  FJORD_FAMED: {
+    en: 'Fjord-Famed Chieftain',
+    fa: 'آوازه‌دار در آبدره‌های شمال',
+    norse: 'Víðfrægr',
+  },
+  SEA_KINGS_EQUAL: {
+    en: "Sea-King's Equal",
+    fa: 'هم‌تراز پادشاهان دریا',
+    norse: 'Sækonungs Jafningi',
+  },
+  IMMORTAL_IN_SONG: {
+    en: 'Immortal in Skaldic Song',
+    fa: 'جاودانه در سرود اسکالدها',
+    norse: 'Ódauðlegr í Kvæðum',
+  },
+};
+
+export const HISTORICAL_STATUS_LABELS: Record<
+  LegendHistoricalStatus,
+  { en: string; fa: string; descEn: string; descFa: string }
+> = {
+  DOCUMENTED: {
+    en: 'DOCUMENTED',
+    fa: 'مستند تاریخی',
+    descEn: 'Attested in contemporary chronicles, annals, or the Landnámabók settlement record.',
+    descFa: 'ثبت‌شده در تواریخ و سالنامه‌های هم‌عصر یا کتاب تاریخی اسکان ایسلند (لاندنامابوک).',
+  },
+  CONTESTED: {
+    en: 'CONTESTED',
+    fa: 'مورد مناقشه',
+    descEn: 'Composite figure blending documented 9th-century commanders with later Icelandic saga tradition.',
+    descFa: 'شخصیتی آمیخته از فرماندهان مستند سده نهم میلادی و روایت‌های حماسی متأخر اسکاندیناوی.',
+  },
+  LEGENDARY: {
+    en: 'LEGENDARY',
+    fa: 'افسانه‌ای / حماسی',
+    descEn: 'Preserved in heroic fornaldarsögur, Saxo Grammaticus, or saga literary tradition.',
+    descFa: 'برآمده از حماسه‌های پهلوانی کهن (فورنالدارسگا)، کتاب ساکسو گراماتیکوس یا سنت شفاهی اسکالدها.',
+  },
+};
+
+export const NEWS_SOURCE_LABELS: Record<NewsSourceType, { en: string; fa: string }> = {
+  EYEWITNESS: {
+    en: 'Eyewitness Oarsman',
+    fa: 'شاهد عینی در بندر',
+  },
+  TRADER_TALE: {
+    en: "Trader's Tale",
+    fa: 'روایت کاروان و بازرگانان',
+  },
+  SKALD_SONG: {
+    en: "Skald's Praise-Song",
+    fa: 'چکامه شاعر (اسکالد)',
+  },
+  MONK_CHRONICLE: {
+    en: "Monk's Chronicle",
+    fa: 'سالنامه راهبان',
+  },
+};
+
+export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
+  // =========================================================================
+  // PHASE 1 — FULL DEEP BIOGRAPHIES, TIMELINES & ENCOUNTER ARCS
+  // =========================================================================
+  {
+    id: 'ragnar_lothbrok',
+    phase: 1,
+    name: 'Ragnar Lothbrok',
+    nameFa: 'راگنار لُدبروک',
+    norseName: 'Ragnarr Loðbrók',
+    epithet: 'Shaggy-Breeches, Scourge of the Seine',
+    epithetFa: 'شلوارپشمین، کابوس رود سن',
+    statusTag: 'CONTESTED',
+    provenance: 'Legendary / Composite Saga',
+    historicalSourcesEn:
+      'Annales Bertiniani (Reginherus at Paris, 845), Saxo Grammaticus Gesta Danorum Book IX, Ragnarssona þáttr, Ragnars saga loðbrókar, Krákumál.',
+    historicalSourcesFa:
+      'سالنامه فرانکی سن‌برتین (محاصره پاریس در ۸۴۵ توسط رگین‌هروس)، کتاب نهم ساکسو گراماتیکوس، منظومه پسران راگنار و سرود مرگ کراکومال.',
+    role: 'Sea-King & War-Leader of the Danish Straits',
+    roleFa: 'پادشاه دریا و سالار جنگی تنگه‌های دانمارک',
+    sex: Sex.Male,
+    homeRegion: 'Denmark',
+    homeSettlementId: 'roskilde',
+    birthYear: 798,
+    deathYear: 865,
+    activeYears: [816, 865],
+    baseOrdstirr: 78,
+    appearance: {
+      skinTone: 1,
+      hairColor: 'blonde',
+      hairStyle: 2,
+      beardStyle: 2,
+    },
+    heirloomId: 'ragnar_serpent_armring',
+    bioEn:
+      'A figure standing at the crossroads of Frankish chronicle and Norse myth. In the Frankish annals, the commander Reginherus sailed 120 ships up the Seine in 845 and wrung 7,000 pounds of silver from Charles the Bald; in the northern sagas, he is the dragon-slayer who wore boiled-hide breeches against the Lindworm, wedded Hlaðgerðr and Queen Aslaug, and met his doom laughing in King Ælla’s Northumbrian snake-pit.',
+    bioFa:
+      'چهره‌ای ایستاده در مرز میان تاریخ مکتوب فرانک‌ها و اسطوره‌های شمال. در سالنامه‌های فرانکی، سرداری به نام «رگین‌هروس» در سال ۸۴۵ با ۱۲۰ کشتی از رود سن بالا رفت و ۷۰۰۰ پوند نقره از شارل تاس باج گرفت؛ و در حماسه‌های ایسلندی، او شکارچی مار بزرگ گوتلند، همسر لاگرتا و ملکه اسلاگ، و پدری است که در چاه مارهای شاه ائلا در نورثامبریا با خنده سرود مرگ سر داد.',
+    relationships: [
+      {
+        legendId: 'lagertha_shieldmaiden',
+        roleEn: 'First Wife & Battle-Ally (Saxo)',
+        roleFa: 'همسر نخست و هم‌پیمان جنگی (در روایت ساکسو)',
+        noteEn: 'Fought side-by-side in Norway; parted ways yet answered his call with 120 ships.',
+        noteFa: 'در نروژ دوشادوش هم جنگیدند و پس از جدایی نیز با ۱۲۰ کشتی به یاری راگنار شتافت.',
+      },
+      {
+        legendId: 'aslaug_kraka',
+        roleEn: 'Queen & Völva-Wife',
+        roleFa: 'ملکه و همسر پیشگو',
+        noteEn: 'Daughter of Sigurd Fafnir’s-Bane; mother of Ivar, Björn, Hvitserk, and Sigurd.',
+        noteFa: 'دختر سیگورد اژدهاکش و مادر ایوار، بیورن، هویتسرک و سیگورد مار-در-چشم.',
+      },
+      {
+        legendId: 'bjorn_ironside',
+        roleEn: 'Son',
+        roleFa: 'پسر (بیورن پهلوآهنین)',
+      },
+      {
+        legendId: 'ivar_boneless',
+        roleEn: 'Son',
+        roleFa: 'پسر (ایوار بی‌استخوان)',
+      },
+      {
+        legendId: 'halfdan_ragnarsson',
+        roleEn: 'Son',
+        roleFa: 'پسر (هالفدان)',
+      },
+      {
+        legendId: 'ubba_ragnarsson',
+        roleEn: 'Son',
+        roleFa: 'پسر (اوبّا)',
+      },
+      {
+        legendId: 'sigurd_snake_eye',
+        roleEn: 'Son',
+        roleFa: 'پسر (سیگورد مار-در-چشم)',
+      },
+      {
+        legendId: 'hvitserk_ragnarsson',
+        roleEn: 'Son',
+        roleFa: 'پسر (هویتسرک)',
+      },
+      {
+        legendId: 'floki_raven_sailor',
+        roleEn: 'Trusted Shipwright & Navigator',
+        roleFa: 'کشتی‌ساز و راهبر دریایی مورد اعتماد',
+      },
+      {
+        legendId: 'king_horik_denmark',
+        roleEn: 'Uneasy Liege & Rival King',
+        roleFa: 'پادشاه رقیب و هم‌پیمان ناپایدار دانمارک',
+      },
+      {
+        legendId: 'king_aella_northumbria',
+        roleEn: 'Mortal Enemy & Slayer',
+        roleFa: 'دشمن خونی و قاتل در نورثامبریا',
+      },
+    ],
+    timeline: [
+      {
+        id: 'beat_ragnar_818_norway_rising',
+        year: 818,
+        season: Season.Summer,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'Vengeance against King Frø in Norway',
+        titleFa: 'انتقام خون نیاکان در آبدره‌های نروژ',
+        text: 'Sailing north to avenge his grandfather Siward against the Swedish usurper Frø, young Ragnar fought beside shield-maidens in the coastal valleys of Norway and won his first fame.',
+        textFa: 'راگنار جوان برای انتقام خون پدربزرگش سیوارد به نروژ لشکر کشید و در کنار بانوان سپردار، سپاه فروئِ سوئدی را در هم کوبید و نخستین آوازه خود را به دست آورد.',
+        skaldVerse: '“Reddened were the ash-spears where the young wolf strode ashore.”',
+        skaldVerseFa: '«سرخ گشت نیزه‌های زبان‌گنجشک، آنگاه که گرگِ جوان بر ساحل گام نهاد.»',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 8,
+      },
+      {
+        id: 'beat_ragnar_824_lindworm_thora',
+        year: 824,
+        season: Season.Spring,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'The Shaggy Breeches & the Heath-Serpent',
+        titleFa: 'شلوار پشمین قیراندود و اژدهای دشت گوتلند',
+        text: 'Clad in shaggy hide breeches boiled in pitch and rolled in sand to turn venom, Ragnar slew the great heath-serpent guarding Jarl Herrauðr’s hall, earning the name Loðbrók.',
+        textFa: 'راگنار با پوشیدن شلواری از پوست پشمینِ جوشانده در قیر که زهر بر آن کارگر نبود، مار عظیم تالار یارل هِراود را از پای درآورد و لقب جاودانه «لُدبروک» (شلوارپشمین) گرفت.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 12,
+      },
+      {
+        id: 'beat_ragnar_833_aslaug_marriage',
+        year: 833,
+        season: Season.Summer,
+        settlementId: 'kaupang',
+        region: 'Norway',
+        title: 'The Riddle of Kráka on the Norwegian Coast',
+        titleFa: 'معمای کراکا (ملکه اسلاگ) در ساحل نروژ',
+        text: 'At a rocky headland near Spangereid, Ragnar tested the wisdom of the shepherd-maiden Kráka — neither clothed nor naked, neither fasting nor full — and took her to wife as Queen Aslaug, daughter of Sigurd Fafnir’s-Bane.',
+        textFa: 'در دماغه‌ای سنگی در نروژ، راگنار خردِ دختری به نام «کراکا» را آزمود که نه پوشیده بود و نه عریان، نه گرسنه و نه سیر؛ و او را که همان «اسلاگ» دختر سیگورد اژدهاکش بود به همسری برگزید.',
+        tone: 'prophecy',
+        importance: 'major',
+        ordstirrGain: 10,
+      },
+      {
+        id: 'beat_ragnar_840_kattegat_muster',
+        year: 840,
+        season: Season.Spring,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'Ragnar’s Western Fleet Musters in the Danish Straits',
+        titleFa: 'فراخوان بزرگ ناوگان غرب در تنگه‌های دانمارک',
+        text: 'Defying King Horik’s cautious truce with the Franks, Ragnar Lothbrok raised his dragon-prows at Hróarskeld and Hedeby, calling free oarsmen and young captains to seek western silver.',
+        textFa: 'برخلاف سازش محتاطانه شاه هوریک با فرانک‌ها، راگنار لُدبروک در راسکیله و هدبی پرچم برافراشت و پاروزنان آزاد و ناخدایان جوان را به یورش‌های بزرگ غرب فراخواند.',
+        tone: 'voyage',
+        importance: 'major',
+        ordstirrGain: 10,
+        setsFlags: ['legend_ragnar_mustered_840'],
+      },
+      {
+        id: 'beat_ragnar_845_seine_paris',
+        year: 845,
+        season: Season.Spring,
+        settlementId: 'paris',
+        region: 'Continent',
+        title: 'The 120 Dragon-Ships on the Seine & Siege of Paris',
+        titleFa: '۱۲۰ کشتی اژدهاپیکر در رود سن و محاصره پاریس',
+        text: 'Rowing 120 hulls up the Seine under Easter mist, Reginherus (Ragnar) routed the divided Frankish army on the riverbanks, occupied Paris, and forced King Charles the Bald to weigh out 7,000 pounds of silver and gold Danegeld.',
+        textFa: 'راگنار (رگین‌هروس در سالنامه سن‌برتین) با ۱۲۰ کشتی از رود سن بالا رفت، سپاه دوپاره فرانک را در کرانه رود در هم شکست، پاریس را گشود و شارل تاس را ناچار به پرداخت ۷۰۰۰ پوند نقره و طلا کرد.',
+        mildText: 'Rowing 120 hulls up the Seine under Easter mist, Reginherus (Ragnar) outmaneuvered the Frankish army on the riverbanks, entered Paris, and compelled King Charles the Bald to pay 7,000 pounds of silver Danegeld.',
+        mildTextFa: 'راگنار با ۱۲۰ کشتی از رود سن بالا رفت، سپاه فرانک را در کرانه رود عقب راند و شارل تاس را ناچار به پرداخت ۷۰۰۰ پوند نقره باج (دانگلد) نمود.',
+        skaldVerse: '“Seven thousand weights of white Frankish silver bowed the gunwales of Reginher’s dragons.”',
+        skaldVerseFa: '«هفت هزار پوند نقره سپید فرانکستان، لبه کشتی‌های اژدهاپیکر راگنار را سنگین ساخت.»',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 25,
+        setsFlags: ['anchor_paris_845_sacked'],
+      },
+      {
+        id: 'beat_ragnar_854_horik_strife',
+        year: 854,
+        season: Season.Autumn,
+        settlementId: 'hedeby',
+        region: 'Denmark',
+        title: 'Blood and Rivalry in the Danish Royal Halls',
+        titleFa: 'رقابت خونین قدرت در تالارهای پادشاهی دانمارک',
+        text: 'As civil war consumed King Horik’s kin at Hedeby, Ragnar’s growing renown and the restless ambition of his grown sons turned the Danish straits into a powder-keg of competing fleets.',
+        textFa: 'با شعله‌ور شدن جنگ داخلی در خاندان شاه هوریک در هدبی، آوازه روزافزون راگنار و جاه‌طلبی پسران برومندش تنگه‌های دانمارک را به کانون رقابت ناوگان‌ها بدل ساخت.',
+        tone: 'feud',
+        importance: 'minor',
+        ordstirrGain: 6,
+        driftVariant: {
+          seedChance: 0.4,
+          title: 'Uneasy Truce Sealed Over Gold at Hedeby',
+          titleFa: 'پیمان آتش‌بس شکننده در بندر هدبی',
+          text: 'At Hedeby’s wharf, Ragnar’s envoys exchanged heavy Frankish silver rings with the Jutish lords, buying a tense peace while his sons prepared their own fleets.',
+          textFa: 'در اسکله هدبی، فرستادگان راگنار با رد و بدل کردن حلقه‌های نقره فرانکی با بزرگان یوتلند، صلحی موقت برقرار کردند تا پسرانش ناوگان‌های مستقل خود را بیارایند.',
+        },
+      },
+      {
+        id: 'beat_ragnar_861_sons_eclipse',
+        year: 861,
+        season: Season.Autumn,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'Envy of the Sons’ Mediterranean Fame',
+        titleFa: 'رشکِ پدر بر آوازه پسران در دریاهای جنوب',
+        text: 'As skalds in every Danish hall sang of Björn Ironside and Hastein storming Luna and the pillars of Al-Andalus, aging Ragnar brooded on his high-seat and vowed to win a conquest in England with only two great knarrs.',
+        textFa: 'هنگامی که اسکالدها در سراسر دانمارک سرود فتوحات بیورن پهلوآهنین در اندلس و ایتالیا را می‌خواندند، راگنارِ سالخورده بر تخت خود در اندیشه فرو رفت و سوگند یاد کرد تنها با دو کشتی بزرگ، انگلستان را به چالش بکشد.',
+        tone: 'prophecy',
+        importance: 'major',
+        ordstirrGain: 8,
+      },
+      {
+        id: 'beat_ragnar_865_snake_pit_death',
+        year: 865,
+        season: Season.Spring,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'The Snake-Pit of King Ælla in Northumbria',
+        titleFa: 'فرجام راگنار لُدبروک در چاه مارهای شاه ائلا',
+        text: 'Shipwrecked on the Northumbrian coast with his two oversized hulls, Ragnar fought until his shield splintered. Stripped of Aslaug’s unwoven shirt and cast into King Ælla’s pit of vipers near York, he chanted his death-song and prophesied: “How the little pigs would grunt if they knew how the old boar suffers!”',
+        textFa: 'راگنار پس از درهم‌شکستن دو کشتی بزرگش در طوفان سواحل نورثامبریا، تا شکافتن آخرین سپرش جنگید. شاه ائلا پیراهن بی‌درز اسلاگ را از تنش بیرون کشید و او را در چاه افعی‌ها افکند؛ اما راگنار با خنده سرود مرگ خواند: «بچه‌گرازها چه نعره‌ای خواهند کشید اگر بدانند گراز پیر چه می‌کشد!»',
+        mildText: 'Shipwrecked on the Northumbrian coast with his two oversized hulls, Ragnar was captured by King Ælla’s host near York. Condemned to die in Ælla’s dungeon pit, he chanted his defiant death-song: “How the little pigs would grunt if they knew how the old boar suffers!”',
+        mildTextFa: 'راگنار پس از شکستن دو کشتی بزرگش در سواحل نورثامبریا به دست سپاه شاه ائلا اسیر شد و در سیاه‌چال مرگ، سرود جاودانه خود را سر داد: «بچه‌گرازها چه نعره‌ای خواهند کشید اگر بدانند گراز پیر چه می‌کشد!»',
+        skaldVerse: '“Gnyðja mundu grísir, ef galtar hag vissi — Glad shall I drink ale upon the high-seat with the Æsir.”',
+        skaldVerseFa: '«بچه‌گرازها نعره خواهند زد اگر از حال گراز پیر آگاه شوند؛ شادمانه در تالار آسگارد با خدایان آبجو خواهم نوشید!»',
+        tone: 'tragedy',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        isDeathBeat: true,
+        ordstirrGain: 35,
+        setsFlags: ['legend_ragnar_dead_865', 'ragnar_pit_vengeance_called'],
+      },
+    ],
+  },
+
+  {
+    id: 'lagertha_shieldmaiden',
+    phase: 1,
+    name: 'Lagertha (Hlaðgerðr)',
+    nameFa: 'لاگرتا (هلادگرد)',
+    norseName: 'Hlaðgerðr Skjaldmær',
+    epithet: 'Shield-Maiden Jarl of Gaular',
+    epithetFa: 'بانوی سپردار و فرمانروای گولار',
+    statusTag: 'LEGENDARY',
+    provenance: 'Legendary / Composite Saga',
+    historicalSourcesEn:
+      'Saxo Grammaticus, Gesta Danorum Book IX (Ladgerda, noble shield-maiden and ruler in Norway).',
+    historicalSourcesFa:
+      'کتاب نهم «کارنامه دانمارکیان» اثر ساکسو گراماتیکوس (لادگردا، بانوی سپردار و فرمانروای مستقل در نروژ).',
+    role: 'Shield-Maiden Commander & Independent Jarl',
+    roleFa: 'فرمانده سپردار و یارل مستقل نروژ',
+    sex: Sex.Female,
+    homeRegion: 'Norway',
+    homeSettlementId: 'nidaros',
+    birthYear: 804,
+    deathYear: 874,
+    activeYears: [818, 874],
+    baseOrdstirr: 68,
+    appearance: {
+      skinTone: 0,
+      hairColor: 'blonde',
+      hairStyle: 3,
+      beardStyle: 0,
+    },
+    heirloomId: 'lagertha_hlathgerd_spear',
+    bioEn:
+      'Recorded in the ninth book of Saxo Grammaticus’s Gesta Danorum as Ladgerda, a skilled shield-maiden who bore the heart of a seasoned warrior in a slender frame. Fighting with hair loose over her shoulders, she wheeled around the Swedish king Frø’s flank to win the battle for Ragnar, guarded her porch with a bear and a hound, and later ruled her Norwegian jarldom alone after striking down a usurping husband with a spearhead hidden in her gown.',
+    bioFa:
+      'در کتاب نهم ساکسو گراماتیکوس با نام «لادگردا» (هلادگرد) ثبت شده است؛ بانوی سپرداری که با گیسوان افشان بر شانه‌ها جناح سپاه سوئد را دور زد و پیروزی را رقم زد. او تالار خود را با یک خرس و یک سگ شکاری نگهبانی می‌کرد و پس از جدایی از راگنار، همسری غاصب را از میان برداشت و به تنهایی و با اقتدار بر قلمرو خود در نروژ فرمان راند.',
+    relationships: [
+      {
+        legendId: 'ragnar_lothbrok',
+        roleEn: 'Former Husband & War-Ally',
+        roleFa: 'همسر پیشین و هم‌پیمان نظامی',
+      },
+      {
+        legendId: 'harald_fairhair',
+        roleEn: 'Rising Norwegian Rival',
+        roleFa: 'رقیب نوظهور در اتحاد نروژ',
+      },
+    ],
+    timeline: [
+      {
+        id: 'beat_lagertha_818_flank_charge',
+        year: 818,
+        season: Season.Summer,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'The Winged Charge Against King Frø',
+        titleFa: 'چرخش برق‌آسا به جناح سپاه شاه فروئِ سوئدی',
+        text: 'When the battle lines wavered in the Norwegian valleys, Hlaðgerðr led a wing of shield-maidens around the enemy rear, her unbound hair streaming behind her helmet as Frø’s host broke in rout.',
+        textFa: 'هنگامی که صفوف نبرد در دره‌های نروژ به لرزه افتاد، لاگرتا با گیسوان افشان در پسِ کلاهخود، جناحی از بانوان سپردار را از پشت سر بر قلب سپاه سوئد کوبید و دشمن را تارومار کرد.',
+        skaldVerse: '“All marveled at her incomparable deeds, for the locks flowing down her back betrayed that she was a woman.”',
+        skaldVerseFa: '«همگان در شگفت ماندند از رزم بی‌همتایش؛ گیسوان افشان بر پشت، راز زن بودن آن پهلوان را فاش می‌ساخت.»',
+        tone: 'triumph',
+        importance: 'epic',
+        ordstirrGain: 18,
+      },
+      {
+        id: 'beat_lagertha_821_bear_and_hound',
+        year: 821,
+        season: Season.Autumn,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'The Trial of the Bear and the Great Hound at Gaular',
+        titleFa: 'آزمون خرس و سگ شکاری در آستانه تالار گولار',
+        text: 'When Ragnar came to court her in Gaular valley, Hlaðgerðr chained a wild bear and a fierce hound across her hall threshold; only when he felled the bear with his spear and throttled the hound did she grant her hand.',
+        textFa: 'زمانی که راگنار به خواستگاری او به دره گولار آمد، لاگرتا خرسی درنده و سگی عظیم را بر درگاه تالار بسته بود؛ و تنها پس از آن‌که راگنار خرس را با نیزه از پا درآورد، دست در دست او نهاد.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 10,
+      },
+      {
+        id: 'beat_lagertha_832_parting_gaular',
+        year: 832,
+        season: Season.Spring,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'The Independent High-Seat of Gaular',
+        titleFa: 'استقلال تالار گولار پس از جدایی از راگنار',
+        text: 'When Ragnar broke their marriage to wed Thora and Aslaug, Hlaðgerðr shed no public tears; she fortified her timber hall in western Norway and drilled her own sworn hird of coastal spear-warriors.',
+        textFa: 'هنگامی که راگنار پیوند زناشویی را گسست، لاگرتا اشکی در برابر چشم بیگانگان نریخت؛ بلکه تالار چوبی خود را در نروژ مستحکم ساخت و سپاه ویژه‌ای از نیزه‌داران ساحلی گرد آورد.',
+        tone: 'feud',
+        importance: 'major',
+        ordstirrGain: 10,
+      },
+      {
+        id: 'beat_lagertha_842_hundred_twenty_ships',
+        year: 842,
+        season: Season.Summer,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: '120 Norwegian Sails Answer the Danish Civil War',
+        titleFa: '۱۲۰ بادبان نروژی به یاری راگنار در جنگ داخلی دانمارک',
+        text: 'Though long divorced from Ragnar, Hlaðgerðr sailed south with 120 ships when the rebel Harald seized his Danish throne. Turning the tide of battle on the Zealand shore, she returned home to strike down her own treacherous second husband and rule Gaular alone.',
+        textFa: 'با وجود سال‌ها جدایی، لاگرتا با ۱۲۰ کشتی به دانمارک شتافت تا تاج‌وتخت راگنار را از چنگ شورشیان بیرون آورد. پس از پیروزی در ساحل شیلند، به نروژ بازگشت، همسر دوم و خائن خود را با نیزه‌ای پنهان در ردا از پا درآورد و به تنهایی فرمانروای گولار گشت.',
+        mildText: 'Though long divorced from Ragnar, Hlaðgerðr sailed south with 120 ships when the rebel Harald seized his Danish throne. Turning the tide of battle on the Zealand shore, she returned home, deposed her treacherous second husband, and ruled Gaular in her own name.',
+        mildTextFa: 'با وجود سال‌ها جدایی، لاگرتا با ۱۲۰ کشتی به یاری راگنار شتافت و پس از پیروزی، به نروژ بازگشت، همسر دوم و پیمان‌شکن خود را برکنار ساخت و به تنهایی فرمانروای گولار گشت.',
+        tone: 'triumph',
+        importance: 'epic',
+        ordstirrGain: 22,
+        setsFlags: ['legend_lagertha_sole_jarl'],
+      },
+      {
+        id: 'beat_lagertha_866_northern_bulwark',
+        year: 866,
+        season: Season.Autumn,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'The Grey Shield-Lady Holds the Western Fjords',
+        titleFa: 'ایستادگی بانوی سپردار در برابر خراج‌خواهان نروژ',
+        text: 'With silver-streaked braids and unbent spear, Hlaðgerðr maintained the ancient odal liberties of her fjord holdings against ambitious petty kings encroaching from Vestfold and Trøndelag.',
+        textFa: 'لاگرتا با گیسوان نقره‌فام و نیزه‌ای خم‌ناشدنی، آزادی زمین‌های موروثی (اودال) آبدره خود را در برابر شاهکان جاه‌طلب وستفولد و تروندلاگ حفظ کرد.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 12,
+      },
+      {
+        id: 'beat_lagertha_874_funeral_ship',
+        year: 874,
+        season: Season.Winter,
+        settlementId: 'nidaros',
+        region: 'Norway',
+        title: 'The Burning Longship on Gaular Fjord',
+        titleFa: 'کشتی شعله‌ور تدفین در آبدره گولار',
+        text: 'After seventy winters of unbroken sovereignty, Hlaðgerðr of Gaular was laid upon her war-ship with shield and ash-spear; coastal bonfires lit the Norwegian headlands as her pyre drifted into the winter tide.',
+        textFa: 'پس از هفتاد زمستان فرمانروایی بی‌وقفه، پیکر لاگرتا را با سپر و نیزه جنگی‌اش بر عرشه کشتی نهادند و مشعل‌های ساحلی در سراسر دماغه‌های نروژ به احترام او برافروخته شد.',
+        skaldVerse: '“No lord ruled above her high-seat; the fjord-wind alone bore her banner out to sea.”',
+        skaldVerseFa: '«هیچ سروری بر فراز تخت او حکم نراند؛ تنها بادِ آبدره بود که درفش او را به دریا برد.»',
+        tone: 'tragedy',
+        importance: 'epic',
+        isDeathBeat: true,
+        ordstirrGain: 20,
+      },
+    ],
+  },
+
+  {
+    id: 'floki_raven_sailor',
+    phase: 1,
+    name: 'Floki Vilgerðarson (Hrafna-Flóki)',
+    nameFa: 'فلوکی ویلگردارسون (هرافنا-فلوکی)',
+    norseName: 'Hrafna-Flóki Vilgerðarson',
+    epithet: 'Raven-Floki, Namemaker of Iceland',
+    epithetFa: 'فلوکیِ زاغ‌بان، کاشف و نام‌گذار ایسلند',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Icelandic Family Saga',
+    historicalSourcesEn:
+      'Landnámabók (Sturlubók & Hauksbók Chapters 2–5): Flóki Vilgerðarson’s blót at Smjörsund, his three consecrated ravens, his winter at Vatnsfjörður, and naming of Ísland.',
+    historicalSourcesFa:
+      'کتاب تاریخی اسکان ایسلند (لاندنامابوک، فصل‌های ۲ تا ۵): قربانی بزرگ فلوکی در اسمیورسوند، رها کردن سه زاغ در اقیانوس، زمستان‌گذرانی در واتنس‌فیورد و نام‌گذاری «ایسلند».',
+    role: 'Master Shipwright, Navigator & Zealot of the Old Gods',
+    roleFa: 'استاد کشتی‌ساز، دریانورد و دل‌بسته سرسخت خدایان کهن',
+    sex: Sex.Male,
+    homeRegion: 'Norway',
+    homeSettlementId: 'kaupang',
+    birthYear: 825,
+    deathYear: 895,
+    activeYears: [842, 895],
+    baseOrdstirr: 58,
+    appearance: {
+      skinTone: 1,
+      hairColor: 'brown',
+      hairStyle: 3,
+      beardStyle: 3,
+    },
+    heirloomId: 'floki_raven_lodestone',
+    bioEn:
+      'Documented in Landnámabók as Flóki Vilgerðarson, a great Viking and shipwright who set out from Rogaland to seek Garðarshólmr in the western ocean. At Smjörsund he held a great blót sacrifice and consecrated three ravens to guide his keel where no stars showed. After losing his daughter Geirhildr in Shetland and watching pack-ice choke Vatnsfjörður, he named the land Ísland — yet could never forget its green summer pastures, returning years later to end his days in Skagafjörður.',
+    bioFa:
+      'در کتاب تاریخی «لاندنامابوک» با نام «فلوکی ویلگردارسون» ثبت شده است؛ دریانورد و کشتی‌ساز بزرگی که از نروژ برای یافتن جزیره مه‌آلود غرب دل به اقیانوس زد. او در اسمیورسوند قربانی بزرگی (بلوت) برپا کرد و سه زاغ مقدس را با خود برد تا در غیاب ستارگان راه خشکی را نشان دهند. پس از دیدن یخ‌های شناور در آبدره، آن سرزمین را «ایسلند» نامید و سال‌ها بعد برای همیشه به همان‌جا بازگشت.',
+    relationships: [
+      {
+        legendId: 'ragnar_lothbrok',
+        roleEn: 'Shipwright Companion & Fleet Builder',
+        roleFa: 'هم‌رزم و معمار کشتی‌های جنگی راگنار',
+      },
+      {
+        legendId: 'brother_aldwin_scribe',
+        roleEn: 'Spiritual Foil & Debater of Wyrd',
+        roleFa: 'هم‌سفر و مناظرهگر بر سر خدایان کهن و آیین نو',
+        noteEn: 'Clashed and conversed over whether ravens and stars obey Odin’s runes or the monks’ God.',
+        noteFa: 'مجادله و گفت‌وگوی پیوسته درباره این‌که زاغ‌ها و ستارگان فرمانبر رون‌های اودین‌اند یا خدای راهبان.',
+      },
+      {
+        legendId: 'harald_fairhair',
+        roleEn: 'Defied Overking of Norway',
+        roleFa: 'پادشاهی که فلوکی از مالیات و سلطه‌اش به غرب کوچید',
+      },
+    ],
+    timeline: [
+      {
+        id: 'beat_floki_844_shallow_keels',
+        year: 844,
+        season: Season.Spring,
+        settlementId: 'kaupang',
+        region: 'Norway',
+        title: 'The Whispering Oak-Keels of Vestfold',
+        titleFa: 'تراشیدن تیرک‌های بلوطین در کارگاه وستفولد',
+        text: 'Putting his ear against living fjord-oaks to hear the grain before felling them, Floki Vilgerðarson framed supple clinker-built hulls capable of riding both Atlantic swells and shallow Frankish rivers.',
+        textFa: 'فلوکی پیش از بریدن درختان بلوط، گوش بر تنه آن‌ها می‌چسباند تا صدای رگه‌های چوب را بشنود؛ و بدین‌سان کشتی‌هایی نرم و استوار ساخت که هم امواج اقیانوس و هم رودهای کم‌عمق را می‌شکافتند.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 10,
+      },
+      {
+        id: 'beat_floki_858_western_rumors',
+        year: 858,
+        season: Season.Autumn,
+        settlementId: 'shetland',
+        region: 'British Isles',
+        title: 'Word of Garðar’s Western Snow-Isle',
+        titleFa: 'شنیدن خبر جزیره برفی گاردار در اقیانوس غرب',
+        text: 'In the smoky ale-booths of Hjaltland (Shetland), Floki questioned storm-driven mariners who had sighted a vast, kingless island of steaming springs and unplowed meadows far northwest of the Faroes.',
+        textFa: 'در بندر شتلند، فلوکی پای سخن دریانوردان طوفان‌زده‌ای نشست که از جزیره‌ای پهناور، بی‌شاه و پر از چشمه‌های بخار در شمال غربی فارو خبر می‌دادند.',
+        tone: 'voyage',
+        importance: 'minor',
+        ordstirrGain: 8,
+      },
+      {
+        id: 'beat_floki_867_smjorsund_blot',
+        year: 867,
+        season: Season.Summer,
+        settlementId: 'kaupang',
+        region: 'Norway',
+        title: 'The Great Blót & Three Ravens of Smjörsund',
+        titleFa: 'قربانی بزرگ اسمیورسوند و تقدیس سه زاغ سیاه',
+        text: 'Preparing to sail into the trackless western ocean, Floki raised a great stone cairn at Smjörsund and consecrated three ravens with blood-runes so Odin’s birds would guide his prow when fog hid the sun.',
+        textFa: 'فلوکی پیش از حرکت به سوی اقیانوس ناشناخته غرب، در اسمیورسوند چینه‌ای سنگی برپا کرد و سه زاغ سیاه را در آیین بلوت تقدیس نمود تا در مه غلیظ اقیانوس، پرندگان اودین راهنمای سکان او باشند.',
+        skaldVerse: '“Where no lodestar shone in the northern mist, the third raven flew straight over the prow.”',
+        skaldVerseFa: '«آنجا که هیچ ستاره‌ای در مه شمال نمی‌درخشید، زاغ سوم یکسره از فراز دماغه کشتی به پیش پر گشود.»',
+        tone: 'prophecy',
+        importance: 'major',
+        ordstirrGain: 14,
+      },
+      {
+        id: 'beat_floki_868_three_ravens_iceland',
+        year: 868,
+        season: Season.Summer,
+        settlementId: 'reykjavik',
+        region: 'North Atlantic',
+        title: 'Flight of the Third Raven & Discovery of Ísland',
+        titleFa: 'پرواز زاغ سوم و کشف سرزمین ایسلند',
+        text: 'Sailing west past Shetland — where his daughter Geirhildr drowned at Geirhildarvatn — and the Faroes, Floki loosed his three ravens. The first flew back toward the Faroes, the second returned to the mast, and the third flew straight ahead to the basalt cliffs of a new land, earning him the name Hrafna-Flóki.',
+        textFa: 'فلوکی پس از گذر از شتلند و جزایر فارو، در دل اقیانوس سه زاغ خود را یک‌به‌یک رها کرد: نخستین زاغ به سوی فارو بازگشت، دومی بر دکل کشتی نشست، و زاغ سوم مستقیم به سوی صخره‌های بازالتی سرزمین نو پرواز کرد؛ و از آن روز او را «هرافنا-فلوکی» (فلوکیِ زاغ‌بان) نامیدند.',
+        mildText: 'Sailing west past Shetland and the Faroes, Floki loosed his three consecrated ravens. The first flew back toward the Faroes, the second returned to the mast, and the third flew straight ahead to the basalt cliffs of a new land, earning him the name Hrafna-Flóki.',
+        mildTextFa: 'فلوکی پس از گذر از شتلند و فارو، سه زاغ خود را در دل اقیانوس رها کرد؛ زاغ سوم مستقیم به سوی صخره‌های سرزمین نو پرواز کرد و از آن پس او را «هرافنا-فلوکی» نامیدند.',
+        tone: 'voyage',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 26,
+        setsFlags: ['legend_floki_discovered_iceland'],
+      },
+      {
+        id: 'beat_floki_869_pack_ice_naming',
+        year: 869,
+        season: Season.Spring,
+        settlementId: 'reykjavik',
+        region: 'North Atlantic',
+        title: 'The Drift-Ice Fjords & the Naming of “Ísland”',
+        titleFa: 'آبدره‌های پر از یخ شناور و نام‌گذاری «ایسلند»',
+        text: 'So rich were the summer salmon-runs at Vatnsfjörður that Floki’s crew neglected to cut winter hay, and their livestock perished. Climbing a high mountain in spring and seeing a great fjord choked with polar drift-ice, Floki called the whole country Ísland (Iceland) — though his companion Thorolf swore butter dripped from every blade of grass.',
+        textFa: 'فراوانی ماهی آزاد در تابستانِ واتنس‌فیورد چنان فلوکی و یارانش را سرگرم کرد که ذخیره علوفه زمستان را از یاد بردند و دام‌هایشان تلف شدند. در بهار، فلوکی بر قله کوهی رفت و با دیدن آبدره‌ای انباشته از یخ‌های شناور قطبی، آن سرزمین را «ایسلند» نامید؛ هرچند هم‌سفرش تورولف قسم می‌خورد که از هر برگ علف آن کره می‌چکد!',
+        tone: 'chronicle',
+        importance: 'major',
+        ordstirrGain: 15,
+      },
+      {
+        id: 'beat_floki_880_return_skagafjordur',
+        year: 880,
+        season: Season.Summer,
+        settlementId: 'akureyri',
+        region: 'North Atlantic',
+        title: 'Hrafna-Flóki’s Final Return to the Northern Fjords',
+        titleFa: 'بازگشت همیشگی فلوکی به آبدره‌های شمال ایسلند',
+        text: 'Though he had once spoken ill of the island in Norway, Hrafna-Flóki could no longer endure King Harald Fairhair’s rule or forget the wild silence of the western fjords. He sailed back to Iceland and claimed Flókadalr in Skagafjörður for the rest of his life.',
+        textFa: 'هرچند فلوکی روزگاری در نروژ از سرمای آن جزیره گلایه کرده بود، اما دیگر تاب فرمانروایی هارالد موی‌زیبا و دوری از سکوت وحشی آبدره‌های غرب را نیاورد؛ پس دوباره بادبان کشید و تا پایان عمر در «فلوکادال» در شمال ایسلند ساکن شد.',
+        tone: 'voyage',
+        importance: 'major',
+        ordstirrGain: 12,
+      },
+      {
+        id: 'beat_floki_895_cairn_by_the_sea',
+        year: 895,
+        season: Season.Autumn,
+        settlementId: 'akureyri',
+        region: 'North Atlantic',
+        title: 'The Raven-Sailor’s Cairn Overlooking the Arctic Sea',
+        titleFa: 'چینه سنگی آرامگاه زاغ‌بان بر فراز دریای شمالگان',
+        text: 'Old Hrafna-Flóki died in his valley at Flókadalr as wild ravens circled the turf-roof. Settlers raised his stone cairn facing the open sea-lanes he had unlocked without king or compass.',
+        textFa: 'هرافنا-فلوکیِ کهنسال در حالی که زاغ‌های سیاه بر فراز بام چمنی تالارش چرخ می‌زدند چشم از جهان فروبست؛ و مهاجران ایسلند آرامگاه سنگی او را رو به اقیانوسی ساختند که خود بی‌قطب‌نما و بی‌شاه گشوده بود.',
+        tone: 'tragedy',
+        importance: 'epic',
+        isDeathBeat: true,
+        ordstirrGain: 18,
+      },
+    ],
+  },
+
+  {
+    id: 'brother_aldwin_scribe',
+    phase: 1,
+    name: 'Brother Aldwin of Lindisfarne',
+    nameFa: 'برادر آلدوینِ لیندیسفارن',
+    norseName: 'Aldوین Bók-Skrifari',
+    epithet: 'The Captive Northumbrian Scribe',
+    epithetFa: 'کاتب اسیر نورثامبریا و راوی دو جهان',
+    statusTag: 'LEGENDARY',
+    provenance: 'Legendary / Composite Saga',
+    historicalSourcesEn:
+      'Original composite character inspired by Anglo-Saxon monastic captives and bilingual interpreters mentioned in Alcuin’s letters, Vita Anskarii, and the Annals of St. Bertin.',
+    historicalSourcesFa:
+      'شخصیت روایی اصیل با الهام از راهبان اسیر و مترجمان دوزبانه آنگلو-ساکسون در نامه‌های آلکوئین، زندگی‌نامه سنت آنسگار و سالنامه‌های سده نهم.',
+    role: 'Northumbrian Monk-Chronicler & Interpreter',
+    roleFa: 'راهب، وقایع‌نگار نورثامبریایی و مترجم دربارهای شمال',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'lindisfarne',
+    birthYear: 814,
+    deathYear: 879,
+    activeYears: [832, 879],
+    baseOrdstirr: 38,
+    appearance: {
+      skinTone: 0,
+      hairColor: 'brown',
+      hairStyle: 0,
+      beardStyle: 1,
+    },
+    bioEn:
+      'Taken as a young illuminator during a coastal raid on a Northumbrian dependency of Lindisfarne, Brother Aldwin was spared for his skill with Latin, Old English, and runic tallies. Torn between the quiet psalmody of his boyhood scriptorium and the fierce, fatalistic warmth of the Norse hearth, he became a trusted envoy, translator, and gentle sparring partner to shipwrights like Floki and sea-kings who wondered whether the White Christ and the Allfather watched the same stars.',
+    bioFa:
+      'آلدوین در جوانی و هنگام یورش وایکینگ‌ها به یکی از کتابخانه‌های ساحلی لیندیسفارن اسیر شد، اما به خاطر تسلطش بر لاتین، انگلیسی باستان و شمارش رون‌ها زنده ماند. او که میان سرودهای آرام صومعه کودکی‌اش و گرمای سرنوشت‌باورِ تالارهای نورس معلق بود، به مترجم، فرستاده و هم‌مناظره فلوکی و پادشاهان دریا بدل گشت که می‌پرسیدند آیا مسیح سپید و اودین از ورای یک آسمان به آدمیان می‌نگرند.',
+    relationships: [
+      {
+        legendId: 'ragnar_lothbrok',
+        roleEn: 'Latin Interpreter & Counselor on Frankia and England',
+        roleFa: 'مترجم لاتین و مشاور شناخت پادشاهی‌های انگلستان و فرانکستان',
+      },
+      {
+        legendId: 'floki_raven_sailor',
+        roleEn: 'Beloved Adversary in Matters of Faith',
+        roleFa: 'رقیب و رفیقِ مناظره در راز خدایان و سرنوشت',
+      },
+      {
+        legendId: 'king_ecbert_wessex',
+        roleEn: 'Correspondent in the West Saxon Scriptoria',
+        roleFa: 'مکاتبه‌کننده با کتابخانه‌های پادشاهی وسکس',
+      },
+    ],
+    timeline: [
+      {
+        id: 'beat_aldwin_836_scriptorium_capture',
+        year: 836,
+        season: Season.Summer,
+        settlementId: 'lindisfarne',
+        region: 'British Isles',
+        title: 'The Vellum Leaves Saved from the Tide at Lindisfarne',
+        titleFa: 'برگه‌های پوست‌آهو در میان دود و امواج لیندیسفارن',
+        text: 'Clutching a half-gilded Psalter rather than a silver chalice when northern prows grounded on the Northumbrian sand, young Brother Aldwin spoke calm Old English to the raiders and was carried across the North Sea as an interpreter.',
+        textFa: 'هنگامی که کشتی‌های شمالی بر ساحل نورثامبریا نشستند، برادر آلدوین جوان به‌جای جام‌های نقره، کتاب تذهیب‌شده خود را در آغوش فشرد و به عنوان کاتب و مترجم به آن سوی دریای شمال برده شد.',
+        tone: 'chronicle',
+        importance: 'major',
+        ordstirrGain: 8,
+      },
+      {
+        id: 'beat_aldwin_845_seine_parley',
+        year: 845,
+        season: Season.Spring,
+        settlementId: 'paris',
+        region: 'Continent',
+        title: 'Translating the Danegeld Weigh-Scales at Paris',
+        titleFa: 'ترجمه پیمان باج نقره در کرانه رود سن',
+        text: 'Standing between Frankish bishops and Norse shield-captains outside Paris, Aldwin translated Latin parchment clauses into plain Old Norse so neither side could cheat the silver scales.',
+        textFa: 'آلدوین در بیرون دیوارهای پاریس میان اسقف‌های فرانک و سرداران نورس ایستاد و بندهای لاتین پیمان را به زبان نورس کهن برگرداند تا هیچ طرفی در ترازوی نقره فریب نخورد.',
+        tone: 'chronicle',
+        importance: 'major',
+        ordstirrGain: 12,
+      },
+      {
+        id: 'beat_aldwin_862_two_altars_treatise',
+        year: 862,
+        season: Season.Winter,
+        settlementId: 'hedeby',
+        region: 'Denmark',
+        title: 'The Winter Debate of Wyrd and Grace at Hedeby',
+        titleFa: 'مناظره زمستانی «سرنوشت و فیض» در بندر هدبی',
+        text: 'In the timber church and mead-halls of Hedeby, Brother Aldwin penned his bilingual chronicle of the Northmen — arguing that courage before fate (wyrd) and mercy before heaven need not murder one another.',
+        textFa: 'در بندر هدبی، برادر آلدوین سالنامه دوزبانه خود درباره مردمان شمال را نگاشت و در تالارها به مناظره نشست که دلیری در برابر تقدیر (ویرد) و رحمت آسمانی می‌توانند در کنار هم بزیند.',
+        skaldVerse: '“With goose-quill and rune-knife alike, memory outlives the iron that spilled the ink.”',
+        skaldVerseFa: '«چه با پرِ غاز و چه با کاردِ رون‌نگار، یادها بیش از پولادی که مرکب را ریخت می‌پایند.»',
+        tone: 'prophecy',
+        importance: 'major',
+        ordstirrGain: 12,
+      },
+      {
+        id: 'beat_aldwin_879_passing_bell',
+        year: 879,
+        season: Season.Winter,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'The Quiet Bell and Rune-Cross at Jórvík',
+        titleFa: 'ناقوس آرام و صلیب رون‌نگار در یورویک (یورک)',
+        text: 'Returning in old age to Anglo-Scandinavian Jórvík after the Treaty of Wedmore, Brother Aldwin died with ink on his fingers; both Christian monks and pagan oarsmen carved his gravestone with interlaced Norse beasts beneath a Northumbrian cross.',
+        textFa: 'برادر آلدوین در کهنسالی به یورویکِ آنگلو-اسکاندیناوی بازگشت و با انگشتانی مرکبی چشم از جهان فروبست؛ راهبان مسیحی و پاروزنان پاگان هر دو بر سنگ مزارش، گره‌نگارهای نورس را در زیر صلیب نورثامبریا کنده‌کاری کردند.',
+        tone: 'tragedy',
+        importance: 'major',
+        isDeathBeat: true,
+        ordstirrGain: 15,
+      },
+    ],
+  },
+
+  // =========================================================================
+  // PHASE 2 & 3 ROSTER — HISTORICAL & SAGA CIRCLE (WITH ANCHOR BEATS)
+  // =========================================================================
+  {
+    id: 'aslaug_kraka',
+    phase: 2,
+    name: 'Queen Aslaug (Kráka)',
+    nameFa: 'ملکه اسلاگ (کراکا)',
+    norseName: 'Áslaug Sigurðardóttir',
+    epithet: 'Daughter of Sigurd Fafnir’s-Bane & Völva-Queen',
+    epithetFa: 'دختر سیگورد اژدهاکش و ملکه پیشگو',
+    statusTag: 'LEGENDARY',
+    provenance: 'Legendary / Composite Saga',
+    historicalSourcesEn: 'Ragnars saga loðbrókar, Ragnarssona þáttr, Völsunga saga.',
+    historicalSourcesFa: 'حماسه راگنار لُدبروک، منظومه پسران راگنار و حماسه ولسونگ.',
+    role: 'Völva-Queen of the Danish Isles',
+    roleFa: 'ملکه پیشگو و مادر پسران راگنار',
+    sex: Sex.Female,
+    homeRegion: 'Denmark',
+    homeSettlementId: 'roskilde',
+    birthYear: 812,
+    deathYear: 875,
+    activeYears: [830, 875],
+    baseOrdstirr: 70,
+    appearance: { skinTone: 0, hairColor: 'red', hairStyle: 3, beardStyle: 0 },
+    heirloomId: 'aslaug_unwoven_shirt',
+    bioEn:
+      'Hidden in a hollow harp by Heimir after the fall of Sigurd and Brynhild, she grew up in Norway as the peasant girl Kráka before becoming Ragnar’s queen and bearing the sons whose vengeance shook England.',
+    bioFa:
+      'فرزند سیگورد اژدهاکش و برونهیلد که در کودکی درون چنگی چوبی پنهان و به نروژ برده شد؛ با لقب «کراکا» به همسری راگنار درآمد و مادر پسرانی شد که انتقامشان انگلستان را لرزاند.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Husband', roleFa: 'همسر (راگنار لُدبروک)' },
+      { legendId: 'ivar_boneless', roleEn: 'Firstborn Son', roleFa: 'پسر ارشد (ایوار)' },
+      { legendId: 'bjorn_ironside', roleEn: 'Son', roleFa: 'پسر (بیورن پهلوآهنین)' },
+      { legendId: 'sigurd_snake_eye', roleEn: 'Son', roleFa: 'پسر (سیگورد مار-در-چشم)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_aslaug_835_prophecy_of_sigurd',
+        year: 835,
+        season: Season.Autumn,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'The Birth-Prophecy of the Ouroboros Eye',
+        titleFa: 'پیشگویی تولد نوزادِ مار-در-چشم در راسکیله',
+        text: 'To prove to Ragnar that her father was truly Sigurd Fafnir’s-Bane, Queen Aslaug foretold that their child would be born with the image of a serpent coiled around his pupil — and Sigurd Snake-in-the-Eye was born as spoken.',
+        textFa: 'ملکه اسلاگ برای اثبات تبار خود از سیگورد اژدهاکش، پیشگویی کرد فرزندی که در راه دارد با نقش ماری حلقه‌زده در مردمک چشم زاده خواهد شد؛ و سیگورد مار-در-چشم درست همان‌گونه چشم به جهان گشود.',
+        tone: 'prophecy',
+        importance: 'major',
+        ordstirrGain: 15,
+      },
+      {
+        id: 'beat_aslaug_865_feast_of_vengeance',
+        year: 865,
+        season: Season.Autumn,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'Queen Randalin Incites the Great Army’s Vengeance',
+        titleFa: 'فراخوان ملکه اسلاگ (راندالین) برای انتقام خون راگنار',
+        text: 'When King Ælla’s envoys announced Ragnar’s death at the feast table in Zealand, Aslaug wept blood-red tears like hard hailstones and called her sons to launch the Great Heathen Army.',
+        textFa: 'هنگامی که پیک‌های شاه ائلا خبر مرگ راگنار را بر سر میز بزم در شیلند بازگفتند، اسلاگ اشک‌هایی چون تگرگ خونین فرو ریخت و پسرانش را به لشکرکشی بزرگ به انگلستان برانگیخت.',
+        tone: 'feud',
+        importance: 'epic',
+        ordstirrGain: 22,
+      },
+    ],
+  },
+
+  {
+    id: 'rollo_normandy',
+    phase: 2,
+    name: 'Rollo (Göngu-Hrólfr)',
+    nameFa: 'رولو (گونگو-هرولف)',
+    norseName: 'Göngu-Hrólfr Rögnvaldsson',
+    epithet: 'The Walker, First Ruler of Normandy',
+    epithetFa: 'هرولفِ پیاده‌رو، بنیان‌گذار دوک‌نشین نورماندی',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Dudo of Saint-Quentin, Flodoard of Reims, Heimskringla (Haralds saga hárfagra).',
+    historicalSourcesFa: 'تواریخ دودو سن‌کانتن، سالنامه فلودوارد رنس و هایمس‌کرینگلا.',
+    role: 'Seine War-Leader & Count of Rouen',
+    roleFa: 'فرمانده وایکینگ‌های سن و نخستین فرمانروای روآن (نورماندی)',
+    sex: Sex.Male,
+    homeRegion: 'Continent',
+    homeSettlementId: 'rouen',
+    birthYear: 860,
+    deathYear: 930,
+    activeYears: [878, 930],
+    baseOrdstirr: 75,
+    appearance: { skinTone: 1, hairColor: 'brown', hairStyle: 2, beardStyle: 2 },
+    bioEn:
+      'So tall and broad-shouldered that no northern pony could bear his weight — earning him the saga byname Göngu-Hrólfr (“Hrólfr the Walker”). Outlawed in Norway, he sailed to the Seine and in 911 concluded the Treaty of Saint-Clair-sur-Epte with King Charles the Simple, founding the Duchy of Normandy.',
+    bioFa:
+      'پهلوانی چنان بلندبالا و چهارشانه که هیچ اسب شمالی تاب حمل او را نداشت و ازاین‌رو «هرولفِ پیاده‌رو» لقب گرفت. او در سال ۹۱۱ میلادی پیمان سن‌کلر-سور-اپت را با شارل ساده بست و دوک‌نشین نورماندی را در روآن بنیان نهاد.',
+    relationships: [
+      { legendId: 'harald_fairhair', roleEn: 'Exiled by King Harald', roleFa: 'تبعیدشده از نروژ به فرمان هارالد موی‌زیبا' },
+      { legendId: 'charles_the_simple', roleEn: 'Treaty Partner & Liege (911)', roleFa: 'طرف پیمان سن‌کلر در سال ۹۱۱ میلادی' },
+    ],
+    timeline: [
+      {
+        id: 'beat_rollo_885_paris_siege',
+        year: 885,
+        season: Season.Autumn,
+        settlementId: 'paris',
+        region: 'Continent',
+        title: 'Rollo’s Banner Along the Besieged Walls of Paris',
+        titleFa: 'درفش رولو در محاصره بزرگ دیوارهای پاریس',
+        text: 'Joining the great fleet on the Seine against Count Odo’s towers, Hrólfr remained in northern Frankia when others sailed home, carving out a permanent base downriver at Rouen.',
+        textFa: 'رولو در محاصره بزرگ پاریس در برابر برج‌های کنت اودو جنگید و هنگامی که دیگر ناوگان‌ها بازگشتند، در مصب رود سن و شهر روآن لنگرگاهی دائمی بنا نهاد.',
+        tone: 'feud',
+        importance: 'major',
+        ordstirrGain: 16,
+      },
+      {
+        id: 'beat_rollo_911_normandy_treaty',
+        year: 911,
+        season: Season.Autumn,
+        settlementId: 'rouen',
+        region: 'Continent',
+        title: 'The Treaty of Saint-Clair-sur-Epte & Birth of Normandy',
+        titleFa: 'پیمان سن‌کلر-سور-اپت و پیدایش دوک‌نشین نورماندی',
+        text: 'After the hard clash at Chartres, Rollo accepted baptism and the lands around Rouen from King Charles the Simple in exchange for guarding the Seine estuary against all other Viking fleets.',
+        textFa: 'پس از نبرد شارتر، رولو غسل تعمید پذیرفت و در ازای حفاظت از دهانه رود سن در برابر دیگر وایکینگ‌ها، سرزمین‌های روآن را از شارل ساده تحویل گرفت و نورماندی را پایه‌گذاری کرد.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 30,
+        setsFlags: ['anchor_normandy_911_founded'],
+      },
+    ],
+  },
+
+  {
+    id: 'bjorn_ironside',
+    phase: 2,
+    name: 'Björn Ironside',
+    nameFa: 'بیورن پهلوآهنین',
+    norseName: 'Björn Járnsíða',
+    epithet: 'Conqueror of Luna & Founder of the Munsö Line',
+    epithetFa: 'فاتح لونا و سرسلسله پادشاهان مونسو در سوئد',
+    statusTag: 'CONTESTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Annales Bertiniani (Berno on the Seine, 855–858), Chronicle of Alfonso III, William of Jumièges, Hervarar saga.',
+    historicalSourcesFa: 'سالنامه سن‌برتین (برنو در رود سن ۸۵۵–۸۵۸)، تواریخ ویلیام ژومیژ و حماسه هروارار.',
+    role: 'Mediterranean Fleet Leader & King in Uppsala',
+    roleFa: 'فرمانده ناوگان مدیترانه و پادشاه سوئد در اوپسالا',
+    sex: Sex.Male,
+    homeRegion: 'Sweden',
+    homeSettlementId: 'uppsala',
+    birthYear: 822,
+    deathYear: 882,
+    activeYears: [840, 882],
+    baseOrdstirr: 76,
+    appearance: { skinTone: 1, hairColor: 'blonde', hairStyle: 1, beardStyle: 2 },
+    heirloomId: 'shield_of_ironside',
+    bioEn:
+      'Attested as Berno on the Seine in the 850s and famed across Latin and Arabic chronicles for leading the 62-ship expedition with Hastein through Gibraltar to Nekor, Seville, and Luna in Italy before ruling Svealand.',
+    bioFa:
+      'در تواریخ لاتین با نام «برنو» شناخته می‌شود؛ فرماندهی که به همراه هستین با ۶۲ کشتی از تنگه جبل‌الطارق گذشت، سواحل مراکش و شهر لونا در ایتالیا را گشود و سرانجام بر تخت پادشاهی سوئد در اوپسالا نشست.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'aslaug_kraka', roleEn: 'Mother', roleFa: 'مادر (ملکه اسلاگ)' },
+      { legendId: 'hastein_loire', roleEn: 'Sworn Fleet Partner', roleFa: 'هم‌قسم و شریک لشکرکشی مدیترانه' },
+      { legendId: 'ivar_boneless', roleEn: 'Brother', roleFa: 'برادر (ایوار بی‌استخوان)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_bjorn_859_mediterranean_voyage',
+        year: 859,
+        season: Season.Summer,
+        settlementId: 'seville',
+        region: 'Iberia & Al-Andalus',
+        title: 'Sixty-Two Longships Pass the Pillars of Hercules',
+        titleFa: 'عبور ۶۲ لانگ‌شیپ از تنگه جبل‌الطارق به سوی مدیترانه',
+        text: 'Björn Ironside and Hastein steered sixty-two dragon-ships past Iberia, raiding Algeciras and Nekor on the Moroccan Rif coast before wintering on the Rhône delta.',
+        textFa: 'بیورن پهلوآهنین و هستین با ۶۲ کشتی از سواحل اندلس و تنگه جبل‌الطارق گذشتند، به بندر نکور در شمال آفریقا یورش بردند و در دلتای رود رُن اردو زدند.',
+        tone: 'voyage',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 24,
+      },
+      {
+        id: 'beat_bjorn_860_luna_ruse',
+        year: 860,
+        season: Season.Summer,
+        settlementId: 'luna',
+        region: 'Mediterranean',
+        title: 'The Coffin Ruse at Marble-Walled Luna',
+        titleFa: 'نیرنگ تابوت در دروازه‌های مرمرین شهر لونا (ایتالیا)',
+        text: 'Mistaking the white marble walls of Luna in Liguria for Rome itself, Björn and Hastein feigned a deathbed conversion to pass the city gates inside a bier, leaping out in mail to seize the harbor.',
+        textFa: 'بیورن و هستین به گمان آن‌که دیوارهای مرمرین «لونا» همان شهر رم است، با نیرنگ مرگ و درخواست دفن در کلیسا، درون تابوتی مسلحانه از دروازه شهر گذشتند و بندر را تسخیر کردند.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 22,
+      },
+    ],
+  },
+
+  {
+    id: 'ivar_boneless',
+    phase: 2,
+    name: 'Ivar the Boneless (Ímar)',
+    nameFa: 'ایوار بی‌استخوان (ایمار دوبلین)',
+    norseName: 'Ívarr hinn Beinlausi',
+    epithet: 'Shield-Borne Strategist & King of Dublin and York',
+    epithetFa: 'استراتژیست سپرنشین و پادشاه دوبلین و یورویک',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Anglo-Saxon Chronicle (Inwær, 865–870), Annals of Ulster (Ímar, Rex Nordmannorum totius Hiberniae et Britanniae, d. 873).',
+    historicalSourcesFa: 'وقایع‌نامه آنگلو-ساکسون (این‌وئر، ۸۶۵–۸۷۰) و سالنامه اولستر ایرلند (ایمار، پادشاه نورس‌های سراسر ایرلند و بریتانیا، درگذشته ۸۷۳).',
+    role: 'Supreme Strategist of the Great Heathen Army',
+    roleFa: 'فرمانده کل ارتش بزرگ و پایه‌گذار خاندان اوی ایمار',
+    sex: Sex.Male,
+    homeRegion: 'Ireland',
+    homeSettlementId: 'dublin',
+    birthYear: 820,
+    deathYear: 873,
+    activeYears: [845, 873],
+    baseOrdstirr: 84,
+    appearance: { skinTone: 0, hairColor: 'black', hairStyle: 1, beardStyle: 0 },
+    heirloomId: 'hrafnsmerki_banner',
+    bioEn:
+      'Known in the Anglo-Saxon Chronicle as Inwær and in the Irish Annals of Ulster as Ímar, “King of the Norsemen of all Ireland and Britain.” Carried on a shield into battle yet unmatched in cunning, he masterminded the 865 invasion of England and the 866–867 conquest of York.',
+    bioFa:
+      'در وقایع‌نامه آنگلو-ساکسون با نام «این‌وئر» و در سالنامه اولستر با عنوان «پادشاه نورس‌های سراسر ایرلند و بریتانیا» ثبت شده است. او که بر سپر جنگی حمل می‌شد، با ذکاوت بی‌همتای خود فتح یورک و انتقام خون راگنار را رهبری کرد.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'aslaug_kraka', roleEn: 'Mother', roleFa: 'مادر (ملکه اسلاگ)' },
+      { legendId: 'halfdan_ragnarsson', roleEn: 'Brother & Co-Commander', roleFa: 'برادر و هم‌فرمانده ارتش بزرگ' },
+      { legendId: 'ubba_ragnarsson', roleEn: 'Brother', roleFa: 'برادر (اوبّا)' },
+      { legendId: 'king_aella_northumbria', roleEn: 'Executed Enemy at York (867)', roleFa: 'دشمن شکست‌خورده در یورک (۸۶۷)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_ivar_865_great_heathen_army',
+        year: 865,
+        season: Season.Autumn,
+        settlementId: 'maldon',
+        region: 'British Isles',
+        title: 'The Great Heathen Army Lands in East Anglia',
+        titleFa: 'فرود «ارتش بزرگ» در سواحل ایست آنگلیا',
+        text: 'Raising the Raven Banner (Hrafnsmerki), Ivar, Halfdan, and Ubba landed a vast coalition fleet in East Anglia, demanding winter horses to ride north against Northumbria.',
+        textFa: 'ایوار، هالفدان و اوبّا با برافراشتن پرچم زاغ سیاه (هرافنزمِرکی)، ناوگان عظیم خود را در ایست آنگلیا پیاده کردند و با گرفتن اسب‌های جنگی، آماده تاختن به سوی نورثامبریا شدند.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 28,
+        setsFlags: ['anchor_great_army_865'],
+      },
+      {
+        id: 'beat_ivar_867_york_aella_fall',
+        year: 867,
+        season: Season.Spring,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'The Fall of York & Vengeance Upon King Ælla',
+        titleFa: 'سقوط یورک و ستاندن انتقام خون راگنار از شاه ائلا',
+        text: 'Luring the rival Northumbrian kings Osberht and Ælla inside the breached Roman walls of Eoforwic (Jórvík), Ivar’s host annihilated the Northumbrian army and avenged the snake-pit.',
+        textFa: 'ایوار سپاه شاه ائلا و اسبرت را به درون دیوارهای شکافته یورک کشاند، ارتش نورثامبریا را در هم کوبید و انتقام چاه مارهای راگنار را به تمامی ستاند.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 32,
+        setsFlags: ['anchor_york_867_taken'],
+      },
+      {
+        id: 'beat_ivar_873_dublin_death',
+        year: 873,
+        season: Season.Winter,
+        settlementId: 'dublin',
+        region: 'Ireland',
+        title: 'Passing of Ímar, King of the Norsemen of Ireland and Britain',
+        titleFa: 'درگذشت ایوار (ایمار)، پادشاه نورس‌های ایرلند و بریتانیا',
+        text: 'The Annals of Ulster record the sudden death of Ímar at Dublin after conquering Dumbarton Rock and reigning over both sides of the Irish Sea.',
+        textFa: 'سالنامه اولستر درگذشت ایوار را در دوبلین ثبت کرد؛ فرمانروایی که بر هر دو سوی دریای ایرلند و شمال بریتانیا حکم راند.',
+        tone: 'tragedy',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        isDeathBeat: true,
+        ordstirrGain: 20,
+      },
+    ],
+  },
+
+  {
+    id: 'ubba_ragnarsson',
+    phase: 2,
+    name: 'Ubba Ragnarsson',
+    nameFa: 'اوبّا پسر راگنار',
+    norseName: 'Ubbi Ragnarsson',
+    epithet: 'Dux Fresonum & Champion of the Great Army',
+    epithetFa: 'سالار فریزیان و پهلوان خط شکن ارتش بزرگ',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Abbo of Fleury (Passio Sancti Eadmundi), Anglo-Saxon Chronicle (878 Battle of Cynwit), Gaimar.',
+    historicalSourcesFa: 'تواریخ آبو فلوری، وقایع‌نامه آنگلو-ساکسون (نبرد سینویت ۸۷۸) و سالنامه گایمار.',
+    role: 'Vanguard Warlord of the Great Army',
+    roleFa: 'فرمانده طلایه‌دار ارتش بزرگ در انگلستان',
+    sex: Sex.Male,
+    homeRegion: 'Denmark',
+    homeSettlementId: 'ribe',
+    birthYear: 826,
+    deathYear: 878,
+    activeYears: [848, 878],
+    baseOrdstirr: 66,
+    appearance: { skinTone: 1, hairColor: 'red', hairStyle: 3, beardStyle: 3 },
+    heirloomId: 'serpent_of_the_wash',
+    bioEn:
+      'Fierce warrior-captain attested alongside Ivar in the conquest of East Anglia (869) and slain in Devon at the Battle of Cynwit in 878, where the English captured the famed Raven Banner.',
+    bioFa:
+      'پهلوان بی‌باک ارتش بزرگ که در کنار ایوار ایست آنگلیا را در سال ۸۶۹ گشود و سرانجام در سال ۸۷۸ در نبرد سینویت در دوون در پای پرچم زاغ سیاه جان باخت.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'ivar_boneless', roleEn: 'Brother', roleFa: 'برادر (ایوار بی‌استخوان)' },
+      { legendId: 'halfdan_ragnarsson', roleEn: 'Brother', roleFa: 'برادر (هالفدان)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_ubba_869_east_anglia',
+        year: 869,
+        season: Season.Winter,
+        settlementId: 'maldon',
+        region: 'British Isles',
+        title: 'The Fall of King Edmund in East Anglia',
+        titleFa: 'سقوط پادشاهی ایست آنگلیا به دست اوبّا و ایوار',
+        text: 'Advancing across the fenlands from York, Ubba and Ivar crushed the East Anglian levy at Thetford and slew King Edmund.',
+        textFa: 'اوبّا و ایوار با پیشروی از یورک، سپاه ایست آنگلیا را در تتفورد در هم کوبیدند و به فرمانروایی شاه ادموند پایان دادند.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 18,
+      },
+      {
+        id: 'beat_ubba_878_cynwit_fall',
+        year: 878,
+        season: Season.Spring,
+        settlementId: 'winchester',
+        region: 'British Isles',
+        title: 'Fall of Ubba & Capture of the Raven Banner at Cynwit',
+        titleFa: 'سقوط اوبّا در نبرد سینویت و به غنیمت رفتن پرچم زاغ سیاه',
+        text: 'Landing 23 ships in Devon before Ealdorman Odda’s hill-fort at Cynwit, Ubba fell in a sudden dawn sally and the Raven Banner was taken.',
+        textFa: 'اوبّا با ۲۳ کشتی به سواحل دوون یورش برد اما در شبیخون سحرگاهی مدافعان قلعه سینویت در خط مقدم کشته شد.',
+        tone: 'tragedy',
+        importance: 'epic',
+        isDeathBeat: true,
+        ordstirrGain: 16,
+      },
+    ],
+  },
+
+  {
+    id: 'halfdan_ragnarsson',
+    phase: 2,
+    name: 'Halfdan Ragnarsson',
+    nameFa: 'هالفدان پسر راگنار',
+    norseName: 'Hálfdan Ragnarsson',
+    epithet: 'Plough-King of Northumbria',
+    epithetFa: 'پادشاه یورویک و تقسیم‌کننده زمین‌های نورثامبریا',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Anglo-Saxon Chronicle (Healfdene, 871–876), Annals of Ulster (Albann, d. 877 at Strangford Lough).',
+    historicalSourcesFa: 'وقایع‌نامه آنگلو-ساکسون (هالفدنه، ۸۷۱–۸۷۶) و سالنامه اولستر (کشته‌شده در استرنگفورد لاخ در سال ۸۷۷).',
+    role: 'King of Danish Jórvík & Commander at Repton',
+    roleFa: 'پادشاه یورویک و فرمانده اردوگاه زمستانی رپتون',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'jorvik',
+    birthYear: 824,
+    deathYear: 877,
+    activeYears: [848, 877],
+    baseOrdstirr: 72,
+    appearance: { skinTone: 1, hairColor: 'brown', hairStyle: 2, beardStyle: 2 },
+    heirloomId: 'bragarfull_horn_lejre',
+    bioEn:
+      'Commander of the Great Heathen Army at Reading, London, and Repton. In 876 the Anglo-Saxon Chronicle records that Halfdan shared out the lands of Northumbria, and his warriors “proceeded to plough and to support themselves.”',
+    bioFa:
+      'فرمانده ارتش بزرگ در لندن و رپتون که در سال ۸۷۶ میلادی زمین‌های نورثامبریا را میان جنگجویان خود تقسیم کرد تا شمشیرها را کنار گاوآهن بگذارند و قلمرو دانلا را آباد سازند.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'ivar_boneless', roleEn: 'Brother', roleFa: 'برادر (ایوار بی‌استخوان)' },
+      { legendId: 'guthrum_danelaw', roleEn: 'Fellow Army Commander', roleFa: 'هم‌رزم و فرمانده جناح جنوب ارتش بزرگ' },
+    ],
+    timeline: [
+      {
+        id: 'beat_halfdan_873_repton_winter',
+        year: 873,
+        season: Season.Winter,
+        settlementId: 'repton',
+        region: 'British Isles',
+        title: 'The Great Winter Camp at Repton & Fall of Mercia',
+        titleFa: 'اردوگاه بزرگ زمستانی در رپتون و سقوط پادشاهی مرسیا',
+        text: 'Fortifying a D-shaped ditch around Repton abbey on the Trent, Halfdan drove King Burgred of Mercia into exile in Rome.',
+        textFa: 'هالفدان با ساختن خندق دفاعی بزرگ پیرامون صومعه رپتون، شاه بورگرد مرسیا را از تخت به زیر کشید و او را ناچار به فرار به رم کرد.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 18,
+      },
+      {
+        id: 'beat_halfdan_876_ploughland_york',
+        year: 876,
+        season: Season.Spring,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'Halfdan Measures Out Northumbrian Ploughlands',
+        titleFa: 'تقسیم دشت‌های نورثامبریا میان جنگجویان ارتش بزرگ',
+        text: 'In 876 Halfdan apportioned the fertile valleys around Jórvík among his veteran oarsmen, founding permanent Anglo-Scandinavian settlement.',
+        textFa: 'در سال ۸۷۶ هالفدان زمین‌های حاصلخیز پیرامون یورویک را میان پاروزنان کهنه‌کار خود تقسیم کرد و اسکان دائمی وایکینگ‌ها در شمال انگلستان را رقم زد.',
+        tone: 'triumph',
+        importance: 'epic',
+        ordstirrGain: 20,
+      },
+      {
+        id: 'beat_halfdan_877_strangford_death',
+        year: 877,
+        season: Season.Summer,
+        settlementId: 'dublin',
+        region: 'Ireland',
+        title: 'Halfdan Falls Fighting for Dublin at Strangford Lough',
+        titleFa: 'مرگ هالفدان در نبرد دریایی استرنگفورد لاخ برای تاج دوبلین',
+        text: 'Sailing across the Irish Sea to reclaim his brother Ímar’s throne in Dublin, Halfdan (Albann) fell in a fierce ship-battle at Strangford Lough.',
+        textFa: 'هالفدان برای بازپس‌گیری تاج‌وتخت برادرش ایوار به دریای ایرلند لشکر کشید اما در نبرد سخت دریایی در استرنگفورد لاخ کشته شد.',
+        tone: 'tragedy',
+        importance: 'major',
+        isDeathBeat: true,
+        ordstirrGain: 15,
+      },
+    ],
+  },
+
+  {
+    id: 'hvitserk_ragnarsson',
+    phase: 2,
+    name: 'Hvitserk Ragnarsson',
+    nameFa: 'هویتسرک پسر راگنار',
+    norseName: 'Hvítserkr Ragnarsson',
+    epithet: 'White-Shirt of the Eastern Rivers',
+    epithetFa: 'پیراهن‌سپیدِ رودهای خاور',
+    statusTag: 'LEGENDARY',
+    provenance: 'Legendary / Composite Saga',
+    historicalSourcesEn: 'Ragnarssona þáttr, Ragnars saga loðbrókar (campaigns in England and Garðaríki).',
+    historicalSourcesFa: 'منظومه پسران راگنار و حماسه راگنار لُدبروک (نبردها در انگلستان و سرزمین‌های شرقی).',
+    role: 'Vanguard Raider in England & the East',
+    roleFa: 'طلایه‌دار بی‌باک در انگلستان و رودهای شرق',
+    sex: Sex.Male,
+    homeRegion: 'Kievan Rus & Rivers',
+    homeSettlementId: 'novgorod',
+    birthYear: 828,
+    deathYear: 879,
+    activeYears: [850, 879],
+    baseOrdstirr: 58,
+    appearance: { skinTone: 0, hairColor: 'blonde', hairStyle: 2, beardStyle: 1 },
+    bioEn:
+      'In saga tradition, after avenging his father in England alongside his brothers, Hvitserk turned his prows toward the Baltic and Eastern river routes (Austrvegr), choosing to die atop a blazing pyre of fallen foes rather than yield in captivity.',
+    bioFa:
+      'در روایت حماسه‌ها، هویتسرک پس از انتقام خون پدر در انگلستان، راهی رودهای شرق و بالتیک شد و هنگامی که در محاصره دشمنی پرشمار افتاد، مرگ بر پشته آتشین را به تسلیم شدن ترجیح داد.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'aslaug_kraka', roleEn: 'Mother', roleFa: 'مادر (ملکه اسلاگ)' },
+      { legendId: 'bjorn_ironside', roleEn: 'Brother', roleFa: 'برادر (بیورن پهلوآهنین)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_hvitserk_871_eastern_sails',
+        year: 871,
+        season: Season.Summer,
+        settlementId: 'staraya_ladoga',
+        region: 'Kievan Rus & Rivers',
+        title: 'Hvitserk Turns His Prows Toward the Eastern Rivers',
+        titleFa: 'حرکت ناوگان هویتسرک به سوی رودهای شرق (آستروِگر)',
+        text: 'Leaving the partitioned fields of England to Halfdan, Hvitserk sailed east past Gotland into the river-gates of Garðaríki.',
+        textFa: 'هویتسرک زمین‌های تقسیم‌شده انگلستان را به هالفدان سپرد و با کشتی‌های خود از بالتیک به سوی رودخانه‌های سرزمین روس تاخت.',
+        tone: 'voyage',
+        importance: 'major',
+        ordstirrGain: 14,
+      },
+      {
+        id: 'beat_hvitserk_879_eastern_pyre',
+        year: 879,
+        season: Season.Autumn,
+        settlementId: 'kiev',
+        region: 'Kievan Rus & Rivers',
+        title: 'The Blazing Warrior-Pyre on the Steppe Frontier',
+        titleFa: 'فرجام حماسی هویتسرک بر پشته آتش در مرزهای خاور',
+        text: 'Outnumbered on the eastern frontier and asked how he wished to die, Hvitserk chose to be burned alive atop a mound of those who had fallen before his blade.',
+        textFa: 'هنگامی که هویتسرک پس از نبردی نابرابر در مرزهای شرق اسیر شد و از او پرسیدند چگونه می‌خواهد بمیرد، خواست که بر فراز پشته‌ای از کشتگانِ شمشیرش در آتش سوزانده شود.',
+        mildText: 'Outnumbered on the eastern frontier, Hvitserk refused all terms of ransom and met his end defiantly in the flames of his last battlefield.',
+        mildTextFa: 'هویتسرک در مرزهای شرق هرگونه تسلیم و خون‌بها را رد کرد و با سرافرازی در شعله‌های آخرین میدان نبردش جان سپرد.',
+        tone: 'tragedy',
+        importance: 'epic',
+        isDeathBeat: true,
+        ordstirrGain: 20,
+      },
+    ],
+  },
+
+  {
+    id: 'sigurd_snake_eye',
+    phase: 2,
+    name: 'Sigurd Snake-in-the-Eye',
+    nameFa: 'سیگورد مار-در-چشم',
+    norseName: 'Sigurðr Ormr-í-Auga',
+    epithet: 'King of Zealand, Scania & the Danish Isles',
+    epithetFa: 'پادشاه شیلند، اسکانیا و جزایر دانمارک',
+    statusTag: 'CONTESTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Annales Fuldenses (Sigifrid, King of the Danes, 873), Ragnarssona þáttr, Saxo Grammaticus.',
+    historicalSourcesFa: 'سالنامه فولدا (سیگیفرید پادشاه دانمارک، ۸۷۳)، منظومه پسران راگنار و ساکسو گراماتیکوس.',
+    role: 'King of Zealand & Keeper of the Völsung Line',
+    roleFa: 'پادشاه جزایر دانمارک و وارث خون ولسونگ',
+    sex: Sex.Male,
+    homeRegion: 'Denmark',
+    homeSettlementId: 'roskilde',
+    birthYear: 835,
+    deathYear: 891,
+    activeYears: [853, 891],
+    baseOrdstirr: 70,
+    appearance: { skinTone: 0, hairColor: 'blonde', hairStyle: 1, beardStyle: 1 },
+    heirloomId: 'fang_of_fafnir',
+    bioEn:
+      'Youngest son of Ragnar and Aslaug, born with the ouroboros ring around his pupil. After fighting at York, he inherited Zealand, Scania, Halland, and Viken, becoming ancestor to the royal line of Denmark and Norway.',
+    bioFa:
+      'کوچک‌ترین پسر راگنار و اسلاگ که با حلقه مار در مردمک چشم زاده شد؛ پس از فتح یورک، فرمانروایی شیلند و جزایر دانمارک را به ارث برد و نیای پادشاهان بعدی دانمارک و نروژ گشت.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Father', roleFa: 'پدر (راگنار لُدبروک)' },
+      { legendId: 'aslaug_kraka', roleEn: 'Mother', roleFa: 'مادر (ملکه اسلاگ)' },
+      { legendId: 'king_aella_northumbria', roleEn: 'Father of Wife Blaeja (Saga)', roleFa: 'پدرِ همسرش بلایا در روایت حماسه‌ها' },
+    ],
+    timeline: [
+      {
+        id: 'beat_sigurd_873_danish_crown',
+        year: 873,
+        season: Season.Summer,
+        settlementId: 'roskilde',
+        region: 'Denmark',
+        title: 'Sigurd Rules the Danish Straits & Sends Envoys to Frankia',
+        titleFa: 'تثبیت پادشاهی سیگورد بر تنگه‌های دانمارک و سفارت صلح با فرانک‌ها',
+        text: 'Consolidating rule over Zealand and the Sound, Sigurd exchanged border oaths at the Eider River to keep Danish trade flowing through Hedeby.',
+        textFa: 'سیگورد با تثبیت فرمانروایی بر شیلند و تنگه‌های دانمارک، پیمان مرزی رود آیدر را برای رونق تجارت هدبی استوار ساخت.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 16,
+      },
+    ],
+  },
+
+  {
+    id: 'hastein_loire',
+    phase: 3,
+    name: 'Hastein (Hálfdan / Hasting)',
+    nameFa: 'هستین (هاستینگ)',
+    norseName: 'Hásteinn',
+    epithet: 'Sea-Wolf of the Loire & Mediterranean',
+    epithetFa: 'گرگ دریا در رود لوآر و مدیترانه',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Annales Bertiniani, Chronicle of Regino of Prüm, Anglo-Saxon Chronicle (892–896 Thames campaigns).',
+    historicalSourcesFa: 'سالنامه سن‌برتین، وقایع‌نامه رگینو پروم و وقایع‌نامه آنگلو-ساکسون (لشکرکشی‌های ۸۹۲–۸۹۶ در تیمز).',
+    role: 'Loire Fleet Commander & Veteran Sea-King',
+    roleFa: 'سالار ناوگان لوآر و فرمانده کهنه‌کار دریاها',
+    sex: Sex.Male,
+    homeRegion: 'Continent',
+    homeSettlementId: 'nantes_noirmoutier',
+    birthYear: 825,
+    deathYear: 896,
+    activeYears: [843, 896],
+    baseOrdstirr: 72,
+    appearance: { skinTone: 2, hairColor: 'black', hairStyle: 2, beardStyle: 3 },
+    bioEn:
+      'One of the longest-lived and most cunning Viking commanders in documented history: based at Noirmoutier on the Loire, co-leader of the 859–862 Mediterranean raid with Björn Ironside, victor over Robert the Strong at Brissarthe (866), and late-life invader of Alfred’s England in 892.',
+    bioFa:
+      'یکی از دیرپاترین و زیرک‌ترین سرداران تاریخ مستند وایکینگ‌ها؛ مستقر در جزیره نوارموتیه در دهانه رود لوآر، هم‌سفر بیورن پهلوآهنین در مدیترانه، و رقیب سرسخت آلفرد کبیر در دهه ۸۹۰ میلادی.',
+    relationships: [
+      { legendId: 'bjorn_ironside', roleEn: 'Foster-Son & Mediterranean Co-Commander', roleFa: 'پسرخوانده رزمی و هم‌فرمانده ناوگان مدیترانه' },
+      { legendId: 'alfred_the_great', roleEn: 'Late-Career Adversary in England', roleFa: 'رقیب نظامی در نبردهای رود تیمز (۸۹۲–۸۹۶)' },
+    ],
+    timeline: [
+      {
+        id: 'beat_hastein_866_brissarthe',
+        year: 866,
+        season: Season.Autumn,
+        settlementId: 'nantes_noirmoutier',
+        region: 'Continent',
+        title: 'Victory on the Loire at Brissarthe',
+        titleFa: 'پیروزی هستین در نبرد بریسارت در دره لوآر',
+        text: 'Cornered inside a stone church on the Loire, Hastein’s raiders burst forth and slew the Frankish margrave Robert the Strong at the doorway.',
+        textFa: 'هستین و جنگجویانش که در کلیسایی سنگی در دره لوآر محاصره شده بودند، ناگهان بیرون زدند و روبر نیرومند، مرزبان بزرگ فرانک را از پای درآوردند.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 18,
+      },
+    ],
+  },
+
+  {
+    id: 'king_horik_denmark',
+    phase: 3,
+    name: 'King Horik I of Denmark',
+    nameFa: 'شاه هوریک یکم دانمارک',
+    norseName: 'Hårik Guðfriðarson',
+    epithet: 'Son of Gudfred, Monarch of Hedeby',
+    epithetFa: 'پسر گودفرد و پادشاه هدبی و دانمارک',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Royal Frankish Annals, Annales Bertiniani, Rimbert’s Vita Anskarii (d. 854).',
+    historicalSourcesFa: 'سالنامه‌های سلطنتی فرانک و کتاب زندگی آنسگار نوشته ریمبرت (درگذشته ۸۵۴).',
+    role: 'King of the Danes at Hedeby',
+    roleFa: 'پادشاه دانمارکیان در بندر هدبی',
+    sex: Sex.Male,
+    homeRegion: 'Denmark',
+    homeSettlementId: 'hedeby',
+    birthYear: 795,
+    deathYear: 854,
+    activeYears: [813, 854],
+    baseOrdstirr: 64,
+    appearance: { skinTone: 1, hairColor: 'brown', hairStyle: 1, beardStyle: 2 },
+    bioEn:
+      'Sole king of Denmark from 827 to 854. He sacked Hamburg in 845 with 600 ships, permitted Ansgar to build the first Christian church bell at Hedeby, and perished in a bloody dynastic battle in 854.',
+    bioFa:
+      'پادشاه یگانه دانمارک از ۸۲۷ تا ۸۵۴ میلادی که با ۶۰۰ کشتی هامبورگ را گشود، به سنت آنسگار اجازه ساخت کلیسای هدبی را داد و در سال ۸۵۴ در نبرد داخلی خاندان سلطنتی کشته شد.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Ambitious Rival Commander', roleFa: 'سردار بلندپرواز و رقیب دربار دانمارک' },
+    ],
+    timeline: [
+      {
+        id: 'beat_horik_845_hamburg_fleet',
+        year: 845,
+        season: Season.Summer,
+        settlementId: 'hedeby',
+        region: 'Denmark',
+        title: 'King Horik Sends 600 Ships Up the Elbe to Hamburg',
+        titleFa: 'لشکرکشی ۶۰۰ کشتی شاه هوریک در رود البه و تسخیر هامبورگ',
+        text: 'While Ragnar struck the Seine, King Horik launched 600 Danish vessels up the Elbe, burning the Saxon fortress and cathedral of Hamburg.',
+        textFa: 'هم‌زمان با یورش راگنار به رود سن، شاه هوریک با ۶۰۰ کشتی دانمارکی از رود البه بالا رفت و دژ هامبورگ را تسخیر کرد.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 16,
+      },
+      {
+        id: 'beat_horik_854_civil_war_death',
+        year: 854,
+        season: Season.Autumn,
+        settlementId: 'hedeby',
+        region: 'Denmark',
+        title: 'TheThree-Day Slaughter of the Danish Royal House',
+        titleFa: 'نبرد سه‌روزه و سقوط شاه هوریک یکم در هدبی',
+        text: 'Challenged by his exiled nephew Gudurm, King Horik I and nearly every adult prince of the royal house fell in a three-day battle at Hedeby.',
+        textFa: 'در پی بازگشت برادرزاده تبعیدی‌اش گودورم، شاه هوریک یکم و تقریباً تمامی شاهزادگان بزرگسال خاندان سلطنتی در نبردی سه‌روزه کشته شدند.',
+        tone: 'tragedy',
+        importance: 'major',
+        isDeathBeat: true,
+        ordstirrGain: 12,
+      },
+    ],
+  },
+
+  {
+    id: 'king_ecbert_wessex',
+    phase: 3,
+    name: 'King Ecgberht of Wessex',
+    nameFa: 'شاه اکبرتِ وسکس',
+    norseName: 'Egברht Vessex-Konungr',
+    epithet: 'Bretwalda & Restorer of the House of Cerdic',
+    epithetFa: 'برتوالدا و بنیان‌گذار برتری پادشاهی وسکس',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Anglo-Saxon Chronicle (reigned 802–839; Battle of Ellandun 825, Hingston Down 838).',
+    historicalSourcesFa: 'وقایع‌نامه آنگلو-ساکسون (سلطنت ۸۰۲ تا ۸۳۹؛ نبرد الاندون ۸۲۵ و هینگستون داون ۸۳۸).',
+    role: 'King of Wessex & Overlord of Southern England',
+    roleFa: 'پادشاه وسکس در وینچستر',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'winchester',
+    birthYear: 771,
+    deathYear: 839,
+    activeYears: [802, 839],
+    baseOrdstirr: 62,
+    appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 0, beardStyle: 2 },
+    bioEn:
+      'Having spent his youth as an exile at Charlemagne’s Frankish court, Ecgberht broke Mercian supremacy at Ellandun (825), defeated a combined Cornish-Viking host at Hingston Down (838), and left a unified southern crown to his son Æthelwulf and grandsons.',
+    bioFa:
+      'پادشاهی که جوانی خود را در تبعید در دربار شارلمانی گذراند، برتری مرسیا را در نبرد الاندون (۸۲۵) در هم شکست، در سال ۸۳۸ اتحاد وایکینگ‌ها و کورنوال را مغلوب ساخت و تاج وسکس را برای پسرش اتلولف و نوه‌اش آلفرد به یادگار گذاشت.',
+    relationships: [
+      { legendId: 'alfred_the_great', roleEn: 'Grandfather', roleFa: 'پدربزرگِ آلفرد کبیر' },
+    ],
+    timeline: [
+      {
+        id: 'beat_ecbert_838_hingston_down',
+        year: 838,
+        season: Season.Summer,
+        settlementId: 'winchester',
+        region: 'British Isles',
+        title: 'King Ecgberht Defeats the Danish Fleet at Hingston Down',
+        titleFa: 'پیروزی شاه اکبرت بر ناوگان دانمارکی در هینگستون داون',
+        text: 'Mustering the West Saxon fyrd at the Cornish border, aged King Ecgberht routed a great fleet of Danish raiders and their British allies at Hingston Down.',
+        textFa: 'شاه اکبرتِ سالخورده با گردآوری سپاه وسکس، اتحاد ناوگان مهاجمان دانمارکی و جنگجویان کورنوال را در هینگستون داون در هم شکست.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 15,
+      },
+      {
+        id: 'beat_ecbert_839_winchester_death',
+        year: 839,
+        season: Season.Summer,
+        settlementId: 'winchester',
+        region: 'British Isles',
+        title: 'Death of King Ecgberht at Winchester & Succession of Æthelwulf',
+        titleFa: 'درگذشت شاه اکبرت در وینچستر و تاج‌گذاری پسرش اتلولف',
+        text: 'After thirty-seven winters on the throne of Wessex, King Ecgberht was laid to rest in Winchester Cathedral as his son Æthelwulf took up the defense of the English coast.',
+        textFa: 'پس از سی‌وهفت سال سلطنت بر وسکس، شاه اکبرت در کلیسای جامع وینچستر به خاک سپرده شد و پسرش اتلولف بار دفاع از سواحل انگلستان را بر دوش گرفت.',
+        tone: 'tragedy',
+        importance: 'major',
+        isDeathBeat: true,
+        ordstirrGain: 10,
+      },
+    ],
+  },
+
+  {
+    id: 'king_aella_northumbria',
+    phase: 3,
+    name: 'King Ælla of Northumbria',
+    nameFa: 'شاه ائلا (پادشاه نورثامبریا)',
+    norseName: 'Ella Norðimbraland-Konungr',
+    epithet: 'Usurper of York & Keeper of the Snake-Pit',
+    epithetFa: 'مدعی تاج یورک و دشمن خونی پسران راگنار',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Anglo-Saxon Chronicle (slain at York 21 March 867), Symeon of Durham, Ragnarssona þáttr.',
+    historicalSourcesFa: 'وقایع‌نامه آنگلو-ساکسون (کشته‌شده در یورک، ۲۱ مارس ۸۶۷)، تواریخ سیمئون دورهام و منظومه پسران راگنار.',
+    role: 'King of Northumbria at Eoforwic (York)',
+    roleFa: 'پادشاه نورثامبریا در شهر یورک',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'jorvik',
+    birthYear: 822,
+    deathYear: 867,
+    activeYears: [862, 867],
+    baseOrdstirr: 55,
+    appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 1, beardStyle: 1 },
+    bioEn:
+      'Seized the Northumbrian throne from King Osberht in 862. In saga tradition he cast Ragnar Lothbrok into the snake-pit; in the Anglo-Saxon Chronicle he reconciled too late with Osberht and fell trying to retake York from the Great Army on 21 March 867.',
+    bioFa:
+      'در سال ۸۶۲ تاج نورثامبریا را از شاه اسبرت ربود. در سنت حماسه‌ها راگنار لُدبروک را در چاه مارها افکند و طبق وقایع‌نامه آنگلو-ساکسون، در ۲۱ مارس ۸۶۷ هنگام تلاش برای بازپس‌گیری یورک از ارتش بزرگ کشته شد.',
+    relationships: [
+      { legendId: 'ragnar_lothbrok', roleEn: 'Captive Executed in 865', roleFa: 'اسیر اعدام‌شده در چاه مارها (۸۶۵)' },
+      { legendId: 'ivar_boneless', roleEn: 'Conqueror & Avenger', roleFa: 'فاتح یورک و منتقم خون راگنار' },
+    ],
+    timeline: [
+      {
+        id: 'beat_aella_862_northumbria_coup',
+        year: 862,
+        season: Season.Autumn,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'Ælla Usurps the Crown of Northumbria at York',
+        titleFa: 'غصب تاج‌وتخت نورثامبریا توسط شاه ائلا در یورک',
+        text: 'Though not of the royal bloodline, Ælla drove King Osberht from Eoforwic (York), splitting Northumbria in bitter civil strife.',
+        textFa: 'ائلا با این‌که از تبار شاهان نبود، شاه اسبرت را از یورک بیرون راند و نورثامبریا را دچار دوگانگی و جنگ داخلی ساخت.',
+        tone: 'feud',
+        importance: 'minor',
+        ordstirrGain: 10,
+      },
+      {
+        id: 'beat_aella_867_fall_at_york',
+        year: 867,
+        season: Season.Spring,
+        settlementId: 'jorvik',
+        region: 'British Isles',
+        title: 'King Ælla Slain Before the Walls of Jórvík',
+        titleFa: 'کشته‌شدن شاه ائلا در درون دیوارهای یورک',
+        text: 'Joining forces with his rival Osberht too late, King Ælla stormed through a gap in York’s Roman walls only to be surrounded and slain by the sons of Ragnar.',
+        textFa: 'شاه ائلا که دیرهنگام با رقیب خود اسبرت متحد شده بود، از شکاف دیوارهای رومی یورک به درون شهر تاخت اما در محاصره پسران راگنار افتاد و به سزای چاه مارها رسید.',
+        tone: 'tragedy',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        isDeathBeat: true,
+        ordstirrGain: 18,
+      },
+    ],
+  },
+
+  {
+    id: 'alfred_the_great',
+    phase: 3,
+    name: 'King Alfred of Wessex',
+    nameFa: 'شاه آلفرد کبیر (وسکس)',
+    norseName: 'Álfráðr hinn Mikli',
+    epithet: 'Defender of the Athelney Marshes & Builder of Burhs',
+    epithetFa: 'مدافع مرداب‌های اتلنی و معمار دژهای انگلستان',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Asser’s Life of King Alfred, Anglo-Saxon Chronicle (reigned 871–899; Battle of Edington 878).',
+    historicalSourcesFa: 'زندگی‌نامه شاه آلفرد نوشته اسقف آسر و وقایع‌نامه آنگلو-ساکسون (سلطنت ۸۷۱ تا ۸۹۹؛ نبرد ادینگتون ۸۷۸).',
+    role: 'King of Wessex & Architect of the Burh Network',
+    roleFa: 'پادشاه وسکس و بنیان‌گذار شبکه دژهای دفاعی (بوره)',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'winchester',
+    birthYear: 849,
+    deathYear: 899,
+    activeYears: [868, 899],
+    baseOrdstirr: 85,
+    appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 1, beardStyle: 1 },
+    bioEn:
+      'Youngest son of Æthelwulf and grandson of Ecgberht. Driven into the Somerset marshes of Athelney in the winter of 878 by Guthrum’s surprise raid at Chippenham, he rallied the West Saxon shires to win the decisive Battle of Edington and establish the Danelaw boundary.',
+    bioFa:
+      'پسر کوچک اتلولف و نوه اکبرت. پس از شبیخون زمستانی گوتورم در سال ۸۷۸ به مرداب‌های سامرست پناه برد، اما در بهار همان سال سپاه وسکس را گرد آورد، در نبرد ادینگتون پیروز شد و مرز دانلا را تثبیت کرد.',
+    relationships: [
+      { legendId: 'king_ecbert_wessex', roleEn: 'Grandfather', roleFa: 'پدربزرگ (شاه اکبرت)' },
+      { legendId: 'guthrum_danelaw', roleEn: 'Rival & Baptismal Godson (Æthelstan)', roleFa: 'رقیب جنگی و پسرخوانده تعمیدی در پیمان ودمور' },
+    ],
+    timeline: [
+      {
+        id: 'beat_alfred_878_edington',
+        year: 878,
+        season: Season.Spring,
+        settlementId: 'winchester',
+        region: 'British Isles',
+        title: 'Alfred Emerges from Athelney & Wins the Battle of Edington',
+        titleFa: 'خروج آلفرد از مرداب‌های اتلنی و پیروزی سرنوشت‌ساز در نبرد ادینگتون',
+        text: 'Mustering the men of Somerset, Wiltshire, and Hampshire at Egbert’s Stone, King Alfred broke Guthrum’s shield-wall at Edington and received his baptismal peace-oath at Wedmore.',
+        textFa: 'شاه آلفرد با گردآوری مردان وسکس در سنگ اکبرت، دیوار سپرهای گوتورم را در ادینگتون در هم شکست و در پیمان ودمور او را به غسل تعمید و پذیرش مرز دانلا واداشت.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 32,
+        setsFlags: ['anchor_edington_878'],
+      },
+      {
+        id: 'beat_alfred_886_london_restored',
+        year: 886,
+        season: Season.Summer,
+        settlementId: 'london',
+        region: 'British Isles',
+        title: 'King Alfred Refortifies the Roman Walls of London',
+        titleFa: 'بازسازی دیوارهای رومی لندن به فرمان شاه آلفرد',
+        text: 'Moving the population inside the old Roman circuit of Londinium, Alfred established a fortified burh and river garrison on the Thames.',
+        textFa: 'آلفرد با انتقال مردم به درون حصارهای کهن رومی لندن، این شهر را به دژی مستحکم بر کرانه رود تیمز تبدیل کرد.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 18,
+      },
+    ],
+  },
+
+  {
+    id: 'guthrum_danelaw',
+    phase: 3,
+    name: 'King Guthrum (Æthelstan)',
+    nameFa: 'شاه گوتورم (اتلستنِ دانلا)',
+    norseName: 'Gormr hinn Enski',
+    epithet: 'Summer-Army Commander & King of East Anglia',
+    epithetFa: 'فرمانده سپاه تابستانی و پادشاه دانمارکی ایست آنگلیا',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Anglo-Saxon Chronicle',
+    historicalSourcesEn: 'Anglo-Saxon Chronicle (871–890), Treaty of Alfred and Guthrum.',
+    historicalSourcesFa: 'وقایع‌نامه آنگلو-ساکسون (۸۷۱ تا ۸۹۰) و متن حقوقی پیمان آلفرد و گوتورم.',
+    role: 'Danish King of Southern Danelaw',
+    roleFa: 'پادشاه دانمارکی ایست آنگلیا و جنوب دانلا',
+    sex: Sex.Male,
+    homeRegion: 'British Isles',
+    homeSettlementId: 'maldon',
+    birthYear: 835,
+    deathYear: 890,
+    activeYears: [871, 890],
+    baseOrdstirr: 65,
+    appearance: { skinTone: 1, hairColor: 'blonde', hairStyle: 2, beardStyle: 2 },
+    bioEn:
+      'Leader of the Great Summer Army that reinforced Halfdan in 871. He nearly conquered Wessex at Twelfth Night 878 before his defeat at Edington, after which he took the baptismal name Æthelstan and ruled East Anglia in peace until 890.',
+    bioFa:
+      'فرمانده «سپاه بزرگ تابستانی» که در ژانویه ۸۷۸ وسکس را تا آستانه سقوط پیش برد و پس از نبرد ادینگتون با نام تعمیدی «اتلستن» بر ایست آنگلیا و جنوب دانلا فرمان راند.',
+    relationships: [
+      { legendId: 'halfdan_ragnarsson', roleEn: 'Brother-in-Arms at Repton', roleFa: 'هم‌رزم در اردوگاه رپتون' },
+      { legendId: 'alfred_the_great', roleEn: 'Adversary & Godfather at Wedmore', roleFa: 'رقیب نظامی و پدرخوانده تعمیدی در پیمان ودمور' },
+    ],
+    timeline: [
+      {
+        id: 'beat_guthrum_878_chippenham_strike',
+        year: 878,
+        season: Season.Winter,
+        settlementId: 'winchester',
+        region: 'British Isles',
+        title: 'Guthrum’s Twelfth-Night Surprise Strike on Wessex',
+        titleFa: 'شبیخون زمستانی گوتورم به قلب پادشاهی وسکس',
+        text: 'Marching in dead winter after Twelfth Night, Guthrum’s army seized Chippenham and drove King Alfred into the Somerset fens.',
+        textFa: 'گوتورم در چله زمستان با شبیخونی ناگهانی دربار وسکس را غافلگیر کرد و شاه آلفرد را به پناه بردن به مرداب‌ها واداشت.',
+        tone: 'triumph',
+        importance: 'major',
+        ordstirrGain: 18,
+      },
+    ],
+  },
+
+  {
+    id: 'charles_the_simple',
+    phase: 3,
+    name: 'King Charles the Simple',
+    nameFa: 'شارل ساده (پادشاه فرانک باختری)',
+    norseName: 'Karl Konungr Frakka',
+    epithet: 'Carolingian Monarch of the Rouen Grant',
+    epithetFa: 'پادشاه کارولنژی امضاکننده پیمان نورماندی',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Annals of Flodoard, Richer of Reims (reigned 898–922).',
+    historicalSourcesFa: 'سالنامه فلودوارد و تواریخ ریشر رنس (سلطنت ۸۹۸ تا ۹۲۲).',
+    role: 'King of West Francia',
+    roleFa: 'پادشاه فرانک باختری',
+    sex: Sex.Male,
+    homeRegion: 'Continent',
+    homeSettlementId: 'paris',
+    birthYear: 879,
+    deathYear: 929,
+    activeYears: [898, 923],
+    baseOrdstirr: 52,
+    appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 0, beardStyle: 1 },
+    bioEn:
+      'Carolingian ruler whose epithet Simplex meant “straightforward.” In 911 he turned a generation of Seine raids into a permanent northern shield by granting Rouen and its coast to Rollo.',
+    bioFa:
+      'فرمانروای کارولنژی که در سال ۹۱۱ میلادی با واگذاری روآن و سواحل شمالی به رولو، یورش‌های رود سن را به سپری دائمی برای فرانکستان بدل ساخت.',
+    relationships: [
+      { legendId: 'rollo_normandy', roleEn: 'Vassal & Duke at Rouen', roleFa: 'هم‌پیمان و دوک نورماندی در روآن' },
+    ],
+    timeline: [
+      {
+        id: 'beat_charles_911_epte_grant',
+        year: 911,
+        season: Season.Autumn,
+        settlementId: 'rouen',
+        region: 'Continent',
+        title: 'Charles Grants the Lower Seine to Rollo’s Northmen',
+        titleFa: 'واگذاری مصب رود سن به نورس‌های رولو توسط شارل',
+        text: 'Meeting on the banks of the River Epte, King Charles sealed the charter granting Rouen to Rollo and his heirs.',
+        textFa: 'در کرانه رود اپت، شاه شارل منشور واگذاری روآن و سواحل نورماندی را با رولو امضا کرد.',
+        tone: 'chronicle',
+        importance: 'major',
+        ordstirrGain: 15,
+      },
+    ],
+  },
+
+  {
+    id: 'count_odo_paris',
+    phase: 3,
+    name: 'Count Odo of Paris',
+    nameFa: 'کنت اودو (مدافع پاریس)',
+    norseName: 'Óðo Parísar-Jarl',
+    epithet: 'Iron Defender of the Grand Châtelet (885–886)',
+    epithetFa: 'مدافع آهنین پل‌ها و برج‌های پاریس (۸۸۵–۸۸۶)',
+    statusTag: 'DOCUMENTED',
+    provenance: 'Frankish Annals',
+    historicalSourcesEn: 'Abbo Cernuus, Bella Parisiacae urbis (eyewitness poem of the 885–886 Siege of Paris).',
+    historicalSourcesFa: 'منظومه شاهد عینی «نبردهای شهر پاریس» سروده راهب آبو (محاصره ۸۸۵–۸۸۶).',
+    role: 'Count of Paris & Elected King of West Francia',
+    roleFa: 'کنت پاریس و پادشاه برگزیده فرانک باختری',
+    sex: Sex.Male,
+    homeRegion: 'Continent',
+    homeSettlementId: 'paris',
+    birthYear: 857,
+    deathYear: 898,
+    activeYears: [882, 898],
+    baseOrdstirr: 68,
+    appearance: { skinTone: 1, hairColor: 'black', hairStyle: 1, beardStyle: 2 },
+    bioEn:
+      'Son of Robert the Strong (slain by Hastein in 866). With barely two hundred men-at-arms, Count Odo held the island walls and fortified bridge-towers of Paris for eleven months against Sigfred and Rollo’s massive Viking fleet in 885–886.',
+    bioFa:
+      'پسر روبر نیرومند که در سال‌های ۸۸۵ و ۸۸۶ میلادی تنها با دویست سوار زبده، یازده ماه در برابر ناوگان عظیم سیگفرد و رولو از برج‌ها و پل‌های پاریس دفاع کرد و به پادشاهی فرانک باختری برگزیده شد.',
+    relationships: [
+      { legendId: 'rollo_normandy', roleEn: 'Besieger at Paris (885)', roleFa: 'فرمانده محاصره‌کننده پاریس در سال ۸۸۵' },
+      { legendId: 'hastein_loire', roleEn: 'Slayer of His Father Robert', roleFa: 'قاتل پدرش روبر نیرومند در نبرد بریسارت' },
+    ],
+    timeline: [
+      {
+        id: 'beat_odo_885_great_siege_defense',
+        year: 885,
+        season: Season.Winter,
+        settlementId: 'paris',
+        region: 'Continent',
+        title: 'Count Odo Holds the Bridge-Towers of Paris Against 300 Ships',
+        titleFa: 'مقاومت افسانه‌ای کنت اودو بر فراز برج‌های پل پاریس',
+        text: 'Pouring boiling oil and pitch from the wooden bridge-towers of the Île de la Cité, Count Odo repulsed wave after wave of Norse scaling assaults through the winter of 885–886.',
+        textFa: 'کنت اودو در تمام زمستان ۸۸۵ از فراز برج‌های چوبی پل پاریس با روغن و قیر جوشان، موجِ پی‌درپیِ یورش وایکینگ‌ها را عقب راند.',
+        tone: 'triumph',
+        importance: 'epic',
+        ordstirrGain: 24,
+      },
+    ],
+  },
+
+  {
+    id: 'harald_fairhair',
+    phase: 3,
+    name: 'Harald Fairhair (Haraldr Hárfagri)',
+    nameFa: 'هارالد موی‌زیبا (هارالد هارفگری)',
+    norseName: 'Haraldr Hárfagri Hálfdanarson',
+    epithet: 'Victor of Hafrsfjord & First High King of Norway',
+    epithetFa: 'فاتح آبدره هافرس‌فیورد و نخستین پادشاه سراسر نروژ',
+    statusTag: 'CONTESTED',
+    provenance: 'Heimskringla',
+    historicalSourcesEn: 'Haraldskvæði (Þorbjörn Hornklofi), Heimskringla, Egils saga.',
+    historicalSourcesFa: 'منظومه هارالدسکودی، کتاب هایمس‌کرینگلا و حماسه اگیل.',
+    role: 'Unifier & High King of Norway',
+    roleFa: 'متحدکننده و پادشاه بزرگ نروژ',
+    sex: Sex.Male,
+    homeRegion: 'Norway',
+    homeSettlementId: 'kaupang',
+    birthYear: 850,
+    deathYear: 932,
+    activeYears: [865, 932],
+    baseOrdstirr: 88,
+    appearance: { skinTone: 0, hairColor: 'blonde', hairStyle: 3, beardStyle: 2 },
+    bioEn:
+      'King of Vestfold who swore neither to comb nor shear his hair until he ruled every fjord and valley of Norway. His decisive naval victory at Hafrsfjord (c. 872) drove proud independent chieftains across the sea to settle Iceland, Orkney, and the Hebrides.',
+    bioFa:
+      'پادشاه وستفولد که سوگند خورد موهایش را شانه نزند و نکاهد تا زمانی که سراسر آبدره‌ها و دره‌های نروژ را زیر یک پرچم درآورد. پیروزی او در نبرد دریایی هافرس‌فیورد (۸۷۲) بسیاری از یارل‌های مغرور را به کوچ به ایسلند و جزایر غرب واداشت.',
+    relationships: [
+      { legendId: 'floki_raven_sailor', roleEn: 'Drove Independent Sailors West', roleFa: 'عامل کوچ آزادمردان نروژی به ایسلند' },
+      { legendId: 'rollo_normandy', roleEn: 'Outlawed Göngu-Hrólfr', roleFa: 'تبعیدکننده رولو از نروژ' },
+    ],
+    timeline: [
+      {
+        id: 'beat_harald_872_hafrsfjord',
+        year: 872,
+        season: Season.Summer,
+        settlementId: 'kaupang',
+        region: 'Norway',
+        title: 'Battle of Hafrsfjord & the Shearing of Fairhair’s Locks',
+        titleFa: 'نبرد دریایی هافرس‌فیورد و اتحاد پادشاهی نروژ',
+        text: 'Crushing the western coalition of petty kings at Hafrsfjord with his berserkers and wolf-skins (úlfhéðnar), Harald fulfilled his oath and had Jarl Rognvald of Møre comb and trim his ten-year mane.',
+        textFa: 'هارالد با درهم‌شکستن ائتلاف شاهکان غربی در آبدره هافرس‌فیورد به سوگند خود وفا کرد؛ یارل روگنوالد گیسوان ده‌ساله او را شانه زد و آراست و از آن پس «هارالد موی‌زیبا» خوانده شد.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 30,
+      },
+    ],
+  },
+
+  {
+    id: 'rurik_of_ladoga',
+    phase: 3,
+    name: 'Prince Rurik of Ladoga & Holmgard',
+    nameFa: 'شاهزاده روریک (بنیان‌گذار روس)',
+    norseName: 'Hrœrekr af Aldeigjuborg',
+    epithet: 'Founder of the Varangian Rus Dynasty',
+    epithetFa: 'پایه‌گذار سلسله وارنگیان در نووگورود و لادوگا',
+    statusTag: 'CONTESTED',
+    provenance: 'Russian Primary Chronicle',
+    historicalSourcesEn: 'Russian Primary Chronicle (Tale of Bygone Years, 862–879), archaeological layers at Staraya Ladoga and Rurikovo Gorodishche.',
+    historicalSourcesFa: 'وقایع‌نامه اولیه روس (حکایت سالیان گذشته، ۸۶۲–۸۷۹) و کاوش‌های باستان‌شناسی استارایا لادوگا.',
+    role: 'Varangian Prince of Aldeigjuborg & Hólmgarðr',
+    roleFa: 'شاهزاده وارنگی در لادوگا و هولم‌گارد (نووگورود)',
+    sex: Sex.Male,
+    homeRegion: 'Kievan Rus & Rivers',
+    homeSettlementId: 'staraya_ladoga',
+    birthYear: 825,
+    deathYear: 879,
+    activeYears: [855, 879],
+    baseOrdstirr: 76,
+    appearance: { skinTone: 1, hairColor: 'blonde', hairStyle: 2, beardStyle: 3 },
+    bioEn:
+      'Invited across the Baltic in 862 by Finnic and East Slavic tribes who declared “Our land is vast and rich, yet there is no order in it,” Rurik established his timber citadel at Aldeigjuborg (Staraya Ladoga) and Hólmgarðr (Novgorod), opening the great river highway toward Miklagard and Baghdad.',
+    bioFa:
+      'در سال ۸۶۲ میلادی به دعوت قبایل اسلاو و فین از بالتیک گذشت و دژهای چوبی خود را در لادوگا و نووگورود بنا نهاد؛ و بدین‌سان شاهراه بزرگ رودخانه‌ای به سوی قسطنطنیه و بغداد را گشود.',
+    relationships: [
+      { legendId: 'hvitserk_ragnarsson', roleEn: 'Contemporary on the Eastern Rivers', roleFa: 'هم‌عصر در شاهراه‌های رودخانه‌ای شرق' },
+    ],
+    timeline: [
+      {
+        id: 'beat_rurik_862_calling_of_varangians',
+        year: 862,
+        season: Season.Summer,
+        settlementId: 'staraya_ladoga',
+        region: 'Kievan Rus & Rivers',
+        title: 'The Calling of the Varangians to Aldeigjuborg',
+        titleFa: 'فراخوان وارنگیان و استقرار روریک در لادوگا و نووگورود',
+        text: 'Rowing across the Gulf of Finland with his brothers and rus-kin, Rurik raised the log ramparts of Aldeigjuborg and took command of the Volkhov river trade.',
+        textFa: 'روریک با گذر از خلیج فنلاند، باروهای چوبی لادوگا و نووگورود را برافراشت و نبض تجارت رود ولخوف را در دست گرفت.',
+        tone: 'triumph',
+        importance: 'epic',
+        isCanonicalAnchor: true,
+        ordstirrGain: 26,
+      },
+    ],
+  },
+];
+
+export const LEGENDS_BY_ID: Record<string, LegendRegistryEntry> = LEGENDS_REGISTRY.reduce<
+  Record<string, LegendRegistryEntry>
+>((acc, leg) => {
+  acc[leg.id] = leg;
+  return acc;
+}, {});
+
+const SEASON_ORDER_INDEX: Record<Season, number> = {
+  [Season.Spring]: 0,
+  [Season.Summer]: 1,
+  [Season.Autumn]: 2,
+  [Season.Winter]: 3,
+};
+
+export interface RegistryValidationResult {
+  valid: boolean;
+  errors: string[];
+  checkedLegendsCount: number;
+  checkedBeatsCount: number;
+}
+
+/**
+ * Consistency test verifying:
+ * 1) No beat occurs before birthYear or after deathYear.
+ * 2) Beats are ordered monotonically in time (year + season).
+ * 3) Every referenced homeSettlementId and beat settlementId exists in SETTLEMENTS_BY_ID.
+ * 4) Every relationship legendId exists in LEGENDS_BY_ID.
+ */
+export function validateLegendsRegistry(): RegistryValidationResult {
+  const errors: string[] = [];
+  let checkedBeatsCount = 0;
+
+  for (const leg of LEGENDS_REGISTRY) {
+    if (!SETTLEMENTS_BY_ID[leg.homeSettlementId]) {
+      errors.push(
+        `Legend "${leg.id}" has unknown homeSettlementId "${leg.homeSettlementId}".`
+      );
+    }
+    if (leg.birthYear > leg.deathYear) {
+      errors.push(
+        `Legend "${leg.id}" has birthYear (${leg.birthYear}) > deathYear (${leg.deathYear}).`
+      );
+    }
+
+    for (const rel of leg.relationships) {
+      if (!LEGENDS_BY_ID[rel.legendId]) {
+        errors.push(
+          `Legend "${leg.id}" references unknown relationship legendId "${rel.legendId}".`
+        );
+      }
+    }
+
+    let prevChronoKey = -Infinity;
+    for (const beat of leg.timeline) {
+      checkedBeatsCount += 1;
+      if (!SETTLEMENTS_BY_ID[beat.settlementId]) {
+        errors.push(
+          `Beat "${beat.id}" of legend "${leg.id}" references unknown settlementId "${beat.settlementId}".`
+        );
+      }
+      if (beat.year < leg.birthYear) {
+        errors.push(
+          `Beat "${beat.id}" of legend "${leg.id}" occurs in ${beat.year}, before birthYear ${leg.birthYear}.`
+        );
+      }
+      if (beat.year > leg.deathYear) {
+        errors.push(
+          `Beat "${beat.id}" of legend "${leg.id}" occurs in ${beat.year}, after deathYear ${leg.deathYear}.`
+        );
+      }
+      const chronoKey = beat.year * 4 + (SEASON_ORDER_INDEX[beat.season] ?? 0);
+      if (chronoKey < prevChronoKey) {
+        errors.push(
+          `Beat "${beat.id}" of legend "${leg.id}" is out of chronological order (${beat.year} ${beat.season}).`
+        );
+      }
+      prevChronoKey = chronoKey;
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    checkedLegendsCount: LEGENDS_REGISTRY.length,
+    checkedBeatsCount,
+  };
+}

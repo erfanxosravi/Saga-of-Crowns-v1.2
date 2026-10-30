@@ -162,8 +162,13 @@ export type SourceProvenance =
   | 'Anglo-Saxon Chronicle'
   | 'Annals of Ulster'
   | 'Royal Frankish Annals'
+  | 'Frankish Annals'
   | 'Archaeological Record'
   | 'Semi-Legendary Saga Tradition'
+  | 'Legendary / Composite Saga'
+  | 'Icelandic Family Saga'
+  | 'Heimskringla'
+  | 'Russian Primary Chronicle'
   | 'Social History';
 
 export interface PersonalStats {
@@ -452,6 +457,69 @@ export interface EventEffects {
   hefndDelta?: number;
   addHeirloomIds?: string[];
   completeLothbrokChapterId?: string;
+  legendStandingDelta?: {
+    legendId: string;
+    delta: number;
+    addOath?: string;
+    addOathFa?: string;
+    addFeud?: string;
+    addFeudFa?: string;
+    addGift?: string;
+    addGiftFa?: string;
+  };
+}
+
+export type LegendHistoricalStatus = 'DOCUMENTED' | 'CONTESTED' | 'LEGENDARY';
+
+export type NewsSourceType = 'EYEWITNESS' | 'TRADER_TALE' | 'SKALD_SONG' | 'MONK_CHRONICLE';
+
+export type LegendOrdstirrRank =
+  | 'UNHEARD_OF'
+  | 'HEARTH_KNOWN'
+  | 'FJORD_FAMED'
+  | 'SEA_KINGS_EQUAL'
+  | 'IMMORTAL_IN_SONG';
+
+export interface LegendLedgerEntry {
+  id: string;
+  text: string;
+  textFa: string;
+  year: number;
+}
+
+export interface LegendStandingRecord {
+  legendId: string;
+  standing: number; // -100 to +100
+  oaths: LegendLedgerEntry[];
+  feuds: LegendLedgerEntry[];
+  gifts: LegendLedgerEntry[];
+  metYears: number[];
+}
+
+export interface PendingLegendNewsItem {
+  beatId: string;
+  legendId: string;
+  triggerYear: number;
+  deliveryYear: number;
+  deliverySeason: Season;
+  delaySeasons: number;
+  sourceType: NewsSourceType;
+  isDistortedRumor?: boolean;
+  distortedTitle?: string;
+  distortedTitleFa?: string;
+  distortedText?: string;
+  distortedTextFa?: string;
+  isCorrection?: boolean;
+}
+
+export interface LegendWorldState {
+  deliveredBeatIds: string[];
+  rumorQueue: PendingLegendNewsItem[];
+  correctedBeatIds: string[];
+  standings: Record<string, LegendStandingRecord>;
+  divergedBeatIds: string[];
+  memorializedLegendIds: string[];
+  lastPaidIntelYear?: number;
 }
 
 export type RagnarBloodlineBranch =
@@ -555,7 +623,7 @@ export interface LogEntry {
   season: Season;
   age: number;
   locationName: string;
-  category: EventCategory | 'Chronicle' | 'Action' | 'Succession';
+  category: EventCategory | 'Chronicle' | 'Action' | 'Succession' | 'Word from the Lands';
   iconType?: EventIconType;
   title?: string;
   titleFa?: string;
@@ -567,6 +635,19 @@ export interface LogEntry {
   isSemiLegendary?: boolean;
   isDivergence?: boolean;
   isDanger?: boolean;
+  legendNews?: {
+    legendId: string;
+    beatId: string;
+    statusTag: LegendHistoricalStatus;
+    sourceType: NewsSourceType;
+    delaySeasons: number;
+    isRumor?: boolean;
+    isCorrection?: boolean;
+    isElegy?: boolean;
+    isSkaldDivergence?: boolean;
+    skaldVerse?: string;
+    skaldVerseFa?: string;
+  };
 }
 
 export interface ScheduledChain {
@@ -698,6 +779,8 @@ export interface FullGameState {
   hefndMeter?: number;
   heirlooms?: string[];
   lothbrokChaptersCompleted?: string[];
+  sagaMode?: boolean;
+  legendState?: LegendWorldState;
   character: CharacterState;
   realm: RealmState;
   relationships: RelationshipPerson[];

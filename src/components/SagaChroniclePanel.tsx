@@ -24,7 +24,8 @@ import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
 import { SHORT_TITLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
 import longhouseHearthUrl from '../assets/images/norse_longhouse_hearth_fire_1793047791880.jpg';
-import { NorseCornerOrnament, RuneDivider } from './NorseMotifs';
+import { HallOfLegendsPanel } from './HallOfLegendsPanel';
+import { NorseBottomSheet, NorseCornerOrnament, RuneDivider } from './NorseMotifs';
 import {
   BADGE_CATEGORY_LABELS,
   BadgeCategory,
@@ -39,9 +40,16 @@ import {
 interface SagaChroniclePanelProps {
   state: FullGameState;
   initialSubTab?: 'badges' | 'milestones' | 'ancestors' | 'history';
+  onOpenHallOfLegends?: () => void;
+  onPayForLegendNews?: () => void;
 }
 
-export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChroniclePanelProps) {
+export function SagaChroniclePanel({
+  state,
+  initialSubTab = 'badges',
+  onOpenHallOfLegends,
+  onPayForLegendNews,
+}: SagaChroniclePanelProps) {
   const lang = state.settings.language;
   const isFa = lang === 'fa';
   const [subTab, setSubTab] = useState<'badges' | 'milestones' | 'ancestors' | 'history'>(
@@ -50,6 +58,7 @@ export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChro
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | BadgeCategory>('all');
   const [inspectedBadgeId, setInspectedBadgeId] = useState<string | null>(null);
   const [showLothbrokChapters, setShowLothbrokChapters] = useState(false);
+  const [showHallModal, setShowHallModal] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [copiedSeed, setCopiedSeed] = useState(false);
 
@@ -204,20 +213,48 @@ export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChro
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowLothbrokChapters((v) => !v)}
-            className="px-3 py-1.5 rounded-xl bg-[#1F1A2C] hover:bg-[#2A223B] border border-[#F59E0B]/45 text-xs font-bold text-[#FDE68A] cursor-pointer transition-colors"
-          >
-            {showLothbrokChapters
-              ? isFa
-                ? 'بستن فصل‌ها'
-                : 'Hide Chapters'
-              : isFa
-                ? 'مشاهده ۹ فصل حماسه'
-                : 'View 9 Chapters'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenHallOfLegends) {
+                  onOpenHallOfLegends();
+                } else {
+                  setShowHallModal(true);
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl bg-[#C8641B] hover:bg-[#B25412] text-xs font-bold text-[#FFFDF9] cursor-pointer transition-colors"
+            >
+              {isFa ? 'تالار افسانه‌ها (راگنار و حلقه او)' : 'Open Hall of Legends'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLothbrokChapters((v) => !v)}
+              className="px-3 py-1.5 rounded-xl bg-[#1F1A2C] hover:bg-[#2A223B] border border-[#F59E0B]/45 text-xs font-bold text-[#FDE68A] cursor-pointer transition-colors"
+            >
+              {showLothbrokChapters
+                ? isFa
+                  ? 'بستن فصل‌ها'
+                  : 'Hide Chapters'
+                : isFa
+                  ? 'مشاهده ۹ فصل حماسه'
+                  : 'View 9 Chapters'}
+            </button>
+          </div>
         </div>
+
+        {showHallModal && (
+          <NorseBottomSheet
+            isOpen={true}
+            onClose={() => setShowHallModal(false)}
+            maxWidthClass="max-w-3xl"
+            accent="amber"
+            closeLabel={isFa ? 'بستن' : 'Close'}
+            title={isFa ? 'تالار افسانه‌ها — خبر از سرزمین‌ها' : 'The Hall of Legends — Word from the Lands'}
+          >
+            <HallOfLegendsPanel state={state} onPayForLegendNews={onPayForLegendNews} />
+          </NorseBottomSheet>
+        )}
 
         {/* Hefnd (Vengeance) Meter — 0–100 Gauge in Dark Nordic Container (#0F1722) with Blood-Red Gradient (#991b1b to #dc2626) */}
         <div

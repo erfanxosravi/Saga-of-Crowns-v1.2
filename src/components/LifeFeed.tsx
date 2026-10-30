@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef } from 'react';
 import {
+  BookOpen,
   Coins,
   Crown,
+  Feather,
   Flame,
   Heart,
   Scale,
@@ -14,6 +16,7 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
+import { HISTORICAL_STATUS_LABELS, NEWS_SOURCE_LABELS } from '../data/legendsRegistry';
 import { CATEGORY_LABELS, formatAgeLabel, formatYearLabel } from '../i18n/ui';
 import { Language, LogEntry } from '../types/game';
 import { EventCategoryIcon } from './EventCategoryIcon';
@@ -346,6 +349,95 @@ export function LifeFeed({
                 const displayTitle = isFa ? entry.titleFa ?? entry.title : entry.title;
                 const displayText = isFa ? entry.textFa ?? entry.text : entry.text;
                 const categoryLabel = CATEGORY_LABELS[lang][entry.category];
+
+                // Distinct Raven-Banner Card for "Word from the Lands"
+                if (entry.legendNews) {
+                  const ln = entry.legendNews;
+                  const srcMeta = NEWS_SOURCE_LABELS[ln.sourceType];
+                  const histMeta = HISTORICAL_STATUS_LABELS[ln.statusTag];
+                  const verseText = isFa ? ln.skaldVerseFa ?? ln.skaldVerse : ln.skaldVerse;
+                  return (
+                    <article
+                      key={`${entry.id}_${index}`}
+                      className={`px-3.5 py-3 bg-gradient-to-r from-[#1D1510] via-[#151A24] to-[#101926] flex items-start gap-2.5 ${
+                        itemIdx > 0 ? 'border-t border-[#3B2818]' : ''
+                      }`}
+                    >
+                      <div
+                        className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
+                          ln.isElegy
+                            ? 'bg-rose-950/60 border-rose-500/50 text-rose-400'
+                            : 'bg-[#C8641B]/20 border-[#C8641B]/55 text-[#F59E0B]'
+                        }`}
+                      >
+                        <Feather className="w-3.5 h-3.5" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span className="px-1.5 py-0.5 rounded bg-[#C8641B]/25 border border-[#C8641B]/50 text-[10px] font-extrabold text-[#FDE68A]">
+                              {isFa ? 'خبر از سرزمین‌ها' : 'Word from the Lands'}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-[#131D2B] border border-[#24354C] text-[10px] font-semibold text-[#93C5FD]">
+                              {isFa ? srcMeta.fa : srcMeta.en}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-[#131D2B] border border-[#24354C] text-[10px] font-mono text-[#CBD5E1]">
+                              {isFa ? histMeta.fa : histMeta.en}
+                            </span>
+                            {ln.isCorrection && (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-[10px] font-bold text-emerald-300">
+                                {isFa ? 'اصلاح شایعه' : 'Rumor Corrected'}
+                              </span>
+                            )}
+                            {ln.isRumor && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 text-[10px] font-bold text-amber-300">
+                                {isFa ? 'شایعه تاییدنشدنی' : 'Unverified Rumor'}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] font-mono text-[#94A3B8] shrink-0">
+                            {ln.delaySeasons === 0
+                              ? isFa
+                                ? 'همین فصل'
+                                : 'Same season'
+                              : isFa
+                                ? `${ln.delaySeasons} فصل در راه`
+                                : `${ln.delaySeasons}s travel`}
+                          </span>
+                        </div>
+
+                        {displayTitle && (
+                          <h3 className="mt-1.5 text-xs sm:text-[13px] font-bold text-[#FEF3C7] leading-snug whitespace-normal break-words">
+                            {displayTitle}
+                          </h3>
+                        )}
+
+                        <p className="mt-1 text-xs sm:text-[13px] text-[#E2E8F0] leading-relaxed whitespace-normal break-words">
+                          {displayText}
+                        </p>
+
+                        {verseText && (
+                          <blockquote className="mt-2 ps-2.5 border-s-2 border-[#C8641B] text-[11px] italic text-[#FDE68A]/90">
+                            «{verseText}»
+                          </blockquote>
+                        )}
+
+                        {ln.isSkaldDivergence && (
+                          <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/50 border border-purple-500/40 text-[10px] font-semibold text-purple-300">
+                            <BookOpen className="w-3 h-3 shrink-0" />
+                            <span>
+                              {isFa
+                                ? 'شاعران به گونه‌ای دیگر روایت می‌کنند (تفاوت با تواریخ)'
+                                : 'The skalds tell it differently'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                }
 
                 // Only show detailed stat/skill deltas on actual events that happen (log_ev_)
                 const eventDeltas = isInteractiveEvent

@@ -87,7 +87,17 @@ import {
   SAGA_HEIRLOOMS_MAP,
 } from '../data/lothbrokCycle';
 import { hashSeedString, SeededRNG } from './prng';
+import {
+  applyLegendStandingDelta,
+  createInitialLegendState,
+  ensureLegendState,
+  executePayForLegendNewsAction,
+  inheritLegendStateForHeir,
+  processYearlyLegends,
+} from './legendEngine';
 import { CURRENT_SAVE_VERSION, deriveAppearanceFromId } from './storage';
+
+export { executePayForLegendNewsAction };
 
 function clampStat(val: number): number {
   return Math.max(0, Math.min(100, Math.round(val)));
@@ -145,6 +155,7 @@ export interface NewGameParams {
   bloodlineBranch?: RagnarBloodlineBranch;
   startingHeirlooms?: string[];
   signatureEventId?: string;
+  sagaMode?: boolean;
 }
 
 function generateInitialFamily(
@@ -567,6 +578,8 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     hefndMeter: initialHefnd,
     heirlooms: startingHeirlooms,
     lothbrokChaptersCompleted: initialChaptersCompleted,
+    sagaMode: params.sagaMode ?? true,
+    legendState: createInitialLegendState(params.year, params.seedString || 'ELDSAGA'),
     character,
     realm: {
       silver: classCfg.silver + (params.bonusSilver ?? 0),
@@ -859,6 +872,11 @@ function isEventEligible(ev: GameEvent, state: FullGameState): boolean {
 
   // Historical set-pieces and coming-of-age only fire once
   if (ev.category === 'Historical Set-Piece' && state.firedUniqueEvents.includes(ev.id)) {
+    return false;
+  }
+
+  // Living-legend encounters require Saga Mode
+  if (ev.id.startsWith('leg_enc_') && !state.sagaMode) {
     return false;
   }
 
@@ -1291,6 +1309,17 @@ export function advanceTurn(state: FullGameState): FullGameState {
   if ((state.heirlooms ?? []).includes('fang_of_fafnir')) {
     char.stats.wyrd = clampStat(char.stats.wyrd + 2);
   }
+  if ((state.heirlooms ?? []).includes('ragnar_serpent_armring')) {
+    realm.fame += 5;
+    char.stats.honor = clampStat(char.stats.honor + 2);
+  }
+  if ((state.heirlooms ?? []).includes('lagertha_hlathgerd_spear')) {
+    char.skills.combat = clampSkill(char.skills.combat + 1);
+  }
+  if ((state.heirlooms ?? []).includes('floki_raven_lodestone')) {
+    char.skills.seamanship = clampSkill(char.skills.seamanship + 1);
+    char.stats.wyrd = clampStat(char.stats.wyrd + 1);
+  }
   if (state.ragnarBloodline || state.character.traits.includes('wolf_blood')) {
     if (nextHefndMeter >= 68) {
       char.stats.honor = clampStat(char.stats.honor - 3);
@@ -1455,6 +1484,13 @@ export function advanceTurn(state: FullGameState): FullGameState {
     });
   }
 
+  // 4b. Living Legends Calendar & "Word from the Lands" News Engine
+  const legendTurn = processYearlyLegends(updatedState, rng);
+  updatedState.legendState = legendTurn.legendState;
+  if (legendTurn.addedFlags.length > 0) {
+    updatedState.flags = Array.from(new Set([...updatedState.flags, ...legendTurn.addedFlags]));
+  }
+
   // 5. Select Event: Scheduled Chain -> Exact Historical Set-Piece -> Weighted Life Event
   let chosenEvent: GameEvent | null = null;
 
@@ -1525,6 +1561,10 @@ export function advanceTurn(state: FullGameState): FullGameState {
     ];
   }
 
+  if (legendTurn.newsLogs.length > 0) {
+    updatedState.lifeLog = [...updatedState.lifeLog, ...legendTurn.newsLogs.slice(0, 2)];
+  }
+
   updatedState.rngState = rng.getState();
   return updatedState;
 }
@@ -1555,6 +1595,7 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
   let nextHefndMeter = state.hefndMeter ?? 0;
   const nextHeirlooms = new Set(state.heirlooms ?? []);
   const nextLothbrokChapters = new Set(state.lothbrokChaptersCompleted ?? []);
+  let nextLegendState = state.legendState;
   const deltaSummary: string[] = [];
   const deltaSummaryFa: string[] = [];
 
@@ -1815,6 +1856,16 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
       nextLothbrokChapters.add(eff.completeLothbrokChapterId);
       nextLothbrokChapters.add(ev.id);
     }
+    if (eff.legendStandingDelta) {
+      const standingRes = applyLegendStandingDelta(
+        nextLegendState ?? ensureLegendState(state),
+        eff.legendStandingDelta,
+        state.year
+      );
+      nextLegendState = standingRes.nextLegendState;
+      if (standingRes.summaryEn) deltaSummary.push(standingRes.summaryEn);
+      if (standingRes.summaryFa) deltaSummaryFa.push(standingRes.summaryFa);
+    }
   }
 
   // Ring Fortress & Garrison bonus on enemy attack event (bl_ab_08_fortress_raid)
@@ -1905,6 +1956,7 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
     hefndMeter: nextHefndMeter,
     heirlooms: Array.from(nextHeirlooms),
     lothbrokChaptersCompleted: Array.from(nextLothbrokChapters),
+    legendState: nextLegendState,
     activeEvent: null,
     lifeLog: [...state.lifeLog, newEntry],
     lastOutcomeBanner: {
@@ -4660,6 +4712,8 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     hefndMeter: inheritedHefnd,
     heirlooms: inheritedHeirlooms,
     lothbrokChaptersCompleted: [...(state.lothbrokChaptersCompleted ?? [])],
+    sagaMode: state.sagaMode,
+    legendState: inheritLegendStateForHeir(state.legendState, state.year, state.seedString),
     flags: nextFlags,
     yearlyActivitiesUsed: {},
     builtThisYear: false,

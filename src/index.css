@@ -517,7 +517,8 @@ html[data-theme="light"] .border-\[\#2C4462\],
 html[data-theme="light"] .border-\[\#2F445E\],
 html[data-theme="light"] .border-\[\#475569\],
 html[data-theme="light"] .border-white\/8,
-html[data-theme="light"] .border-white\/10 {
+html[data-theme="light"] .border-white\/10,
+html[data-theme="light"] .divide-\[\#1E2D40\] > :not([hidden]) ~ :not([hidden]) {
   border-color: #d6c8b2 !important;
 }
 

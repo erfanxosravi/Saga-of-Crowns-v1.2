@@ -9,6 +9,7 @@ import {
 import { HISTORICAL_SET_PIECE_EVENTS } from './historicalTimeline';
 import { BITLIFE_EVENTS } from './bitlifeEvents';
 import { LOTHBROK_CYCLE_EVENTS, LOTHBROK_SIGNATURE_EVENTS } from './lothbrokCycle';
+import { LEGEND_ENCOUNTER_EVENTS } from './legendEncounters';
 
 /**
  * 65+ handcrafted life, feud, Thing, sea, farm, mystic, romance, and realm events
@@ -2733,6 +2734,7 @@ export const NORMALIZED_HISTORICAL_VIKING_EVENTS: GameEvent[] =
   HISTORICAL_VIKING_EVENTS.map(normalizeHistoricalVikingEvent);
 
 export const ALL_EVENTS: GameEvent[] = [
+  ...LEGEND_ENCOUNTER_EVENTS,
   ...LOTHBROK_CYCLE_EVENTS,
   ...LOTHBROK_SIGNATURE_EVENTS,
   ...HISTORICAL_SET_PIECE_EVENTS,

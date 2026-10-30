@@ -227,6 +227,8 @@ export function migrateGameState(raw: unknown): FullGameState | null {
     lothbrokChaptersCompleted: Array.isArray(parsed.lothbrokChaptersCompleted)
       ? parsed.lothbrokChaptersCompleted
       : [],
+    sagaMode: typeof parsed.sagaMode === 'boolean' ? parsed.sagaMode : false,
+    legendState: parsed.legendState,
     character: {
       ...parsed.character,
       appearance,

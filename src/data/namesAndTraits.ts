@@ -1014,3 +1014,388 @@ export const WIN_GOALS: WinGoal[] = [
       }/2 · Hefnd Debt ${s.hefndMeter ?? 0}/100 · Fame ${s.realm.fame}/500`,
   },
 ];
+
+export type MilitaryCatalogItemId =
+  | 'local_garrison'
+  | 'bondi_spearmen'
+  | 'sworn_huscarls'
+  | 'norse_archers'
+  | 'berserkers'
+  | 'snekkja'
+  | 'drakkar'
+  | 'knarr'
+  | 'warhorses'
+  | 'pack_horses'
+  | 'war_gear';
+
+export interface MilitaryCatalogItem {
+  id: MilitaryCatalogItemId;
+  group: 'warriors' | 'fleet' | 'stables';
+  action?:
+    | 'recruit_bondi'
+    | 'recruit_hird'
+    | 'recruit_archers'
+    | 'recruit_berserkers'
+    | 'build_snekkja'
+    | 'build_longship'
+    | 'build_knarr'
+    | 'buy_warhorses'
+    | 'buy_pack_horses'
+    | 'buy_war_gear';
+  norseName: string;
+  costSilver: number;
+  batchSize: number;
+  sealiftCap?: number;
+  accentHex: string;
+  en: {
+    name: string;
+    shortName: string;
+    role: string;
+    description: string;
+    batchLabel: string;
+    effectText: string;
+    ctaLabel: string;
+    unitSuffix: string;
+  };
+  fa: {
+    name: string;
+    shortName: string;
+    role: string;
+    description: string;
+    batchLabel: string;
+    effectText: string;
+    ctaLabel: string;
+    unitSuffix: string;
+  };
+}
+
+export const MILITARY_CATALOG: MilitaryCatalogItem[] = [
+  {
+    id: 'local_garrison',
+    group: 'warriors',
+    norseName: 'Borgverðir · Garrison',
+    costSilver: 0,
+    batchSize: 2,
+    accentHex: '#34D399',
+    en: {
+      name: 'Holding Shield-Guards',
+      shortName: 'Guards',
+      role: 'Settlement Garrison & Watch',
+      description: 'Stationed shield-men defending the settlement walls, farms, and keeping local unrest in check.',
+      batchLabel: 'Stationed in holding',
+      effectText: '-Unrest · +Holding Defense',
+      ctaLabel: 'Station Garrison',
+      unitSuffix: 'guards',
+    },
+    fa: {
+      name: 'نگهبانان دژ و پادگان شهر',
+      shortName: 'نگهبانان',
+      role: 'پادگان مستقر و محافظ شهر',
+      description: 'جنگجویان سپردار مستقر در برج‌ها و دروازه‌های شهر برای مهار شورش و دفاع از مزارع.',
+      batchLabel: 'مستقر در پادگان شهر',
+      effectText: 'کاهش ناآرامی · +دفاع شهر',
+      ctaLabel: 'تقویت پادگان',
+      unitSuffix: 'نگهبان',
+    },
+  },
+  {
+    id: 'bondi_spearmen',
+    group: 'warriors',
+    action: 'recruit_bondi',
+    norseName: 'Bóndi Spjótmenn',
+    costSilver: 12,
+    batchSize: 5,
+    accentHex: '#38BDF8',
+    en: {
+      name: 'Free Spearmen (Bondé)',
+      shortName: 'Bondé Spearmen',
+      role: 'Light Shield-Levy',
+      description: 'Freemen armed with ash-spears and wooden shields; economical troops for swelling ranks and holding garrisons.',
+      batchLabel: 'Batch: +5 Warriors',
+      effectText: '+10 Base Power · Garrison Levy',
+      ctaLabel: 'Recruit 5 Bondi',
+      unitSuffix: 'men',
+    },
+    fa: {
+      name: 'نیزه‌داران آزاد (بوندِه)',
+      shortName: 'نیزه‌داران بوندِه',
+      role: 'پیاده‌نظام سبک و پادگان',
+      description: 'مردان آزاد مسلح به نیزه زبان‌گنجشک و سپر چوبی؛ کم‌هزینه‌ترین نیرو برای پر کردن صفوف و نگهبانی از املاک.',
+      batchLabel: 'دسته: +۵ جنگجو',
+      effectText: 'قدرت پایه: +۱۰ · نیروی پادگان',
+      ctaLabel: 'جذب ۵ نیزه‌دار بوندِه',
+      unitSuffix: 'نفر',
+    },
+  },
+  {
+    id: 'sworn_huscarls',
+    group: 'warriors',
+    action: 'recruit_hird',
+    norseName: 'Hirðmenn · Húskarlar',
+    costSilver: 18,
+    batchSize: 6,
+    accentHex: '#F59E0B',
+    en: {
+      name: 'Shield-Huskarls (Hird Guard)',
+      shortName: 'Huskarls',
+      role: 'Heavy Shield-Wall Elite',
+      description: 'Veteran household guards with Dane-axes; backbone of the Skjaldborg shield-wall and city sieges (+1 Combat).',
+      batchLabel: 'Batch: +6 Huscarls',
+      effectText: '+1 Combat · +12 Power',
+      ctaLabel: 'Recruit 6 Huscarls',
+      unitSuffix: 'men',
+    },
+    fa: {
+      name: 'هوسکارل‌های سپردار (هیرد)',
+      shortName: 'هوسکارل‌ها',
+      role: 'گارد زبده دیوار سپرها',
+      description: 'جنگجویان حرفه‌ای با تبرهای دانمارکی و زره؛ ستون اصلی یورش‌ها و شکستن دروازه شهرها (+۱ مهارت رزم).',
+      batchLabel: 'دسته: +۶ هوسکارل',
+      effectText: 'رزم +۱ · قدرت +۱۲',
+      ctaLabel: 'استخدام ۶ هوسکارل',
+      unitSuffix: 'نفر',
+    },
+  },
+  {
+    id: 'norse_archers',
+    group: 'warriors',
+    action: 'recruit_archers',
+    norseName: 'Bogamenn · Yew-Bowmen',
+    costSilver: 20,
+    batchSize: 5,
+    accentHex: '#34D399',
+    en: {
+      name: 'Hunting Archers',
+      shortName: 'Archers',
+      role: 'Ranged Volley & Skirmish',
+      description: 'Sharpshooters with heavy yew longbows who rain broadhead arrows upon enemy decks and ramparts before the clash.',
+      batchLabel: 'Batch: +5 Bowmen',
+      effectText: '+2 Combat · +2 Cunning',
+      ctaLabel: 'Recruit 5 Bowmen',
+      unitSuffix: 'men',
+    },
+    fa: {
+      name: 'کمانداران شکاری شمال',
+      shortName: 'کمانداران',
+      role: 'پشتیبانی تیرباران و کمین',
+      description: 'تیراندازان ماهر با کمان‌های چوب سرخدار که پیش از نبرد تن‌به‌تن، عرشه کشتی‌ها و باروی قلعه‌ها را تیرباران می‌کنند.',
+      batchLabel: 'دسته: +۵ کماندار',
+      effectText: 'رزم +۲ · ذکاوت +۲',
+      ctaLabel: 'استخدام ۵ کماندار',
+      unitSuffix: 'نفر',
+    },
+  },
+  {
+    id: 'berserkers',
+    group: 'warriors',
+    action: 'recruit_berserkers',
+    norseName: 'Berserkir ok Úlfhéðnar',
+    costSilver: 28,
+    batchSize: 4,
+    accentHex: '#F43F5E',
+    en: {
+      name: 'Berserkers & Úlfhéðnar',
+      shortName: 'Berserkers',
+      role: 'Shock Terror Champions',
+      description: 'Bear-coat and wolf-skin shock warriors whose furious charge shatters enemy shield-walls (+3 Strength, +8 Fame).',
+      batchLabel: 'Batch: +4 Berserkers',
+      effectText: '+3 Strength · +8 Fame',
+      ctaLabel: 'Recruit 4 Berserkers',
+      unitSuffix: 'men',
+    },
+    fa: {
+      name: 'برزرکرها و اولف‌هدنار',
+      shortName: 'برزرکرها',
+      role: 'جنگجویان خشم اودین (خط‌شکن)',
+      description: 'دلاوران بی‌باک در پوست خرس و گرگ که بدون ترس از مرگ، دیوار سپرهای دشمن را متلاشی می‌کنند (+۳ قدرت بدنی و +۸ شهرت).',
+      batchLabel: 'دسته: +۴ برزرکر',
+      effectText: 'قدرت +۳ · شهرت +۸',
+      ctaLabel: 'جذب ۴ برزرکر خشمگین',
+      unitSuffix: 'نفر',
+    },
+  },
+  {
+    id: 'snekkja',
+    group: 'fleet',
+    action: 'build_snekkja',
+    norseName: 'Snekkja · 20-Oar Patrol',
+    costSilver: 32,
+    batchSize: 1,
+    sealiftCap: 20,
+    accentHex: '#22D3EE',
+    en: {
+      name: 'Snekkja Patrol Ship',
+      shortName: 'Snekkja',
+      role: 'Swift Shallow-Draft Raider',
+      description: 'Light, shallow-draft 20-oar warship ideal for river strikes, dawn ambushes (+6 Raid) & +2 Seamanship.',
+      batchLabel: 'Cap: 20 men',
+      effectText: '+2 Seamanship · Cap 20',
+      ctaLabel: 'Build Snekkja',
+      unitSuffix: 'ships',
+    },
+    fa: {
+      name: 'کشتی گشتی اسنکیا',
+      shortName: 'اسنکیا',
+      role: 'اسنکیا تندرو و کم‌آبخور',
+      description: 'کشتی باریک و چابک با ۲۰ پاروزن؛ عالی برای شبیخون سحرگاهی، رودخانه‌های کم‌عمق و افزایش مهارت دریانوردی (+۲).',
+      batchLabel: 'ظرفیت: ۲۰ جنگجو',
+      effectText: 'دریانوردی +۲ · ظرفیت ۲۰ نفر',
+      ctaLabel: 'ساخت اسنکیا',
+      unitSuffix: 'فروند',
+    },
+  },
+  {
+    id: 'drakkar',
+    group: 'fleet',
+    action: 'build_longship',
+    norseName: 'Dreki · Dragon Longship',
+    costSilver: 55,
+    batchSize: 1,
+    sealiftCap: 30,
+    accentHex: '#38BDF8',
+    en: {
+      name: 'Drakkar Dragon Longship',
+      shortName: 'Drakkar',
+      role: 'Flagship Dragon Warship',
+      description: 'Flagship dragon warship carrying 30 warriors; grants +15 Fame, +3 Craft & heavy siege power.',
+      batchLabel: 'Cap: 30 men',
+      effectText: '+15 Fame · +3 Craft · Cap 30',
+      ctaLabel: 'Launch Longship',
+      unitSuffix: 'ships',
+    },
+    fa: {
+      name: 'ناو جنگی دراکار (لانگ‌شیپ)',
+      shortName: 'دراکار',
+      role: 'لانگ‌شیپ اژدهانشان',
+      description: 'ناو سرفرماندهی با سرِ اژدهای منبت‌کاری‌شده؛ حمل ۳۰ جنگجو، +۱۵ شهرت و قدرت محاصره بالا.',
+      batchLabel: 'ظرفیت: ۳۰ جنگجو',
+      effectText: 'شهرت +۱۵ · ظرفیت ۳۰ نفر',
+      ctaLabel: 'ساخت لانگ‌شیپ',
+      unitSuffix: 'فروند',
+    },
+  },
+  {
+    id: 'knarr',
+    group: 'fleet',
+    action: 'build_knarr',
+    norseName: 'Knörr · Ocean Trader',
+    costSilver: 45,
+    batchSize: 1,
+    sealiftCap: 15,
+    accentHex: '#34D399',
+    en: {
+      name: 'Knarr Ocean Trader',
+      shortName: 'Knarr',
+      role: 'Merchant Cargo Vessel',
+      description: 'Broad-hulled ocean cargo ship that reduces storm peril and opens +1 active Trade Network.',
+      batchLabel: '+18% Trade Profit',
+      effectText: '+18% Trade Profit · +1 Route',
+      ctaLabel: 'Launch Knarr',
+      unitSuffix: 'ships',
+    },
+    fa: {
+      name: 'کشتی تجاری کِنار',
+      shortName: 'کِنار تجاری',
+      role: 'کِنار اقیانوس‌پیما',
+      description: 'کشتی پهن‌پیکر و مقاوم در برابر طوفان برای گشودن مسیرهای تجاری جدید (+۱ مسیر) و افزایش سود سالانه.',
+      batchLabel: 'سود تجارت: +۱۸٪',
+      effectText: '+۱۸٪ سود تجارت · +۱ مسیر تجاری',
+      ctaLabel: 'ساخت کِنار تجاری',
+      unitSuffix: 'فروند',
+    },
+  },
+  {
+    id: 'warhorses',
+    group: 'stables',
+    action: 'buy_warhorses',
+    norseName: 'Víghestar · Stallions',
+    costSilver: 24,
+    batchSize: 4,
+    accentHex: '#F59E0B',
+    en: {
+      name: 'Nordic War Horses',
+      shortName: 'Warhorses',
+      role: 'War Stallions',
+      description: 'Sturdy stallions for rapid overland strikes, flanking maneuvers, and +3 Combat & +10 Fame.',
+      batchLabel: 'Batch: +4 Warhorses',
+      effectText: '+3 Combat · +8 Power · +10 Fame',
+      ctaLabel: 'Buy 4 Warhorses',
+      unitSuffix: 'horses',
+    },
+    fa: {
+      name: 'اسب‌های جنگی نوردیک',
+      shortName: 'اسب جنگی',
+      role: 'اسب جنگی نوردیک',
+      description: 'اسب‌های چابک برای پیشروی برق‌آسای سپاه در خشکی، محاصره سریع و تاکتیک فرار ساختگی (+۳ رزم، +۱۰ شهرت).',
+      batchLabel: 'دسته: +۴ اسب جنگی',
+      effectText: 'قدرت +۸ · رزم +۳ · شهرت +۱۰',
+      ctaLabel: 'خرید ۴ اسب جنگی',
+      unitSuffix: 'راس',
+    },
+  },
+  {
+    id: 'pack_horses',
+    group: 'stables',
+    action: 'buy_pack_horses',
+    norseName: 'Klyfjahestar · Pack Mounts',
+    costSilver: 16,
+    batchSize: 4,
+    accentHex: '#2DD4BF',
+    en: {
+      name: 'Caravan Pack Horses',
+      shortName: 'Pack Horses',
+      role: 'Pack Mounts',
+      description: 'Fjord pack horses that haul +10% extra raid plunder, add +12 Food Stores, and grant +3 Trade.',
+      batchLabel: 'Batch: +4 Pack Horses',
+      effectText: '+10% Plunder · +12 Food · +3 Trade',
+      ctaLabel: 'Buy 4 Pack Horses',
+      unitSuffix: 'horses',
+    },
+    fa: {
+      name: 'اسب‌های بارکش و کاروانی',
+      shortName: 'اسب بارکش',
+      role: 'ستور بارکش کاروان',
+      description: 'ستورهای مقاوم با خورجین‌های چرمی؛ افزایش +۱۰٪ غنیمت یورش‌ها، +۱۲ آذوقه انبار و +۳ مهارت تجارت.',
+      batchLabel: 'دسته: +۴ اسب بارکش',
+      effectText: '+۱۰٪ غنیمت · +۱۲ آذوقه · تجارت +۳',
+      ctaLabel: 'خرید ۴ اسب بارکش',
+      unitSuffix: 'راس',
+    },
+  },
+  {
+    id: 'war_gear',
+    group: 'stables',
+    action: 'buy_war_gear',
+    norseName: 'Brynja ok Ulfberht',
+    costSilver: 30,
+    batchSize: 1,
+    accentHex: '#A78BFA',
+    en: {
+      name: 'Ulfberht Ring-Mail & Steel',
+      shortName: 'Ulfberht Armory',
+      role: 'Ulfberht Armory',
+      description: 'Outfit your champions with riveted ring-mail and crucible steel (+4 Combat, +3 Strength, +10 Power).',
+      batchLabel: 'Upgrade: +1 Tier',
+      effectText: '+4 Combat · +3 Strength · +10 Power',
+      ctaLabel: 'Forge War-Gear',
+      unitSuffix: 'tier',
+    },
+    fa: {
+      name: 'زره حلقه‌ای و شمشیرهای فولادی',
+      shortName: 'زره اولف‌برهت',
+      role: 'زره و فولاد اولف‌برهت',
+      description: 'تجهیز سپاه به زره‌های زنجیری، کلاه‌خودهای چشمی و شمشیرهای فولادی آبدیده (+۴ رزم، +۳ قدرت بدنی).',
+      batchLabel: 'ارتقا: +۱ سطح زره',
+      effectText: 'رزم +۴ · قدرت +۱۰ · نیرو +۳',
+      ctaLabel: 'تجهیز زره و سلاح',
+      unitSuffix: 'سطح',
+    },
+  },
+];
+
+export const MILITARY_CATALOG_BY_ID: Record<MilitaryCatalogItemId, MilitaryCatalogItem> =
+  Object.fromEntries(MILITARY_CATALOG.map((item) => [item.id, item])) as Record<
+    MilitaryCatalogItemId,
+    MilitaryCatalogItem
+  >;
+
