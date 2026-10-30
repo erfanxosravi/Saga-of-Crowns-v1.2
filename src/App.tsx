@@ -798,9 +798,9 @@ export default function App() {
                 playSound('click', settings.soundEnabled);
                 setIsPosterModalOpen(true);
               }}
-              className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#131D2B] hover:bg-[#19283B] border border-[#F59E0B]/45 hover:border-[#F59E0B] text-xs font-bold text-[#F59E0B] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] hover:brightness-105 active:scale-[0.99] text-[#0B1118] text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#0B1118]" />
               <span>{isFa ? 'پوستر داستان زندگی (استوری)' : 'Saga Story Poster'}</span>
             </button>
 
@@ -1255,7 +1255,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="pt-2 border-t border-[#1E2D40]">
+            <div className="pt-2.5 border-t border-[#1E2D40]">
               <button
                 type="button"
                 onClick={() => {
@@ -1263,13 +1263,27 @@ export default function App() {
                   setIsMobileStatsSheetOpen(false);
                   setIsPosterModalOpen(true);
                 }}
-                className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#17263B] via-[#1C2F47] to-[#17263B] hover:brightness-110 border border-[#F59E0B]/55 text-xs sm:text-sm font-bold text-[#F1F5F9] flex items-center justify-center gap-2 cursor-pointer transition-all"
+                className="w-full min-h-[50px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#F59E0B] hover:brightness-105 active:scale-[0.99] border border-[#F59E0B] text-[#0B1118] shadow-[0_6px_20px_rgba(245,158,11,0.25)] flex items-center justify-between gap-3 cursor-pointer transition-all"
               >
-                <Sparkles className="w-4 h-4 text-[#F59E0B] shrink-0" />
-                <span>
-                  {isFa
-                    ? 'طراحی پوستر داستان زندگی (مناسب استوری اینستاگرام)'
-                    : 'Create Character Saga Poster (Story Ready)'}
+                <div className="flex items-center gap-2.5 min-w-0 text-start">
+                  <div className="w-8 h-8 rounded-lg bg-[#0B1118]/12 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-[#0B1118]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs sm:text-sm font-extrabold text-[#0B1118] leading-snug">
+                      {isFa
+                        ? 'طراحی پوستر داستان زندگی'
+                        : 'Create Character Saga Poster'}
+                    </div>
+                    <div className="text-[11px] font-semibold text-[#0B1118]/75 leading-tight">
+                      {isFa
+                        ? 'تصویر ۹:۱۶ باکیفیت مناسب استوری اینستاگرام'
+                        : 'High-craft 9:16 portrait ready for Instagram Story'}
+                    </div>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-[#0B1118] text-[#FBBF24] text-[11px] font-extrabold shrink-0">
+                  {isFa ? 'مشاهده' : 'Open'}
                 </span>
               </button>
             </div>

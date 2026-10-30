@@ -343,6 +343,7 @@ html[data-theme="light"] .bg-\[\#241016\],
 html[data-theme="light"] .bg-\[\#241117\],
 html[data-theme="light"] .bg-\[\#24161B\],
 html[data-theme="light"] .bg-\[\#261116\],
+html[data-theme="light"] .bg-\[\#27151D\],
 html[data-theme="light"] .bg-\[\#271820\],
 html[data-theme="light"] .bg-\[\#28141F\],
 html[data-theme="light"] .bg-\[\#2A1119\],
@@ -352,8 +353,10 @@ html[data-theme="light"] .bg-\[\#31121A\],
 html[data-theme="light"] .bg-\[\#331828\],
 html[data-theme="light"] .bg-\[\#34141E\],
 html[data-theme="light"] .bg-\[\#381B2C\],
+html[data-theme="light"] .bg-\[\#3B181E\],
 html[data-theme="light"] .bg-\[\#3D2525\],
 html[data-theme="light"] .bg-\[\#482239\],
+html[data-theme="light"] .bg-rose-950\/40,
 html[data-theme="light"] .bg-rose-950\/65 {
   background-color: #fff1f2 !important;
 }
@@ -364,7 +367,8 @@ html[data-theme="light"] .bg-\[\#1F1A12\],
 html[data-theme="light"] .bg-\[\#211E16\],
 html[data-theme="light"] .bg-\[\#281D0B\],
 html[data-theme="light"] .bg-\[\#2B2317\],
-html[data-theme="light"] .bg-\[\#3B290C\]\/60 {
+html[data-theme="light"] .bg-\[\#3B290C\]\/60,
+html[data-theme="light"] .bg-amber-950\/30 {
   background-color: #fef6df !important;
 }
 
@@ -378,18 +382,28 @@ html[data-theme="light"] .bg-\[\#142922\],
 html[data-theme="light"] .bg-\[\#153428\],
 html[data-theme="light"] .bg-\[\#16302B\],
 html[data-theme="light"] .bg-\[\#16382E\],
-html[data-theme="light"] .bg-\[\#1E3B32\] {
+html[data-theme="light"] .bg-\[\#1E3B32\],
+html[data-theme="light"] .bg-emerald-950\/70,
+html[data-theme="light"] .bg-emerald-950\/80 {
   background-color: #ecfdf5 !important;
 }
 
 html[data-theme="light"] .bg-\[\#140D1A\],
 html[data-theme="light"] .bg-\[\#151118\],
+html[data-theme="light"] .bg-\[\#15121E\],
 html[data-theme="light"] .bg-\[\#1E1424\],
+html[data-theme="light"] .bg-\[\#1F1A2C\],
 html[data-theme="light"] .bg-\[\#1F2438\],
+html[data-theme="light"] .bg-\[\#2A223B\],
 html[data-theme="light"] .bg-\[\#2B1B34\],
 html[data-theme="light"] .bg-\[\#2E1842\],
 html[data-theme="light"] .bg-\[\#331C44\] {
   background-color: #f5f3ff !important;
+}
+
+html[data-theme="light"] .bg-\[\#090D14\],
+html[data-theme="light"] .bg-\[\#090E15\] {
+  background-color: #e2d8c5 !important;
 }
 
 /* 8. Gradient Surface Remapping in Daylight Mode */
@@ -409,15 +423,20 @@ html[data-theme="light"] .from-\[\#281C0E\] {
 html[data-theme="light"] .from-\[\#0F2422\],
 html[data-theme="light"] .from-\[\#102033\],
 html[data-theme="light"] .from-\[\#10221E\],
-html[data-theme="light"] .from-\[\#102338\] {
+html[data-theme="light"] .from-\[\#102338\],
+html[data-theme="light"] .from-\[\#17263B\],
+html[data-theme="light"] .from-\[\#18293E\] {
   --tw-gradient-from: #eef7fc !important;
 }
 
 html[data-theme="light"] .from-\[\#1B1730\],
 html[data-theme="light"] .from-\[\#241520\],
+html[data-theme="light"] .from-\[\#261116\],
 html[data-theme="light"] .from-\[\#271016\],
 html[data-theme="light"] .from-\[\#2A0E12\],
+html[data-theme="light"] .from-\[\#2A1015\],
 html[data-theme="light"] .from-\[\#2C1016\],
+html[data-theme="light"] .from-\[\#2D0F16\],
 html[data-theme="light"] .from-\[\#3B0D15\] {
   --tw-gradient-from: #fff1f3 !important;
 }
@@ -426,11 +445,15 @@ html[data-theme="light"] .via-\[\#0B1118\]\/70,
 html[data-theme="light"] .via-\[\#0B1118\]\/75,
 html[data-theme="light"] .via-\[\#131D2B\],
 html[data-theme="light"] .via-\[\#132030\],
+html[data-theme="light"] .via-\[\#171622\],
 html[data-theme="light"] .via-\[\#181118\],
 html[data-theme="light"] .via-\[\#181522\],
+html[data-theme="light"] .via-\[\#1B1420\],
 html[data-theme="light"] .via-\[\#1B1422\],
 html[data-theme="light"] .via-\[\#1B1712\],
 html[data-theme="light"] .via-\[\#1B1915\],
+html[data-theme="light"] .via-\[\#1C2F47\],
+html[data-theme="light"] .via-\[\#1E1320\],
 html[data-theme="light"] .via-\[\#240D14\] {
   --tw-gradient-via: #f9f3e6 !important;
 }
@@ -438,8 +461,11 @@ html[data-theme="light"] .via-\[\#240D14\] {
 html[data-theme="light"] .to-\[\#0B1118\],
 html[data-theme="light"] .to-\[\#0F1722\],
 html[data-theme="light"] .to-\[\#111926\],
+html[data-theme="light"] .to-\[\#121A28\],
 html[data-theme="light"] .to-\[\#131826\],
-html[data-theme="light"] .to-\[\#131D2B\] {
+html[data-theme="light"] .to-\[\#131D2B\],
+html[data-theme="light"] .to-\[\#132134\],
+html[data-theme="light"] .to-\[\#17263B\] {
   --tw-gradient-to: #f2ead9 !important;
 }
 

@@ -59,8 +59,10 @@ import {
   Holding,
   Language,
   LogEntry,
+  MilitaryPurchaseAction,
   PersonalStats,
   PlotType,
+  RagnarBloodlineBranch,
   RegionGroup,
   RelationshipPerson,
   Religion,
@@ -76,6 +78,14 @@ import {
   TitleRank,
   TributeBurden,
 } from '../types/game';
+import {
+  calculateLothbrokEnglishRaidModifiers,
+  getEnglishDefenderFlavor,
+  hasLothbrokVengeanceActive,
+  isEnglishSettlement,
+  LOTHBROK_BLOODLINE_BRANCHES,
+  SAGA_HEIRLOOMS_MAP,
+} from '../data/lothbrokCycle';
 import { hashSeedString, SeededRNG } from './prng';
 import { CURRENT_SAVE_VERSION, deriveAppearanceFromId } from './storage';
 
@@ -130,6 +140,11 @@ export interface NewGameParams {
   startingFlags?: string[];
   startingHomeland?: StartingHomeland;
   startingOccupation?: StartingOccupation;
+  epithet?: string;
+  ragnarBloodline?: boolean;
+  bloodlineBranch?: RagnarBloodlineBranch;
+  startingHeirlooms?: string[];
+  signatureEventId?: string;
 }
 
 function generateInitialFamily(
@@ -276,7 +291,12 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     seidr: rng.int(4, 14),
   };
 
-  for (const tid of params.traits) {
+  const initialTraits = [...params.traits];
+  if (params.ragnarBloodline && !initialTraits.includes('wolf_blood')) {
+    initialTraits.unshift('wolf_blood');
+  }
+
+  for (const tid of initialTraits) {
     const def = ALL_TRAITS_MAP[tid];
     if (!def) continue;
     if (def.statModifiers) {
@@ -398,14 +418,16 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
       : [];
 
   const dynastyBase = fatherName || params.givenName;
-  const dynastyName = `House of ${dynastyBase}`;
+  const dynastyName = params.ragnarBloodline
+    ? 'House of Lothbrok (Ragnarsættin)'
+    : `House of ${dynastyBase}`;
 
   const charId = `char_gen1_${rng.int(1000, 9999)}`;
   const character: CharacterState = {
     id: charId,
     givenName: params.givenName.trim() || 'Sigurd',
     patronymic,
-    epithet: '',
+    epithet: params.epithet ?? '',
     sex: params.sex,
     age: params.startAge,
     birthYear,
@@ -414,7 +436,7 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     socialClass: params.socialClass,
     title: classCfg.startingTitle,
     religion: params.religion,
-    traits: [...params.traits],
+    traits: initialTraits,
     stats: baseStats,
     skills: baseSkills,
     appearance: params.appearance ?? deriveAppearanceFromId(charId),
@@ -427,6 +449,68 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
 
   const startingFlags = [...(params.startingFlags ?? [])];
   if (params.startAge >= 16) startingFlags.push('came_of_age');
+  if (params.ragnarBloodline && !startingFlags.includes('lothbrok_heir')) {
+    startingFlags.push('lothbrok_heir');
+  }
+
+  const initialChaptersCompleted: string[] = [];
+  const initialScheduledChains: { eventId: string; triggerYear: number }[] = [];
+
+  if (params.signatureEventId) {
+    initialScheduledChains.push({
+      eventId: params.signatureEventId,
+      triggerYear: params.year + 1,
+    });
+  }
+
+  if (params.ragnarBloodline) {
+    if (params.year >= 865) {
+      initialChaptersCompleted.push(
+        'ch1_shirt_serpent',
+        'ch2_seine_silver',
+        'ch3_last_voyage',
+        'ch4_the_pit',
+        'lothbrok_ch1_shirt_serpent',
+        'lothbrok_ch2_seine_silver',
+        'lothbrok_ch3_last_voyage',
+        'lothbrok_ch4_the_pit'
+      );
+      if (!startingFlags.includes('lothbrok_ch4_done')) {
+        startingFlags.push('lothbrok_ch1_done', 'lothbrok_ch2_done', 'lothbrok_ch3_done', 'lothbrok_ch4_done');
+      }
+      initialScheduledChains.push({
+        eventId: 'lothbrok_ch5_the_oath',
+        triggerYear: params.year + (params.signatureEventId ? 2 : 1),
+      });
+    } else if (params.year >= 845) {
+      initialChaptersCompleted.push('ch1_shirt_serpent', 'lothbrok_ch1_shirt_serpent');
+      if (!startingFlags.includes('lothbrok_ch1_done')) {
+        startingFlags.push('lothbrok_ch1_done');
+      }
+      initialScheduledChains.push({
+        eventId: 'lothbrok_ch2_seine_silver',
+        triggerYear: params.year + (params.signatureEventId ? 2 : 1),
+      });
+    } else {
+      initialScheduledChains.push({
+        eventId: 'lothbrok_ch1_shirt_serpent',
+        triggerYear: params.year + (params.signatureEventId ? 2 : 1),
+      });
+    }
+  }
+
+  const branchDef = params.bloodlineBranch
+    ? LOTHBROK_BLOODLINE_BRANCHES.find((b) => b.id === params.bloodlineBranch)
+    : undefined;
+  const startingHeirlooms = Array.from(
+    new Set([
+      ...(params.startingHeirlooms ?? []),
+      ...(params.ragnarBloodline && branchDef?.startingHeirloomId
+        ? [branchDef.startingHeirloomId]
+        : []),
+    ])
+  );
+  const initialHefnd = params.ragnarBloodline ? (params.year >= 865 ? 58 : 28) : 0;
 
   const sFa = SETTLEMENTS_FA[settlement.id];
   const fullNameFa = formatPersonName(`${character.givenName} ${character.patronymic}`, 'fa');
@@ -441,10 +525,18 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     locationName: `${settlement.name} (${settlement.norseName})`,
     category: 'Chronicle',
     iconType: 'crown',
-    title: `A New Viking Life · ${params.year} AD`,
-    titleFa: `شروع یک زندگی وایکینگی · سال ${params.year} میلادی`,
-    text: `Born into ${settlement.name} as ${classCfg.label.toLowerCase()} following ${RELIGION_LABELS.en[character.religion]}. Northern seas and wild fates await.`,
-    textFa: `در ${sFa?.name ?? settlement.name}، زندگی «${fullNameFa}» در جایگاه ${classFa} و پیرو «${faithFa}» شروع شد. دریاهای شمال منتظرند!`,
+    title: params.ragnarBloodline
+      ? `Blood of Ragnar Lothbrok · ${params.year} AD`
+      : `A New Viking Life · ${params.year} AD`,
+    titleFa: params.ragnarBloodline
+      ? `خونِ راگنار لُدبروک (چرخه انتقام) · سال ${params.year} میلادی`
+      : `شروع یک زندگی وایکینگی · سال ${params.year} میلادی`,
+    text: params.ragnarBloodline
+      ? `Born of Ragnarsættin in ${settlement.name} carrying the Wolf-Blood and the Debt of Vengeance (Hefnd: ${initialHefnd}/100). Across the grey sea, Northumbria and the English kingdoms remember the snake-pit.`
+      : `Born into ${settlement.name} as ${classCfg.label.toLowerCase()} following ${RELIGION_LABELS.en[character.religion]}. Northern seas and wild fates await.`,
+    textFa: params.ragnarBloodline
+      ? `از تبار اسطوره‌ای «راگنار لُدبروک» در ${sFa?.name ?? settlement.name}، زندگی «${fullNameFa}» با موهبت «خونِ گرگ» و بارِ سنگین «بدهی انتقام خون (هِفند: ${initialHefnd}/100)» آغاز شد. در آن سوی دریا، انگلستان و چاه مارهای شاه ائلا در انتظار شمشیر توست!`
+      : `در ${sFa?.name ?? settlement.name}، زندگی «${fullNameFa}» در جایگاه ${classFa} و پیرو «${faithFa}» شروع شد. دریاهای شمال منتظرند!`,
   };
 
   return {
@@ -470,6 +562,11 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     marriedBloodEnemy: false,
     divorcesCount: 0,
     conquestsWon: 0,
+    ragnarBloodline: Boolean(params.ragnarBloodline),
+    bloodlineBranch: params.bloodlineBranch,
+    hefndMeter: initialHefnd,
+    heirlooms: startingHeirlooms,
+    lothbrokChaptersCompleted: initialChaptersCompleted,
     character,
     realm: {
       silver: classCfg.silver + (params.bonusSilver ?? 0),
@@ -487,7 +584,7 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     },
     startingHomeland: params.startingHomeland,
     startingOccupation: params.startingOccupation,
-    specialTitles: [],
+    specialTitles: params.ragnarBloodline ? ['Scion of Ragnar Lothbrok'] : [],
     relationships,
     ancestors: [],
     discoveredSettlements: getNearbyDiscoveredIds(settlement.id, params.year),
@@ -495,7 +592,7 @@ export function createNewGame(params: NewGameParams, settings: GameSettings): Fu
     divergences: [],
     divergencesFa: [],
     achievements: [],
-    scheduledChains: [],
+    scheduledChains: initialScheduledChains,
     firedUniqueEvents: [],
     lifeLog: [openingEntry],
     activeEvent: null,
@@ -1152,6 +1249,8 @@ export function advanceTurn(state: FullGameState): FullGameState {
     });
   }
 
+  let nextHefndMeter = state.hefndMeter ?? 0;
+
   relationships = relationships.map((rel) => {
     if (!rel.alive) return rel;
     const newAge = rel.age + 1;
@@ -1159,6 +1258,9 @@ export function advanceTurn(state: FullGameState): FullGameState {
     if (rng.chance(oldAgeDeathProb)) {
       const relNameFa = formatPersonName(rel.name, 'fa');
       const roleFa = ROLE_LABELS.fa[rel.role];
+      if (state.ragnarBloodline && ['Father', 'Mother', 'Sibling', 'Child', 'Sworn Brother', 'Sworn Sister'].includes(rel.role)) {
+        nextHefndMeter = Math.min(100, nextHefndMeter + 8);
+      }
       yearlySideNotices.push({
         id: `log_npcd_${nextYear}_${nextLogs.length}_${rel.id}`,
         year: nextYear,
@@ -1181,6 +1283,40 @@ export function advanceTurn(state: FullGameState): FullGameState {
     }
     return { ...rel, age: newAge };
   });
+
+  // 2b. Lothbrok Hefnd (Debt of Vengeance) & Heirloom Annual Effects
+  if ((state.heirlooms ?? []).includes('bragarfull_horn_lejre')) {
+    realm.fame += 4;
+  }
+  if ((state.heirlooms ?? []).includes('fang_of_fafnir')) {
+    char.stats.wyrd = clampStat(char.stats.wyrd + 2);
+  }
+  if (state.ragnarBloodline || state.character.traits.includes('wolf_blood')) {
+    if (nextHefndMeter >= 68) {
+      char.stats.honor = clampStat(char.stats.honor - 3);
+      char.stats.wyrd = clampStat(char.stats.wyrd - 2);
+      if (rng.chance(0.45)) {
+        yearlySideNotices.push({
+          id: `log_hefnd_bleed_${nextYear}_${nextLogs.length}`,
+          year: nextYear,
+          season: nextSeason,
+          age: char.age,
+          locationName: loc.name,
+          category: 'Blood Feud',
+          iconType: 'skull',
+          title: `Unavenged Blood-Debt (Hefnd: ${nextHefndMeter}/100)`,
+          titleFa: `سنگینیِ بدهی انتقام خونِ راگنار (هِفند: ${nextHefndMeter}/100)`,
+          text: `Skalds at the mead-benches whisper that the blood-debt of Ragnar Lothbrok goes uncollected while English bells ring unchallenged. Your Honor (-3) and Wyrd (-2) bleed until you raid or conquer in England.`,
+          textFa: `شاعران در تالار زمزمه می‌کنند که بدهی خونِ «راگنار لُدبروک» هنوز ستانده نشده و ناقوس‌های انگلستان بی‌مزاحمت به صدا درمی‌آیند! تا زمانی که به سواحل انگلستان یورش نبری، شرافت (-3) و بخت (-2) تو کاسته می‌شود.`,
+          deltas: [`Hefnd Debt ${nextHefndMeter}/100`, 'Honor -3', 'Wyrd -2'],
+          deltasFa: [`بدهی هِفند ${nextHefndMeter}/100`, 'شرافت -3', 'بخت و ویرد -2'],
+          isDanger: true,
+        });
+      }
+    } else if (nextHefndMeter > 0 && nextHefndMeter <= 20 && rng.chance(0.25)) {
+      char.stats.honor = clampStat(char.stats.honor + 2);
+    }
+  }
 
   // 3. Natural Character Aging & Mortality
   if (char.age >= 12 && char.age <= 24) {
@@ -1290,6 +1426,7 @@ export function advanceTurn(state: FullGameState): FullGameState {
     pending1066Epilogue: state.pending1066Epilogue || reached1066Now,
     settlementStatuses: currentStatuses,
     tributaries: currentTributaries,
+    hefndMeter: nextHefndMeter,
     character: char,
     realm,
     relationships,
@@ -1415,6 +1552,9 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
   const divergences = [...state.divergences];
   const divergencesFa = [...(state.divergencesFa ?? [])];
   const discovered = new Set(state.discoveredSettlements);
+  let nextHefndMeter = state.hefndMeter ?? 0;
+  const nextHeirlooms = new Set(state.heirlooms ?? []);
+  const nextLothbrokChapters = new Set(state.lothbrokChaptersCompleted ?? []);
   const deltaSummary: string[] = [];
   const deltaSummaryFa: string[] = [];
 
@@ -1646,6 +1786,35 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
       divergences.push(eff.divergenceNote);
       divergencesFa.push(chFa?.divergenceNote ?? eff.divergenceNote);
     }
+    if (eff.hefndDelta !== undefined && eff.hefndDelta !== 0) {
+      nextHefndMeter = Math.max(0, Math.min(100, nextHefndMeter + eff.hefndDelta));
+      deltaSummary.push(
+        eff.hefndDelta < 0
+          ? `Hefnd Satisfied ${eff.hefndDelta} (${nextHefndMeter}/100)`
+          : `Hefnd Debt +${eff.hefndDelta} (${nextHefndMeter}/100)`
+      );
+      deltaSummaryFa.push(
+        eff.hefndDelta < 0
+          ? `کاهش بدهی انتقام هِفند ${eff.hefndDelta} (${nextHefndMeter}/100)`
+          : `افزایش بدهی انتقام هِفند +${eff.hefndDelta} (${nextHefndMeter}/100)`
+      );
+    }
+    if (eff.addHeirloomIds) {
+      for (const hid of eff.addHeirloomIds) {
+        if (!nextHeirlooms.has(hid)) {
+          nextHeirlooms.add(hid);
+          const hDef = SAGA_HEIRLOOMS_MAP[hid];
+          if (hDef) {
+            deltaSummary.push(`Heirloom: ${hDef.nameEn}`);
+            deltaSummaryFa.push(`میراث اسطوره‌ای: ${hDef.nameFa}`);
+          }
+        }
+      }
+    }
+    if (eff.completeLothbrokChapterId) {
+      nextLothbrokChapters.add(eff.completeLothbrokChapterId);
+      nextLothbrokChapters.add(ev.id);
+    }
   }
 
   // Ring Fortress & Garrison bonus on enemy attack event (bl_ab_08_fortress_raid)
@@ -1665,8 +1834,14 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
     }
   }
 
-  // Injury roll
-  if (choice.injuryChance && choice.injuryTraitId && rng.chance(choice.injuryChance)) {
+  // Injury roll (reduced by Aslaug's Unwoven Shirt or Shield of Ironside)
+  const heirloomWardMult =
+    nextHeirlooms.has('aslaug_unwoven_shirt') || nextHeirlooms.has('shield_of_ironside') ? 0.65 : 1.0;
+  if (
+    choice.injuryChance &&
+    choice.injuryTraitId &&
+    rng.chance(choice.injuryChance * heirloomWardMult)
+  ) {
     if (!char.traits.includes(choice.injuryTraitId)) {
       char.traits.push(choice.injuryTraitId);
       const tDef = ALL_TRAITS_MAP[choice.injuryTraitId];
@@ -1727,6 +1902,9 @@ export function resolveEventChoice(state: FullGameState, choiceId: string): Full
     divergencesFa,
     discoveredSettlements: Array.from(discovered),
     scheduledChains,
+    hefndMeter: nextHefndMeter,
+    heirlooms: Array.from(nextHeirlooms),
+    lothbrokChaptersCompleted: Array.from(nextLothbrokChapters),
     activeEvent: null,
     lifeLog: [...state.lifeLog, newEntry],
     lastOutcomeBanner: {
@@ -1789,14 +1967,27 @@ export function executeRaidAction(
   };
   const realm = { ...state.realm, holdings: state.realm.holdings.map((h) => ({ ...h })) };
 
+  const lothbrokMod = calculateLothbrokEnglishRaidModifiers(state, target.id, rng);
+  const englishDefender = isEnglishSettlement(target.id)
+    ? getEnglishDefenderFlavor(target.id, state.year, rng)
+    : null;
+
+  const eliteUnitBonus =
+    (realm.berserkers ?? 0) * 1.2 +
+    (realm.norseArchers ?? 0) * 0.8 +
+    (realm.warhorses ?? 0) * 1.5 +
+    (realm.warGearTier ?? 0) * 8;
+
   const playerForce =
     realm.hirdWarriors * 1.4 +
+    eliteUnitBonus +
     char.skills.combat * 0.8 +
     char.stats.strength * 0.4 +
-    (tactic === 'surprise' ? char.stats.cunning * 0.5 : 0) +
+    lothbrokMod.combatBonus +
+    (tactic === 'surprise' ? char.stats.cunning * 0.5 + (realm.snekkjas ?? 0) * 6 : 0) +
     (tactic === 'shield_wall' ? 18 : 0) +
     (tactic === 'ransom' ? char.skills.diplomacy * 0.6 : 0) +
-    (tactic === 'feigned_retreat' ? char.stats.cunning * 0.65 : 0) +
+    (tactic === 'feigned_retreat' ? char.stats.cunning * 0.65 + (realm.warhorses ?? 0) * 1.2 : 0) +
     rng.int(-12, 22);
 
   const garrisonForce = target.baseDefense * 11 + rng.int(0, 25);
@@ -1811,27 +2002,40 @@ export function executeRaidAction(
   const deltas: string[] = [];
   const deltasFa: string[] = [];
   const targetFa = SETTLEMENTS_FA[target.id]?.name ?? target.name;
+  let nextHefndMeter = state.hefndMeter ?? 0;
 
   if (margin >= 0) {
     const isMonastery = target.settlementType === 'monastery';
-    const baseLoot = isMonastery
+    const rawLoot = isMonastery
       ? Math.round(target.baseWealth * 15 + rng.int(35, 75))
       : target.baseWealth * (tactic === 'ransom' ? 9 : 7) + rng.int(12, 34);
+    const packHorseLootBonus = 1 + Math.min(0.4, (realm.packHorses ?? 0) * 0.025);
+    const baseLoot = Math.round(rawLoot * lothbrokMod.lootMultiplier * packHorseLootBonus);
     const casualties =
       tactic === 'ransom' || isMonastery
         ? rng.int(0, isMonastery ? 0 : 1)
         : Math.min(realm.hirdWarriors, rng.int(0, Math.max(1, Math.floor(target.baseDefense / 3))));
-    const fameGain = Math.round(16 + target.baseDefense * 3 + (isMonastery ? 12 : 0));
+    const rawFame = Math.round(16 + target.baseDefense * 3 + (isMonastery ? 12 : 0));
+    const fameGain = Math.round(rawFame * lothbrokMod.fameMultiplier);
 
     realm.silver += baseLoot;
     realm.hirdWarriors = Math.max(0, realm.hirdWarriors - casualties);
     realm.fame += fameGain;
     char.skills.combat = clampSkill(char.skills.combat + 4);
     char.skills.seamanship = clampSkill(char.skills.seamanship + 2);
-    char.stats.honor = clampStat(char.stats.honor + (isMonastery && char.religion === Religion.Christian ? -6 : 6));
+    char.stats.honor = clampStat(
+      char.stats.honor +
+        (isMonastery && char.religion === Religion.Christian ? -6 : 6) +
+        (lothbrokMod.active ? 4 : 0)
+    );
 
     deltas.push(`+${baseLoot} Silver`, `+${fameGain} Fame`);
     deltasFa.push(`+${baseLoot} نقره`, `+${fameGain} شهرت`);
+    if (lothbrokMod.active) {
+      nextHefndMeter = Math.max(0, nextHefndMeter + lothbrokMod.hefndDeltaOnWin);
+      deltas.push(`Wolf-Blood & Hefnd (${lothbrokMod.hefndDeltaOnWin})`);
+      deltasFa.push(`خونِ گرگ و انتقام راگنار (${lothbrokMod.hefndDeltaOnWin} هِفند)`);
+    }
     if (isMonastery) {
       deltas.push('Monastery Reliquaries Sacked');
       deltasFa.push('غارت جام‌ها و کتب زرین صومعه');
@@ -1860,12 +2064,21 @@ export function executeRaidAction(
             : 'با عقب‌نشینی ساختگی در ساحل و برگشتن ناگهانی بر سر مدافعان پراکنده';
 
     const isMild = state.settings.contentIntensity === ContentIntensity.Mild;
-    outcomeText = isMild
-      ? `Your ships struck ${target.name}, ${tacticDesc}. Carrying ${baseLoot} silver back to the oars, your warband won ${fameGain} fame.`
-      : `Your ships struck ${target.name}, ${tacticDesc}. Carrying ${baseLoot} silver back to the oars, you lost ${casualties} warrior${casualties === 1 ? '' : 's'} and won ${fameGain} fame.`;
-    outcomeTextFa = isMild
-      ? `ناوگان شما ${tacticDescFa} به بندر ${targetFa} رفت و با ${baseLoot} سکه نقره غنیمت و +${fameGain} شهرت به کشتی‌ها بازگشت!`
-      : `ناوگان شما ${tacticDescFa} به بندر ${targetFa} یورش برد! با ${baseLoot} سکه نقره غنیمت و +${fameGain} شهرت به کشتی‌ها بازگشتید${casualties > 0 ? ` (${casualties} جنگجو در نبرد کشته شدند)` : ' (بدون تلفات)'}.`;
+    if (lothbrokMod.active && englishDefender) {
+      outcomeText = isMild
+        ? `${lothbrokMod.warCryEn} Raising ${lothbrokMod.bannerDescEn}, your ships struck ${target.name} (${englishDefender.defenderEn}), ${tacticDesc}. [Ragnar's Name]: The defenders yielded ${baseLoot} silver and ${fameGain} fame toward the blood-debt!`
+        : `${lothbrokMod.warCryEn} Raising ${lothbrokMod.bannerDescEn}, your warband crashed into ${englishDefender.defenderEn} at ${target.name}, ${tacticDesc}. [Ragnar's Name]: Oarsmen hammered their shield-rims chanting for Ragnar Lothbrok as ${baseLoot} silver and ${fameGain} fame were won (${casualties} warrior${casualties === 1 ? '' : 's'} fallen).`;
+      outcomeTextFa = isMild
+        ? `${lothbrokMod.warCryFa} با برافراشتن ${lothbrokMod.bannerDescFa}، ناوگان شما ${tacticDescFa} بر سر مدافعان (${englishDefender.defenderFa}) در ${targetFa} فرود آمد. [به نام راگنار لُدبروک]: با غنیمت ${baseLoot} نقره و +${fameGain} شهرت، بخشی از بدهی انتقام خون ستانده شد!`
+        : `${lothbrokMod.warCryFa} زیر سایه ${lothbrokMod.bannerDescFa}، جنگجویانت ${tacticDescFa} صفِ «${englishDefender.defenderFa}» را در ${targetFa} در هم کوبیدند! [به نام راگنار لُدبروک]: با طنین نام راگنار بر سپرها، ${baseLoot} سکه نقره و +${fameGain} شهرت به چنگ آمد${casualties > 0 ? ` (${casualties} جنگجو در نبرد جان باختند)` : ' (بدون تلفات)'}.`;
+    } else {
+      outcomeText = isMild
+        ? `Your ships struck ${target.name}, ${tacticDesc}. Carrying ${baseLoot} silver back to the oars, your warband won ${fameGain} fame.`
+        : `Your ships struck ${target.name}, ${tacticDesc}. Carrying ${baseLoot} silver back to the oars, you lost ${casualties} warrior${casualties === 1 ? '' : 's'} and won ${fameGain} fame.`;
+      outcomeTextFa = isMild
+        ? `ناوگان شما ${tacticDescFa} به بندر ${targetFa} رفت و با ${baseLoot} سکه نقره غنیمت و +${fameGain} شهرت به کشتی‌ها بازگشت!`
+        : `ناوگان شما ${tacticDescFa} به بندر ${targetFa} یورش برد! با ${baseLoot} سکه نقره غنیمت و +${fameGain} شهرت به کشتی‌ها بازگشتید${casualties > 0 ? ` (${casualties} جنگجو در نبرد کشته شدند)` : ' (بدون تلفات)'}.`;
+    }
   } else {
     const isMild = state.settings.contentIntensity === ContentIntensity.Mild;
     const casualties = Math.min(realm.hirdWarriors, rng.int(2, 6));
@@ -1878,18 +2091,43 @@ export function executeRaidAction(
     deltas.push(`+${consolationLoot} Silver`, `-${casualties} Warriors`, `Health -${hpLoss}`);
     deltasFa.push(`+${consolationLoot} نقره`, `-${casualties} جنگجو`, `سلامتی -${hpLoss}`);
 
-    outcomeText = isMild
-      ? `Stiff harbor defenses at ${target.name} repelled your landing! You rowed clear with ${consolationLoot} silver from the outer wharf while ${casualties} warriors were lost from your ranks.`
-      : `Heavy garrison spears at ${target.name} held firm against your assault! Pulling back to the ships under arrow-fire with ${consolationLoot} silver snatched from the docks, ${casualties} warriors fell on the beach.`;
-    outcomeTextFa = isMild
-      ? `دفاع سرسختانه در ${targetFa} جلوی پیشروی شما را گرفت! با ${consolationLoot} نقره از اسکله عقب نشستید و ${casualties} جنگجو از صف سپاه کم شد.`
-      : `مدافعان پرشمار در ${targetFa} در برابر یورش شما سرسختانه ایستادگی کردند! زیر باران تیر با ${consolationLoot} نقره از اسکله عقب نشستید و ${casualties} تن از جنگجویانتان در ساحل جان باختند.`;
+    if (lothbrokMod.active) {
+      nextHefndMeter = Math.min(100, nextHefndMeter + lothbrokMod.hefndDeltaOnLoss);
+      deltas.push(`The Wyrd Turns: Hefnd +${lothbrokMod.hefndDeltaOnLoss}`);
+      deltasFa.push(`چرخش شوم تقدیر: هِفند +${lothbrokMod.hefndDeltaOnLoss}`);
+    }
+
+    if (lothbrokMod.active && englishDefender) {
+      outcomeText = isMild
+        ? `[The Wyrd Turns]: ${englishDefender.defenderEn} held the shore at ${target.name} against your landing! The Raven Banner drooped as you rowed clear with ${consolationLoot} silver and ${casualties} warriors lost.`
+        : `[The Wyrd Turns]: The shield-wall of ${englishDefender.defenderEn} repelled your assault at ${target.name}! The Raven Banner drooped in salt-spray as ${casualties} warriors fell on the shingle and Ragnar’s blood-debt grew heavier.`;
+      outcomeTextFa = isMild
+        ? `[چرخش شوم تقدیر]: «${englishDefender.defenderFa}» در ساحل ${targetFa} سد راه شما شد! درفش کلاغ بال فرو بست و با ${consolationLoot} نقره و از دست دادن ${casualties} جنگجو عقب نشستید.`
+        : `[چرخش شوم تقدیر]: دیوار سپرهای «${englishDefender.defenderFa}» در ساحل ${targetFa} یورش شما را عقب راند! با سقوط ${casualties} جنگجو، بارِ بدهی انتقام خونِ راگنار لُدبروک سنگین‌تر شد.`;
+    } else {
+      outcomeText = isMild
+        ? `Stiff harbor defenses at ${target.name} repelled your landing! You rowed clear with ${consolationLoot} silver from the outer wharf while ${casualties} warriors were lost from your ranks.`
+        : `Heavy garrison spears at ${target.name} held firm against your assault! Pulling back to the ships under arrow-fire with ${consolationLoot} silver snatched from the docks, ${casualties} warriors fell on the beach.`;
+      outcomeTextFa = isMild
+        ? `دفاع سرسختانه در ${targetFa} جلوی پیشروی شما را گرفت! با ${consolationLoot} نقره از اسکله عقب نشستید و ${casualties} جنگجو از صف سپاه کم شد.`
+        : `مدافعان پرشمار در ${targetFa} در برابر یورش شما سرسختانه ایستادگی کردند! زیر باران تیر با ${consolationLoot} نقره از اسکله عقب نشستید و ${casualties} تن از جنگجویانتان در ساحل جان باختند.`;
+    }
   }
+
+  const raidTitleEn =
+    lothbrokMod.active && margin >= 0
+      ? `Vengeance Raid on ${target.name} (Hefnd)`
+      : `Raid on ${target.name}`;
+  const raidTitleFa =
+    lothbrokMod.active && margin >= 0
+      ? `یورش انتقام راگنار به ${targetFa} (هِفند)`
+      : `یورش دریایی به ${targetFa}`;
 
   const raidLogId = `log_raid_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
   const nextState: FullGameState = {
     ...state,
     rngState: rng.getState(),
+    hefndMeter: nextHefndMeter,
     yearlyActivitiesUsed: { ...(state.yearlyActivitiesUsed ?? {}), raid: true },
     totalRaidsWon: margin >= 0 ? (state.totalRaidsWon ?? 0) + 1 : state.totalRaidsWon ?? 0,
     character: char,
@@ -1905,8 +2143,8 @@ export function executeRaidAction(
         locationName: target.name,
         category: 'Raiding',
         iconType: 'sword',
-        title: `Raid on ${target.name}`,
-        titleFa: `یورش دریایی به ${targetFa}`,
+        title: raidTitleEn,
+        titleFa: raidTitleFa,
         text: outcomeText,
         textFa: outcomeTextFa,
         deltas,
@@ -1915,8 +2153,8 @@ export function executeRaidAction(
       },
     ],
     lastOutcomeBanner: {
-      title: `Raid on ${target.name}`,
-      titleFa: `یورش دریایی به ${targetFa}`,
+      title: raidTitleEn,
+      titleFa: raidTitleFa,
       text: outcomeText,
       textFa: outcomeTextFa,
       deltaSummary: deltas,
@@ -2198,9 +2436,7 @@ export function executeGeneralAction(
     | 'attend_thing'
     | 'hold_feast'
     | 'patronize_skald'
-    | 'recruit_hird'
-    | 'build_longship'
-    | 'build_knarr'
+    | MilitaryPurchaseAction
     | 'buy_freedom'
     | 'convert_pagan'
     | 'convert_christian'
@@ -2348,28 +2584,80 @@ export function executeGeneralAction(
     textFa = `شاعری چیره‌دست سرودی حماسی درباره سفرها و بخشندگی شما سرود؛ اشعاری که سریع‌تر از کشتی‌ها در تالارهای شمال دهان‌به‌دهان می‌چرخد.`;
     deltas.push('-15 Silver', `+${fameGain} Fame`, 'Honor +8');
     deltasFa.push('-15 نقره', `+${fameGain} شهرت`, 'شرافت +8');
+  } else if (actionType === 'recruit_bondi') {
+    if (realm.silver < 12) return state;
+    realm.silver -= 12;
+    realm.hirdWarriors += 5;
+    realm.bondiSpearmen = (realm.bondiSpearmen ?? 0) + 5;
+    title = 'Mustered 5 Bondi Levy Spearmen';
+    titleFa = 'جذب ۵ نیزه‌دار آزاد (بوندِه)';
+    text = `Five sturdy freemen farmers with ash-wood spears and painted round-shields answered your muster horn at ${loc.name}.`;
+    textFa = `پنج مرد آزاد با نیزه‌های چوب زبان‌گنجشک و سپرهای گرد رنگ‌آمیزی‌شده در ${locFa} به ندای شیپور شما پاسخ دادند و به سپاه پیوستند.`;
+    deltas.push('-12 Silver', '+5 Spearmen');
+    deltasFa.push('-12 نقره', '+5 نیزه‌دار بوندِه');
   } else if (actionType === 'recruit_hird') {
     if (realm.silver < 18) return state;
     realm.silver -= 18;
     realm.hirdWarriors += 6;
-    title = 'Recruited 6 Household Warriors (Hird)';
-    titleFa = 'استخدام ۶ جنگجوی سوگندخورده (هیرد)';
-    text = `Six seasoned spear-men swore loyalty on your sword-hilt at ${loc.name}, joining your personal warband.`;
-    textFa = `شش نیزه‌دار کارآزموده در ${locFa} دست بر قبضه شمشیر شما گذاشتند و به سپاه وفادار تالارتان پیوستند.`;
-    deltas.push('-18 Silver', '+6 Warriors');
-    deltasFa.push('-18 نقره', '+6 جنگجو');
+    realm.huscarls = (realm.huscarls ?? 0) + 6;
+    char.skills.combat = clampSkill(char.skills.combat + 1);
+    title = 'Recruited 6 Sworn Huscarls (Hird)';
+    titleFa = 'استخدام ۶ هوسکارل و سپردار سوگندخورده (هیرد)';
+    text = `Six mail-clad huscarls with broad Dane-axes swore loyalty on your sword-hilt at ${loc.name}, bolstering your shield-wall.`;
+    textFa = `شش جنگجوی زره‌پوش هوسکارل با تبرهای پهن دانمارکی در ${locFa} دست بر قبضه شمشیر شما گذاشتند و دیوار سپرهایتان را استوارتر ساختند.`;
+    deltas.push('-18 Silver', '+6 Huscarls', 'Combat +1');
+    deltasFa.push('-18 نقره', '+6 هوسکارل زبده', 'رزم +1');
+  } else if (actionType === 'recruit_archers') {
+    if (realm.silver < 20) return state;
+    realm.silver -= 20;
+    realm.hirdWarriors += 5;
+    realm.norseArchers = (realm.norseArchers ?? 0) + 5;
+    char.skills.combat = clampSkill(char.skills.combat + 2);
+    char.stats.cunning = clampStat(char.stats.cunning + 2);
+    title = 'Enlisted 5 Norse Yew-Bowmen';
+    titleFa = 'استخدام ۵ کماندار شکاری شمال';
+    text = `Five keen-eyed northern bowmen armed with heavy yew longbows and iron broadheads joined your warband at ${loc.name}.`;
+    textFa = `پنج کماندار تیزچشم شمالی با کمان‌های بلند چوب سرخدار و پیکان‌های پولادین در ${locFa} به صفوف سپاه شما پیوستند.`;
+    deltas.push('-20 Silver', '+5 Bowmen', 'Combat +2', 'Cunning +2');
+    deltasFa.push('-20 نقره', '+5 کماندار شمالی', 'رزم +2', 'ذکاوت +2');
+  } else if (actionType === 'recruit_berserkers') {
+    if (realm.silver < 28) return state;
+    realm.silver -= 28;
+    realm.hirdWarriors += 4;
+    realm.berserkers = (realm.berserkers ?? 0) + 4;
+    char.stats.strength = clampStat(char.stats.strength + 3);
+    realm.fame += 8;
+    title = 'Bound 4 Berserkers & Ulfhednar';
+    titleFa = 'جذب ۴ برزرکر و جنگجوی گرگینه (اولف‌هدنار)';
+    text = `Clad in bear-pelts and wolf-skins, four ferocious shock champions pledged their battle-fury to your banner at ${loc.name}!`;
+    textFa = `چهار جنگجوی خشمگین در پوست خرس و گرگ در ${locFa} هم‌قسم شدند تا در خط مقدم نبرد، لرزه بر اندام دشمنان شما بیندازند!`;
+    deltas.push('-28 Silver', '+4 Berserkers', 'Strength +3', '+8 Fame');
+    deltasFa.push('-28 نقره', '+4 برزرکر خشمگین', 'قدرت +3', '+8 شهرت');
+  } else if (actionType === 'build_snekkja') {
+    if (realm.silver < 32) return state;
+    realm.silver -= 32;
+    realm.longships += 1;
+    realm.snekkjas = (realm.snekkjas ?? 0) + 1;
+    realm.fame += 8;
+    char.skills.seamanship = clampSkill(char.skills.seamanship + 2);
+    title = 'Launched a Swift Snekkja War-Galley';
+    titleFa = 'به‌آب‌اندازی کشتی تندرو جنگی (اسنکیا)';
+    text = `Sleek, light, and twenty-benched for lightning river raids and shallow fjords, your new Snekkja slid into the waters of ${loc.name}.`;
+    textFa = `کشتی باریک، چابک و تندرو اسنکیا برای شبیخون‌های ساحلی و عبور از کم‌عمق‌ترین رودخانه‌ها در بندر ${locFa} به آب انداخته شد.`;
+    deltas.push('-32 Silver', '+1 Snekkja Warship', 'Seamanship +2', '+8 Fame');
+    deltasFa.push('-32 نقره', '+1 کشتی جنگی اسنکیا', 'دریانوردی +2', '+8 شهرت');
   } else if (actionType === 'build_longship') {
     if (realm.silver < 55) return state;
     realm.silver -= 55;
     realm.longships += 1;
     realm.fame += 15;
     char.skills.craft = clampSkill(char.skills.craft + 3);
-    title = 'Launched a War Longship';
-    titleFa = 'به‌آب‌اندازی کشتی جنگی (لانگ‌شیپ)';
-    text = `Built of split oak planks, iron rivets, and a wool square-sail, your new warship slid into the harbor of ${loc.name}!`;
-    textFa = `کشتی جنگی تندرو از الوار بلوط و بادبان پشمی چهارگوش بر ریل‌های چرب‌شده به آب‌های بندر ${locFa} لغزید!`;
-    deltas.push('-55 Silver', '+1 War Longship', '+15 Fame');
-    deltasFa.push('-55 نقره', '+1 کشتی جنگی', '+15 شهرت');
+    title = 'Launched a Dragon Longship (Drakkar)';
+    titleFa = 'به‌آب‌اندازی لانگ‌شیپ اژدهانشان (دراکار)';
+    text = `Built of split oak planks, iron rivets, and a carved dragon prow, your new flagship slid into the harbor of ${loc.name}!`;
+    textFa = `ناو جنگی بزرگ از الوار بلوط، میخ‌های آهنین و سرِ اژدهای منبت‌کاری‌شده بر ریل‌های چرب‌شده به آب‌های بندر ${locFa} لغزید!`;
+    deltas.push('-55 Silver', '+1 Dragon Longship', '+15 Fame');
+    deltasFa.push('-55 نقره', '+1 لانگ‌شیپ اژدهانشان', '+15 شهرت');
   } else if (actionType === 'build_knarr') {
     if (realm.silver < 45) return state;
     realm.silver -= 45;
@@ -2381,6 +2669,45 @@ export function executeGeneralAction(
     textFa = `کشتی پهن‌پیکر و استوار برای حمل کالا و عبور ایمن از امواج اقیانوس اطلس ساخته شد و در بندر ${locFa} لنگر انداخت.`;
     deltas.push('-45 Silver', '+1 Trade Ship', '+1 Trade Route');
     deltasFa.push('-45 نقره', '+1 کشتی تجاری', '+1 مسیر تجاری');
+  } else if (actionType === 'buy_warhorses') {
+    if (realm.silver < 24) return state;
+    realm.silver -= 24;
+    realm.warhorses = (realm.warhorses ?? 0) + 4;
+    char.skills.combat = clampSkill(char.skills.combat + 3);
+    char.stats.honor = clampStat(char.stats.honor + 4);
+    realm.fame += 10;
+    title = 'Acquired 4 Norse Warhorses';
+    titleFa = 'خرید ۴ راس اسب جنگی نوردیک';
+    text = `Four muscular northern stallions fitted with iron bits and braided manes were led into your stables at ${loc.name}, giving your warband rapid overland mobility.`;
+    textFa = `چهار اسب جنگی نیرومند با یال‌های بافته و لگام آهنین به اصطبل شما در ${locFa} افزوده شدند تا سرعت جابه‌جایی و توان رزمی سپاه در خشکی دوچندان شود.`;
+    deltas.push('-24 Silver', '+4 Warhorses', 'Combat +3', '+10 Fame');
+    deltasFa.push('-24 نقره', '+4 اسب جنگی', 'رزم +3', '+10 شهرت');
+  } else if (actionType === 'buy_pack_horses') {
+    if (realm.silver < 16) return state;
+    realm.silver -= 16;
+    realm.packHorses = (realm.packHorses ?? 0) + 4;
+    realm.foodStores += 12;
+    char.skills.trade = clampSkill(char.skills.trade + 3);
+    title = 'Purchased 4 Caravan Pack Horses';
+    titleFa = 'خرید ۴ راس ستور بارکش و کاروانی';
+    text = `Sure-footed fjord pack horses with heavy leather saddlebags now haul extra plunder, grain, and merchant wares for your retinue at ${loc.name}.`;
+    textFa = `چهار اسب بارکش مقاوم با خورجین‌های چرمی برای حمل غنایم بیشتر، آذوقه سفر و کالاهای تجاری در ${locFa} خریداری شد.`;
+    deltas.push('-16 Silver', '+4 Pack Horses', '+12 Food', 'Trade +3');
+    deltasFa.push('-16 نقره', '+4 اسب بارکش', '+12 آذوقه', 'تجارت +3');
+  } else if (actionType === 'buy_war_gear') {
+    if (realm.silver < 30) return state;
+    realm.silver -= 30;
+    realm.warGearTier = (realm.warGearTier ?? 0) + 1;
+    char.skills.combat = clampSkill(char.skills.combat + 4);
+    char.stats.strength = clampStat(char.stats.strength + 3);
+    char.skills.craft = clampSkill(char.skills.craft + 2);
+    realm.fame += 12;
+    title = 'Forged Ring-Mail & Ulfberht War-Gear';
+    titleFa = 'تجهیز سپاه به زره حلقه‌ای و شمشیرهای فولادی';
+    text = `Master weaponsmiths at ${loc.name} outfitted your front-rank champions with riveted iron ring-byrnies, spectacled helms, and crucible-steel blades!`;
+    textFa = `آهنگران چیره‌دست در ${locFa} جنگجویان پیش‌قراول شما را به زره‌های حلقه‌ای آهنین، کلاه‌خودهای جنگی و شمشیرهای فولادی آبدیده مجهز کردند!`;
+    deltas.push('-30 Silver', 'Armory Tier +1', 'Combat +4', 'Strength +3');
+    deltasFa.push('-30 نقره', 'ارتقای زره و سلاح +1', 'رزم +4', 'قدرت +3');
   } else if (actionType === 'buy_freedom') {
     if (realm.silver < 25 || char.title !== TitleRank.Thrall) return state;
     realm.silver -= 25;
@@ -2927,24 +3254,32 @@ export function executeBesiegeAction(
   let won = false;
 
   if (approach === 'assault') {
+    const lothbrokSiegeMod = calculateLothbrokEnglishRaidModifiers(state, target.id, rng);
+    const englishDefender = isEnglishSettlement(target.id)
+      ? getEnglishDefenderFlavor(target.id, state.year, rng)
+      : null;
+
     const attackPower =
       realm.hirdWarriors * 1.5 +
       realm.longships * 14 +
       char.skills.combat * 0.9 +
       char.stats.strength * 0.4 +
+      lothbrokSiegeMod.combatBonus +
       rng.int(-12, 22);
     const defensePower = target.baseDefense * 14 + 25;
     won = attackPower >= defensePower;
 
     if (won) {
       const losses = Math.min(realm.hirdWarriors, rng.int(2, 6));
-      const spoilSilver = target.baseWealth * 15 + rng.int(25, 60);
+      const rawSpoil = target.baseWealth * 15 + rng.int(25, 60);
+      const spoilSilver = Math.round(rawSpoil * lothbrokSiegeMod.lootMultiplier);
+      const fameGain = Math.round(45 * lothbrokSiegeMod.fameMultiplier);
       realm.hirdWarriors = Math.max(0, realm.hirdWarriors - losses);
       realm.silver += spoilSilver;
       realm.landFarms += 2;
-      realm.fame += 45;
+      realm.fame += fameGain;
       realm.stability = clampStat(realm.stability + 6);
-      char.stats.honor = clampStat(char.stats.honor + 12);
+      char.stats.honor = clampStat(char.stats.honor + 12 + (lothbrokSiegeMod.active ? 6 : 0));
       char.skills.combat = clampSkill(char.skills.combat + 5);
 
       const existing = realm.holdings.find((h) => h.settlementId === target.id);
@@ -2964,17 +3299,31 @@ export function executeBesiegeAction(
       }
       currentStatuses[target.id] = 'conquered';
 
-      title = `Breached the Gates of ${target.name}!`;
-      titleFa = `شکستن دروازه‌ها و تسخیر «${targetFa}»!`;
-      text = isMild
-        ? `Under covered dragon-shields, your warriors breached ${target.name}’s outer gates! The garrison yielded the citadel, 2 fertile estates, and ${spoilSilver} silver in tribute.`
-        : `Swarming the stone ramparts with battleaxes, your warband smashed the defenders of ${target.name}! Seizing 2 estates and ${spoilSilver} silver in spoils (-${losses} warriors).`;
-      textFa = isMild
-        ? `با سپرپوش‌های اژدهایی، دژ «${targetFa}» را گشودید! مدافعان تسلیم شدند و ۲ ملک حاصلخیز و ${spoilSilver} سکه نقره نصیب خاندان شد.`
-        : `با تبرزین‌های بران از باروی «${targetFa}» بالا رفتید و شهر را گشودید! ۲ ملک و ${spoilSilver} سکه نقره به چنگ آمد (-${losses} جنگجو).`;
+      title = lothbrokSiegeMod.active
+        ? `Ragnar’s Vengeance: ${target.name} Conquered!`
+        : `Breached the Gates of ${target.name}!`;
+      titleFa = lothbrokSiegeMod.active
+        ? `انتقام راگنار لُدبروک: فتح بزرگ «${targetFa}»!`
+        : `شکستن دروازه‌ها و تسخیر «${targetFa}»!`;
+      text =
+        lothbrokSiegeMod.active && englishDefender
+          ? `${lothbrokSiegeMod.warCryEn} Beneath ${lothbrokSiegeMod.bannerDescEn}, your host shattered ${englishDefender.defenderEn} at ${target.name}! [Ragnar's Name]: Seizing 2 estates and ${spoilSilver} silver, the blood-debt of the snake-pit is answered in iron.`
+          : isMild
+            ? `Under covered dragon-shields, your warriors breached ${target.name}’s outer gates! The garrison yielded the citadel, 2 fertile estates, and ${spoilSilver} silver in tribute.`
+            : `Swarming the stone ramparts with battleaxes, your warband smashed the defenders of ${target.name}! Seizing 2 estates and ${spoilSilver} silver in spoils (-${losses} warriors).`;
+      textFa =
+        lothbrokSiegeMod.active && englishDefender
+          ? `${lothbrokSiegeMod.warCryFa} زیر سایه ${lothbrokSiegeMod.bannerDescFa}، سپاهِ «${englishDefender.defenderFa}» در «${targetFa}» در هم شکسته شد! [به نام راگنار لُدبروک]: با تصرف شهر، ۲ ملک حاصلخیز و ${spoilSilver} نقره، انتقام چاه مارهای شاه ائلا با پولاد ستانده شد.`
+          : isMild
+            ? `با سپرپوش‌های اژدهایی، دژ «${targetFa}» را گشودید! مدافعان تسلیم شدند و ۲ ملک حاصلخیز و ${spoilSilver} سکه نقره نصیب خاندان شد.`
+            : `با تبرزین‌های بران از باروی «${targetFa}» بالا رفتید و شهر را گشودید! ۲ ملک و ${spoilSilver} سکه نقره به چنگ آمد (-${losses} جنگجو).`;
 
-      deltas.push(`Conquered ${target.name}`, `+${spoilSilver} Silver`, '+2 Farms', '+45 Fame');
-      deltasFa.push(`تسخیر ${targetFa}`, `+${spoilSilver} نقره`, '+2 ملک', '+45 شهرت');
+      deltas.push(`Conquered ${target.name}`, `+${spoilSilver} Silver`, '+2 Farms', `+${fameGain} Fame`);
+      deltasFa.push(`تسخیر ${targetFa}`, `+${spoilSilver} نقره`, '+2 ملک', `+${fameGain} شهرت`);
+      if (lothbrokSiegeMod.active) {
+        deltas.push(`Hefnd Satisfied -18`);
+        deltasFa.push(`کاهش بدهی انتقام هِفند -18`);
+      }
       if (losses > 0) {
         deltas.push(`-${losses} Warriors`);
         deltasFa.push(`-${losses} جنگجو`);
@@ -3068,10 +3417,16 @@ export function executeBesiegeAction(
     }
   }
 
+  const nextHefndAfterSiege =
+    isEnglishSettlement(target.id) && hasLothbrokVengeanceActive(state)
+      ? Math.max(0, Math.min(100, (state.hefndMeter ?? 0) + (won ? -18 : 10)))
+      : state.hefndMeter ?? 0;
+
   const siegeLogId = `log_siege_${target.id}_${state.year}_${state.lifeLog.length}_${rng.int(100, 999)}`;
   const nextState: FullGameState = {
     ...state,
     rngState: rng.getState(),
+    hefndMeter: nextHefndAfterSiege,
     yearlyActivitiesUsed: { ...(state.yearlyActivitiesUsed ?? {}), raid: true },
     conquestsWon: won && approach === 'assault' ? (state.conquestsWon ?? 0) + 1 : state.conquestsWon ?? 0,
     character: char,
@@ -4055,7 +4410,12 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     title: inheritedTitle,
     religion: old.religion,
     appearance: deriveAppearanceFromId(newCharId),
-    traits: heir.traits.length > 0 ? [...heir.traits] : ['brave', 'oath_keeper'],
+    traits: Array.from(
+      new Set([
+        ...(state.ragnarBloodline ? ['wolf_blood'] : []),
+        ...(heir.traits.length > 0 ? heir.traits : ['brave', 'oath_keeper']),
+      ])
+    ),
     stats: {
       health: rng.int(76, 94),
       strength: heirAge < 14 ? rng.int(28, 45) : rng.int(52, 74),
@@ -4254,6 +4614,20 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     `${inheritedFame} شهرت`,
   ];
 
+  const inheritedHeirlooms = [...(state.heirlooms ?? [])];
+  const inheritedHefnd = state.ragnarBloodline
+    ? Math.min(100, Math.max(15, (state.hefndMeter ?? 0) + 8))
+    : state.hefndMeter ?? 0;
+
+  if (state.ragnarBloodline) {
+    successionDeltas.push(`Wolf-Blood & Hefnd (${inheritedHefnd}/100)`);
+    successionDeltasFa.push(`میراث خونِ راگنار و هِفند (${inheritedHefnd}/100)`);
+    if (inheritedHeirlooms.length > 0) {
+      successionDeltas.push(`${inheritedHeirlooms.length} Saga Heirlooms`);
+      successionDeltasFa.push(`${inheritedHeirlooms.length} میراث اسطوره‌ای لُدبروک`);
+    }
+  }
+
   const successionLog: LogEntry = {
     id: `log_succ_gen${nextGen}_${state.year}`,
     year: state.year,
@@ -4264,16 +4638,29 @@ export function continueAsHeir(state: FullGameState, heirId: string): FullGameSt
     iconType: 'crown',
     title: `Generation ${nextGen} · Inheritance of ${newChar.givenName} ${newChar.patronymic}`,
     titleFa: `نسل ${nextGen} · آغاز فرمانروایی و گزارش میراث «${newFullFa}»`,
-    text: `Following the passing of ${oldFullEn}, you took the high-seat of ${state.dynastyName} at ${locName}. You inherited ${state.realm.silver} silver, ${state.realm.landFarms} farms, ${state.realm.longships} war longships, ${state.realm.knarrs} trade knarrs, ${state.realm.hirdWarriors} sworn warriors${holdingsCount > 0 ? `, and ${holdingsCount} dynasty holdings` : ''}.`,
-    textFa: `پس از درگذشت «${oldFullFa}»، شما در ${locNameFa} بر مسند فرمانروایی «${dynFa}» نشستید و میراث خاندان را تحویل گرفتید: ${state.realm.silver} سکه نقره، ${state.realm.landFarms} مزرعه، ${state.realm.longships} کشتی جنگی، ${state.realm.knarrs} کشتی تجاری، ${state.realm.hirdWarriors} جنگجوی قسم‌خورده${holdingsCount > 0 ? ` و ${holdingsCount} شهر و ملک تحت فرمان` : ''}.`,
+    text: `Following the passing of ${oldFullEn}, you took the high-seat of ${state.dynastyName} at ${locName}. You inherited ${state.realm.silver} silver, ${state.realm.landFarms} farms, ${state.realm.longships} war longships, ${state.realm.knarrs} trade knarrs, ${state.realm.hirdWarriors} sworn warriors${holdingsCount > 0 ? `, and ${holdingsCount} dynasty holdings` : ''}${state.ragnarBloodline ? ` — along with the Blood of Ragnar Lothbrok and its living Debt of Vengeance (Hefnd: ${inheritedHefnd}/100)` : ''}.`,
+    textFa: `پس از درگذشت «${oldFullFa}»، شما در ${locNameFa} بر مسند فرمانروایی «${dynFa}» نشستید و میراث خاندان را تحویل گرفتید: ${state.realm.silver} سکه نقره، ${state.realm.landFarms} مزرعه، ${state.realm.longships} کشتی جنگی، ${state.realm.knarrs} کشتی تجاری، ${state.realm.hirdWarriors} جنگجوی قسم‌خورده${holdingsCount > 0 ? ` و ${holdingsCount} شهر و ملک تحت فرمان` : ''}${state.ragnarBloodline ? ` — به همراه خونِ راگنار لُدبروک، یادگارهای خاندان و بدهی انتقام خون (هِفند: ${inheritedHefnd}/100)` : ''}.`,
     deltas: successionDeltas,
     deltasFa: successionDeltasFa,
   };
+
+  const nextFlags = Array.from(
+    new Set([
+      ...state.flags,
+      ...(state.ragnarBloodline ? ['lothbrok_heir', 'ui_imair_descendant'] : []),
+    ])
+  );
 
   const resumed: FullGameState = {
     ...state,
     rngState: rng.getState(),
     generation: nextGen,
+    ragnarBloodline: state.ragnarBloodline,
+    bloodlineBranch: state.bloodlineBranch,
+    hefndMeter: inheritedHefnd,
+    heirlooms: inheritedHeirlooms,
+    lothbrokChaptersCompleted: [...(state.lothbrokChaptersCompleted ?? [])],
+    flags: nextFlags,
     yearlyActivitiesUsed: {},
     builtThisYear: false,
     familyInteractionsUsed: {},

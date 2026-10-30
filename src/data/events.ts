@@ -8,6 +8,7 @@ import {
 } from '../types/game';
 import { HISTORICAL_SET_PIECE_EVENTS } from './historicalTimeline';
 import { BITLIFE_EVENTS } from './bitlifeEvents';
+import { LOTHBROK_CYCLE_EVENTS, LOTHBROK_SIGNATURE_EVENTS } from './lothbrokCycle';
 
 /**
  * 65+ handcrafted life, feud, Thing, sea, farm, mystic, romance, and realm events
@@ -2704,6 +2705,7 @@ export function normalizeHistoricalVikingEvent(ev: HistoricalVikingEvent): GameE
     category: 'Historical Set-Piece',
     provenance: ev.provenance ?? 'Anglo-Saxon Chronicle',
     isSemiLegendary: ev.isSemiLegendary,
+    sagaVsChronicleNote: ev.sagaVsChronicleNote,
     conditions: ev.conditions,
     eras: ev.conditions.eras,
     exactYear: ev.conditions.exactYear,
@@ -2731,6 +2733,8 @@ export const NORMALIZED_HISTORICAL_VIKING_EVENTS: GameEvent[] =
   HISTORICAL_VIKING_EVENTS.map(normalizeHistoricalVikingEvent);
 
 export const ALL_EVENTS: GameEvent[] = [
+  ...LOTHBROK_CYCLE_EVENTS,
+  ...LOTHBROK_SIGNATURE_EVENTS,
   ...HISTORICAL_SET_PIECE_EVENTS,
   ...NORMALIZED_HISTORICAL_VIKING_EVENTS,
   ...CORE_LIFE_EVENTS,

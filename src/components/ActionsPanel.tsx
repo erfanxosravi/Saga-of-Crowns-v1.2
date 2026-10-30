@@ -14,6 +14,10 @@ import {
   Swords,
 } from 'lucide-react';
 import { calculateVoyageMetrics, SETTLEMENTS, SETTLEMENTS_BY_ID } from '../data/geography';
+import {
+  hasLothbrokVengeanceActive,
+  isEnglishSettlement,
+} from '../data/lothbrokCycle';
 import { hasBoathouse, isFortifiedEnemyCity, RaidTactic } from '../engine/gameEngine';
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import { REGION_LABELS, RELIGION_LABELS, SKILL_LABELS } from '../i18n/ui';
@@ -691,6 +695,29 @@ export function ActionsPanel({
           disabled={Boolean(used.raid)}
           icon={<MapPin className="w-4 h-4 text-[#F87171]" />}
         />
+
+        {isEnglishSettlement(validRaidTargetId) && hasLothbrokVengeanceActive(state) && (
+          <div className="p-3 rounded-xl bg-gradient-to-r from-[#2D0F16] via-[#1E1320] to-[#131D2B] border border-[#EF4444]/60 space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-bold text-[#FCA5A5] flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                {isFa
+                  ? 'خونِ گرگ و انتقام راگنار لُدبروک (هِفند فعال)'
+                  : 'Wolf-Blood & Hefnd Vengeance Active'}
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-[#0B1118]/90 border border-[#EF4444]/50 text-[10px] font-mono font-bold text-[#FBBF24]">
+                {isFa
+                  ? `بدهی انتقام هِفند: ${state.hefndMeter ?? 0}/100`
+                  : `Hefnd Debt: ${state.hefndMeter ?? 0}/100`}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#E2E8F0] leading-relaxed">
+              {isFa
+                ? 'هدف در خاک انگلستان است: +۱۲ قدرت رزم، +۲۰٪ غنیمت نقره، +۲۵٪ شهرت و کاهش بدهی انتقام چاه مارهای شاه ائلا در صورت پیروزی زیر پرچم کلاغ!'
+                : 'English target: +12 Combat Power, +20% Silver Loot, +25% Fame, and satisfies Ragnar’s snake-pit blood-debt (Hefnd) upon victory beneath the Raven Banner!'}
+            </p>
+          </div>
+        )}
 
         <div className="space-y-2">
           <div className="text-xs font-semibold text-[#CBD5E1]">

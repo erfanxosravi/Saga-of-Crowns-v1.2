@@ -685,19 +685,19 @@ export function SagaSharePosterModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Studio Bar */}
-        <div className="shrink-0 px-4 py-3 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-2">
+        <div className="shrink-0 px-3.5 sm:px-4 py-2.5 border-b border-[#1E2D40] bg-[#121C2B] flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-saga text-base sm:text-lg font-bold text-[#F1F5F9] truncate">
-                {isFa ? 'طومار تصویری زندگی (مناسب استوری و اشتراک)' : 'Character Saga Story Poster'}
+              <h3 className="font-saga text-sm sm:text-base font-bold text-[#F1F5F9] leading-snug">
+                {isFa ? 'پوستر داستان زندگی (استوری ۹:۱۶)' : 'Character Saga Story Poster'}
               </h3>
-              <p className="text-[11px] text-[#94A3B8] truncate">
+              <p className="text-[10px] sm:text-[11px] text-[#94A3B8] leading-snug">
                 {isFa
-                  ? 'طراحی باکیفیت ۹:۱۶ همراه با چهره، زندگینامه و افتخارات کاراکتر شما'
-                  : 'High-resolution 9:16 portrait poster with biography, portrait & deeds'}
+                  ? 'چهره، زندگینامه و کارنامه افتخارات کاراکتر شما'
+                  : 'High-resolution 9:16 portrait poster with biography & deeds'}
               </p>
             </div>
           </div>
@@ -706,15 +706,15 @@ export function SagaSharePosterModal({
             type="button"
             onClick={onClose}
             aria-label={isFa ? 'بستن' : 'Close'}
-            className="w-9 h-9 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-xl bg-[#182638] hover:bg-[#22354D] border border-[#2A3E59] flex items-center justify-center text-[#CBD5E1] cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Customization Strip: Theme + Quote Switcher */}
-        <div className="shrink-0 px-4 py-2.5 bg-[#101926] border-b border-[#1E2D40] flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
+        <div className="shrink-0 px-3.5 sm:px-4 py-2 bg-[#101926] border-b border-[#1E2D40] flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 shrink-0">
             {(Object.values(POSTER_THEMES) as PosterPalette[]).map((t) => {
               const active = t.id === themeId;
               return (
@@ -722,7 +722,7 @@ export function SagaSharePosterModal({
                   key={t.id}
                   type="button"
                   onClick={() => setThemeId(t.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
                     active
                       ? 'bg-[#F59E0B] text-[#0B1118] border-[#F59E0B]'
                       : 'bg-[#131D2B] text-[#CBD5E1] border-[#233246] hover:border-[#F59E0B]/50'
@@ -737,37 +737,37 @@ export function SagaSharePosterModal({
           <button
             type="button"
             onClick={() => setQuoteIdx((v) => v + 1)}
-            className="px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] text-[11px] font-semibold text-[#38BDF8] cursor-pointer"
+            className="px-2.5 py-1 rounded-lg bg-[#131D2B] hover:bg-[#19283B] border border-[#233246] text-[11px] font-semibold text-[#38BDF8] cursor-pointer whitespace-nowrap shrink-0"
           >
-            {isFa ? '↻ تغییر سخن حکیمانه' : '↻ Cycle Quote'}
+            {isFa ? '↻ سخن دیگر' : '↻ Quote'}
           </button>
         </div>
 
-        {/* Scrollable Poster Live Preview Card */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5 flex justify-center">
+        {/* Complete Poster Live Preview (Compact proportions so the whole 9:16 card is visible) */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2.5 sm:px-5 sm:py-3 flex flex-col items-center">
           <div
             style={{
               background: `linear-gradient(180deg, ${pal.bgTop} 0%, ${pal.bgMid} 52%, ${pal.bgBot} 100%)`,
               borderColor: pal.outerFrame,
               color: pal.primaryText,
             }}
-            className="relative w-full max-w-[400px] rounded-3xl border-2 p-4 sm:p-5 shadow-2xl flex flex-col items-center text-center space-y-3.5 overflow-hidden"
+            className="relative mx-auto w-full max-w-[360px] h-auto rounded-3xl border-2 p-3 sm:p-4 shadow-2xl flex flex-col items-center text-center space-y-2"
           >
             {/* Inner Ornamental Frame */}
             <div
               style={{ borderColor: pal.innerFrame }}
-              className="pointer-events-none absolute inset-2.5 rounded-2xl border"
+              className="pointer-events-none absolute inset-2 rounded-2xl border"
             />
 
             {/* Top Runic Kicker */}
-            <div className="relative z-10 space-y-0.5 pt-1">
+            <div className="relative z-10 space-y-0.5">
               <div
                 style={{ color: pal.accentPrimary }}
-                className="text-[11px] font-mono tracking-widest font-bold"
+                className="text-[10px] font-mono tracking-widest font-bold"
               >
                 ᛟ ᛋᚨᚷᚨ ᛟᚠ ᚲᚱᛟᚹᚾᛋ ᛟ
               </div>
-              <div style={{ color: pal.mutedText }} className="text-[11px] font-semibold">
+              <div style={{ color: pal.mutedText }} className="text-[10px] font-semibold">
                 {isFa
                   ? `طومار زندگینامه · ${formatDynastyName(state.dynastyName, 'fa')}`
                   : `CHRONICLE OF ${state.dynastyName.toUpperCase()}`}
@@ -779,9 +779,9 @@ export function SagaSharePosterModal({
               <div
                 style={{
                   borderColor: pal.accentPrimary,
-                  boxShadow: `0 0 32px ${pal.cardBorder}`,
+                  boxShadow: `0 0 22px ${pal.cardBorder}`,
                 }}
-                className="p-1.5 rounded-3xl border-2"
+                className="p-1 rounded-2xl border-2"
               >
                 <VikingPortrait
                   age={c.age}
@@ -790,7 +790,7 @@ export function SagaSharePosterModal({
                   title={c.title}
                   appearance={c.appearance}
                   seedId={c.id}
-                  size={104}
+                  size={68}
                 />
               </div>
 
@@ -800,7 +800,7 @@ export function SagaSharePosterModal({
                   backgroundColor: pal.accentPrimary,
                   color: '#0B1118',
                 }}
-                className="-mt-3 px-3 py-0.5 rounded-full text-[11px] font-extrabold shadow-md inline-flex items-center gap-1"
+                className="-mt-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shadow-md inline-flex items-center gap-1"
               >
                 {death ? <Skull className="w-3 h-3" /> : <Crown className="w-3 h-3" />}
                 <span>
@@ -811,8 +811,8 @@ export function SagaSharePosterModal({
             </div>
 
             {/* Name, Epithet & Saga Title */}
-            <div className="relative z-10 space-y-1.5 w-full">
-              <h2 className="font-saga text-xl sm:text-2xl font-bold leading-snug break-words">
+            <div className="relative z-10 space-y-1 w-full">
+              <h2 className="font-saga text-base sm:text-lg font-bold leading-snug break-words">
                 {fullName}
                 {epText}
               </h2>
@@ -823,14 +823,14 @@ export function SagaSharePosterModal({
                   borderColor: pal.cardBorder,
                   color: pal.badgeText,
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-bold"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl border text-[11px] font-bold"
               >
-                <Crown className="w-3.5 h-3.5 shrink-0" />
+                <Crown className="w-3 h-3 shrink-0" />
                 <span>{sagaTitle}</span>
               </div>
 
               {traitNames.length > 0 && (
-                <div style={{ color: pal.mutedText }} className="text-[11px] pt-0.5">
+                <div style={{ color: pal.mutedText }} className="text-[10px]">
                   {traitNames.join(' · ')}
                 </div>
               )}
@@ -842,18 +842,18 @@ export function SagaSharePosterModal({
                 backgroundColor: pal.cardBg,
                 borderColor: pal.cardBorder,
               }}
-              className="relative z-10 w-full p-3.5 rounded-2xl border text-start space-y-2"
+              className="relative z-10 w-full p-2.5 rounded-2xl border text-start space-y-1.5"
             >
               <div
                 style={{ color: pal.accentPrimary }}
-                className="text-xs font-bold flex items-center gap-1.5"
+                className="text-[11px] font-bold flex items-center gap-1"
               >
-                <Flame className="w-3.5 h-3.5 shrink-0" />
+                <Flame className="w-3 h-3 shrink-0" />
                 <span>{isFa ? 'روایت زندگی و کارنامه روزگار' : 'Life Saga & Deeds'}</span>
               </div>
               <p
                 style={{ color: pal.secondaryText }}
-                className="text-xs leading-relaxed whitespace-normal break-words"
+                className="text-[11px] leading-relaxed whitespace-normal break-words"
               >
                 {bio.narrative}
               </p>
@@ -862,21 +862,21 @@ export function SagaSharePosterModal({
               {bio.highlights.length > 0 && (
                 <div
                   style={{ borderColor: pal.statBoxBorder }}
-                  className="pt-2 border-t space-y-1"
+                  className="pt-1.5 border-t space-y-0.5"
                 >
                   <div style={{ color: pal.mutedText }} className="text-[10px] font-bold">
                     {isFa ? 'مهم‌ترین نقاط عطف زندگی:' : 'Defining Moments:'}
                   </div>
-                  {bio.highlights.map((h, i) => (
+                  {bio.highlights.slice(0, 3).map((h, i) => (
                     <div
                       key={i}
                       style={{ color: pal.secondaryText }}
-                      className="text-[11px] flex items-center gap-1.5 truncate"
+                      className="text-[10px] flex items-start gap-1"
                     >
                       <span style={{ color: pal.accentPrimary }} className="font-mono font-bold shrink-0">
                         {isFa ? `سن ${h.age}:` : `Age ${h.age}:`}
                       </span>
-                      <span className="truncate">{h.title}</span>
+                      <span className="break-words">{h.title}</span>
                     </div>
                   ))}
                 </div>
@@ -884,7 +884,7 @@ export function SagaSharePosterModal({
             </div>
 
             {/* 6 Heroic Metrics Grid */}
-            <div className="relative z-10 w-full grid grid-cols-3 gap-2">
+            <div className="relative z-10 w-full grid grid-cols-3 gap-1.5">
               {statsItems.map((st, idx) => (
                 <div
                   key={idx}
@@ -892,14 +892,14 @@ export function SagaSharePosterModal({
                     backgroundColor: pal.statBoxBg,
                     borderColor: pal.statBoxBorder,
                   }}
-                  className="p-2 rounded-xl border flex flex-col items-center justify-center text-center"
+                  className="p-1.5 rounded-xl border flex flex-col items-center justify-center text-center"
                 >
-                  <span style={{ color: pal.mutedText }} className="text-[10px] font-semibold">
+                  <span style={{ color: pal.mutedText }} className="text-[9px] font-semibold">
                     {st.label}
                   </span>
                   <span
                     style={{ color: pal.primaryText }}
-                    className="text-xs sm:text-sm font-mono font-bold tabular-nums mt-0.5"
+                    className="text-xs font-mono font-bold tabular-nums"
                   >
                     {st.value}
                   </span>
@@ -917,7 +917,7 @@ export function SagaSharePosterModal({
                 borderColor: pal.quoteBorder,
                 color: pal.badgeText,
               }}
-              className="relative z-10 w-full p-3 rounded-2xl border text-xs italic font-medium leading-relaxed"
+              className="relative z-10 w-full p-2 rounded-xl border text-[11px] italic font-medium leading-snug"
             >
               {activeQuote}
             </div>
@@ -925,7 +925,7 @@ export function SagaSharePosterModal({
             {/* Bottom Runic Seal */}
             <div
               style={{ color: pal.mutedText }}
-              className="relative z-10 text-[10px] font-mono pt-0.5 flex items-center justify-between w-full px-1"
+              className="relative z-10 text-[9px] font-mono pt-0.5 flex items-center justify-between w-full px-1"
             >
               <span>Saga of Crowns · {state.year} AD</span>
               <span>Seed: {state.seedString}</span>
@@ -934,12 +934,12 @@ export function SagaSharePosterModal({
         </div>
 
         {/* Sticky Action Footer: Download HD Story PNG + Share */}
-        <div className="shrink-0 px-4 py-3 border-t border-[#1E2D40] bg-[#121C2B] flex flex-wrap items-center justify-between gap-2.5">
+        <div className="shrink-0 px-4 py-2.5 border-t border-[#1E2D40] bg-[#121C2B] flex flex-wrap items-center justify-between gap-2.5">
           <button
             type="button"
             disabled={isExporting}
             onClick={() => handleExportPoster('download')}
-            className="flex-1 min-h-[46px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:opacity-50 text-[#0B1118] font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md"
+            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#FBBF24] disabled:opacity-50 text-[#0B1118] font-extrabold text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md"
           >
             {savedNotice ? (
               <>
@@ -964,7 +964,7 @@ export function SagaSharePosterModal({
             type="button"
             disabled={isExporting}
             onClick={() => handleExportPoster('share')}
-            className="min-h-[46px] px-4 py-2 rounded-xl bg-[#16283E] hover:bg-[#1E3652] border border-[#38BDF8]/50 text-xs sm:text-sm font-bold text-[#38BDF8] inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            className="min-h-[44px] px-4 py-2 rounded-xl bg-[#16283E] hover:bg-[#1E3652] border border-[#38BDF8]/50 text-xs sm:text-sm font-bold text-[#38BDF8] inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
             <Share2 className="w-4 h-4 shrink-0" />
             <span>{isFa ? 'اشتراک‌گذاری' : 'Share'}</span>

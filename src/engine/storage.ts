@@ -219,6 +219,14 @@ export function migrateGameState(raw: unknown): FullGameState | null {
     marriedBloodEnemy: Boolean(parsed.marriedBloodEnemy),
     divorcesCount: typeof parsed.divorcesCount === 'number' ? parsed.divorcesCount : 0,
     conquestsWon: typeof parsed.conquestsWon === 'number' ? parsed.conquestsWon : 0,
+    ragnarBloodline: Boolean(parsed.ragnarBloodline),
+    bloodlineBranch: parsed.bloodlineBranch,
+    hefndMeter:
+      typeof parsed.hefndMeter === 'number' ? Math.max(0, Math.min(100, parsed.hefndMeter)) : 0,
+    heirlooms: Array.isArray(parsed.heirlooms) ? parsed.heirlooms : [],
+    lothbrokChaptersCompleted: Array.isArray(parsed.lothbrokChaptersCompleted)
+      ? parsed.lothbrokChaptersCompleted
+      : [],
     character: {
       ...parsed.character,
       appearance,

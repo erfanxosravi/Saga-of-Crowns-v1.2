@@ -1,3 +1,4 @@
+import { LOTHBROK_CHAPTER_METADATA, SAGA_HEIRLOOMS_MAP } from '../data/lothbrokCycle';
 import { EVENTS_FA } from '../i18n/eventsFa';
 import { SETTLEMENTS_FA } from '../i18n/gameDataFa';
 import {
@@ -97,8 +98,30 @@ function getChoiceConsequences(
     });
   }
 
-  // 4. Key Outcomes (Feud, Marriage, Rank, Ships, Land, Fame)
+  // 4. Key Outcomes (Feud, Marriage, Rank, Ships, Land, Fame, Hefnd, Heirlooms)
   if (eff) {
+    if (eff.addHeirloomIds && eff.addHeirloomIds.length > 0) {
+      const firstH = SAGA_HEIRLOOMS_MAP[eff.addHeirloomIds[0]];
+      if (firstH) {
+        tags.push({
+          text: isFa ? `میراث: ${firstH.nameFa}` : `Heirloom: ${firstH.nameEn}`,
+          tone: 'reward',
+        });
+      }
+    }
+    if (eff.hefndDelta !== undefined && eff.hefndDelta !== 0) {
+      tags.push({
+        text:
+          eff.hefndDelta < 0
+            ? isFa
+              ? `انتقام هفند ${eff.hefndDelta}`
+              : `Hefnd Satisfied ${eff.hefndDelta}`
+            : isFa
+              ? `بدهی انتقام +${eff.hefndDelta}`
+              : `Hefnd Debt +${eff.hefndDelta}`,
+        tone: eff.hefndDelta < 0 ? 'reward' : 'cost',
+      });
+    }
     if (eff.spawnRival) {
       tags.push({
         text: isFa ? 'دشمنی خونی!' : 'Starts feud',
@@ -168,6 +191,11 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
       ? event.mildText
       : event.text;
 
+  const lothbrokMeta = LOTHBROK_CHAPTER_METADATA.find((m) => m.eventId === event.id);
+  const sagaVsChronicleText = isFa
+    ? lothbrokMeta?.sagaVsChronicleFa ?? event.sagaVsChronicleNote
+    : lothbrokMeta?.sagaVsChronicleEn ?? event.sagaVsChronicleNote;
+
   const categoryText = CATEGORY_LABELS[lang][event.category];
   const ageText = formatAgeLabel(state.character.age, lang);
   const yearText = formatYearLabel(state.year, lang);
@@ -180,7 +208,7 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
       aria-modal="true"
       aria-labelledby="decision-modal-title"
     >
-      <div className="w-full max-w-xl max-h-[min(88dvh,680px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)]">
+      <div className="w-full max-w-xl max-h-[min(90dvh,720px)] flex flex-col overflow-hidden bg-[#0F1722] border border-[#283B52] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.88)]">
         <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 text-center space-y-1.5 border-b border-[#1E2D40] bg-[#121C2B]/85">
           <div className="inline-flex items-center justify-center gap-1.5 text-xs text-[#38BDF8] font-medium">
             <EventCategoryIcon
@@ -191,6 +219,13 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
             <span>
               {ageText} · {yearText} · {categoryText}
             </span>
+            {lothbrokMeta && (
+              <span className="px-2 py-0.5 rounded-md bg-[#3B181E] border border-[#F59E0B]/50 text-[#FDE68A] text-[10px] font-bold">
+                {isFa
+                  ? `فصل ${lothbrokMeta.roman} چرخه لُدبروک`
+                  : `Lothbrok Cycle · Chapter ${lothbrokMeta.roman}`}
+              </span>
+            )}
           </div>
           <h2
             id="decision-modal-title"
@@ -204,6 +239,24 @@ export function DecisionModal({ event, state, onSelectChoice }: DecisionModalPro
           <p className="font-saga text-base sm:text-lg leading-relaxed text-[#E2E8F0] text-center">
             {narrativeText}
           </p>
+
+          {sagaVsChronicleText && (
+            <div className="p-3 rounded-xl bg-[#131D2B] border border-[#F59E0B]/40 text-start space-y-1">
+              <div className="text-[11px] font-bold text-[#FBBF24] flex items-center justify-between gap-2">
+                <span>
+                  {isFa
+                    ? '📜 روایت حماسه در برابر سالنامه‌های تاریخی'
+                    : '📜 SAGA SAYS vs. CHRONICLE SAYS'}
+                </span>
+                {event.isSemiLegendary && (
+                  <span className="px-1.5 py-0.5 rounded bg-[#F59E0B]/15 text-[#FDE68A] text-[10px]">
+                    {isFa ? 'مرز اسطوره و تاریخ' : 'Myth & Record'}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#CBD5E1] leading-relaxed">{sagaVsChronicleText}</p>
+            </div>
+          )}
 
           <div className="space-y-2.5 pt-1">
             {event.choices.map((ch) => {

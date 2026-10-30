@@ -113,6 +113,12 @@ export function EventCategoryIcon({
           className={`${className} ${inheritColor ? 'text-current' : 'text-[#34D399]'} shrink-0`}
         />
       );
+    case 'dragon':
+      return (
+        <Flame
+          className={`${className} ${inheritColor ? 'text-current' : 'text-[#F59E0B]'} shrink-0`}
+        />
+      );
     case 'crown':
     default:
       return (

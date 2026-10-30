@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { SETTLEMENTS } from '../data/geography';
 import {
+  ALL_TRAITS_MAP,
   FEMALE_NAMES_BY_REGION,
   HISTORICAL_ERAS,
   MALE_NAMES_BY_REGION,
@@ -29,6 +30,10 @@ import {
   SOCIAL_CLASS_CONFIG,
   WIN_GOALS,
 } from '../data/namesAndTraits';
+import {
+  LOTHBROK_BLOODLINE_BRANCHES,
+  SAGA_HEIRLOOMS_MAP,
+} from '../data/lothbrokCycle';
 import { NewGameParams } from '../engine/gameEngine';
 import { generateReadableSeed } from '../engine/prng';
 import {
@@ -46,12 +51,14 @@ import {
   isRtl,
   REGION_LABELS,
   RELIGION_LABELS,
+  SETTLEMENT_TYPE_LABELS,
 } from '../i18n/ui';
 import {
   CharacterAppearance,
   FullGameState,
   Language,
   PremadeCharacter,
+  RagnarBloodlineBranch,
   RegionGroup,
   Religion,
   Sex,
@@ -375,6 +382,8 @@ export function CharacterCreation({
   const [startAge, setStartAge] = useState<number>(16);
   const [selectedTraits, setSelectedTraits] = useState<string[]>(['brave', 'seafarer']);
   const [winGoalId, setWinGoalId] = useState<string>('freeform_dynasty');
+  const [ragnarBloodline, setRagnarBloodline] = useState<boolean>(false);
+  const [bloodlineBranch, setBloodlineBranch] = useState<RagnarBloodlineBranch>('ivar');
   const [seedString, setSeedString] = useState<string>(() => generateReadableSeed());
   const [appearance, setAppearance] = useState<CharacterAppearance>({
     skinTone: 1,
@@ -445,21 +454,30 @@ export function CharacterCreation({
   };
 
   const handleStart = () => {
+    const branchDef = LOTHBROK_BLOODLINE_BRANCHES.find((b) => b.id === bloodlineBranch);
     onStartNewGame({
       givenName: givenName.trim() || 'Sigurd',
-      patronymic: patronymic.trim() || 'Hakonsson',
+      patronymic: patronymic.trim() || (ragnarBloodline ? 'Ragnarsson' : 'Hakonsson'),
       sex,
       year: Math.max(793, Math.min(1066, year)),
       startAge,
       birthplaceId,
       socialClass: selectedOcc.socialClass,
       religion,
-      traits: selectedTraits,
+      traits: ragnarBloodline
+        ? Array.from(new Set(['wolf_blood', ...selectedTraits]))
+        : selectedTraits,
       winGoalId,
       seedString: seedString.trim() || generateReadableSeed(),
       appearance,
       startingHomeland: homelandId,
       startingOccupation: occupationId,
+      ragnarBloodline,
+      bloodlineBranch: ragnarBloodline ? bloodlineBranch : undefined,
+      startingHeirlooms:
+        ragnarBloodline && branchDef?.startingHeirloomId
+          ? [branchDef.startingHeirloomId]
+          : undefined,
     });
   };
 
@@ -467,6 +485,7 @@ export function CharacterCreation({
     onStartNewGame({
       givenName: pm.name,
       patronymic: pm.patronymic,
+      epithet: pm.epithet,
       sex: pm.sex,
       year: pm.year,
       startAge: pm.age,
@@ -477,6 +496,14 @@ export function CharacterCreation({
       winGoalId: pm.winGoalId,
       seedString: generateReadableSeed(),
       appearance: pm.appearance,
+      bonusSilver: pm.bonusSilver,
+      bonusShips: pm.bonusShips,
+      bonusWarriors: pm.bonusWarriors,
+      startingFlags: pm.startingFlags,
+      ragnarBloodline: pm.ragnarBloodline,
+      bloodlineBranch: pm.bloodlineBranch,
+      startingHeirlooms: pm.startingHeirlooms,
+      signatureEventId: pm.signatureEventId,
     });
   };
 
@@ -598,7 +625,7 @@ export function CharacterCreation({
                 : 'text-[#94A3B8] hover:text-[#F1F5F9]'
             }`}
           >
-            {isFa ? '۵ شخصیت آماده تاریخی' : '5 Historical Lives'}
+            {isFa ? `شخصیت‌های تاریخی و خاندان راگنار (${PREMADE_CHARACTERS.length})` : `Historical & Lothbrok Leads (${PREMADE_CHARACTERS.length})`}
           </button>
         </div>
 
@@ -610,12 +637,17 @@ export function CharacterCreation({
               const placeName = isFa
                 ? SETTLEMENTS_FA[pm.birthplaceId]?.name ?? place?.name
                 : place?.name;
+              const isLothbrok = Boolean(pm.ragnarBloodline);
               return (
                 <button
                   key={pm.id}
                   type="button"
                   onClick={() => handleStartPreset(pm)}
-                  className="w-full p-4 text-start rounded-xl bg-[#131D2B] border border-[#233246] hover:border-[#F59E0B] transition-colors flex items-center justify-between gap-4 cursor-pointer"
+                  className={`w-full p-4 text-start rounded-xl border transition-colors flex items-center justify-between gap-4 cursor-pointer ${
+                    isLothbrok
+                      ? 'bg-gradient-to-r from-[#261116] via-[#171622] to-[#131D2B] border-[#EF4444]/60 hover:border-[#F59E0B]'
+                      : 'bg-[#131D2B] border-[#233246] hover:border-[#F59E0B]'
+                  }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <VikingPortrait
@@ -626,18 +658,52 @@ export function CharacterCreation({
                       seedId={pm.id}
                       size={56}
                     />
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="font-saga text-xl font-bold text-[#F1F5F9] break-words leading-snug">
-                        {isFa
-                          ? pmFa?.displayName ?? `${pm.name} ${pm.patronymic}`
-                          : `${pm.name} ${pm.patronymic}`}
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-saga text-xl font-bold text-[#F1F5F9] break-words leading-snug">
+                          {isFa
+                            ? pmFa?.displayName ?? `${pm.name} ${pm.patronymic}`
+                            : `${pm.name} ${pm.patronymic}${pm.epithet ? ` "${pm.epithet}"` : ''}`}
+                        </span>
+                        {pm.isLegendaryClaim && (
+                          <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/25 border border-[#EF4444]/60 text-[10px] font-mono font-bold text-[#FCA5A5] uppercase tracking-wider">
+                            {isFa ? 'ادعای اسطوره‌ای · تبار راگنار' : 'LEGENDARY CLAIM · RAGNARSÆTTIN'}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-[#38BDF8] break-words leading-snug">
                         {isFa ? pmFa?.subtitle ?? pm.subtitle : pm.subtitle} · {placeName}
                       </div>
-                      <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      <p className="text-xs text-[#CBD5E1] leading-relaxed">
                         {isFa ? pmFa?.context ?? pm.historicalContext : pm.historicalContext}
                       </p>
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {pm.traits.map((tid) => {
+                          const tName = isFa
+                            ? TRAITS_FA[tid]?.name ?? tid
+                            : ALL_TRAITS_MAP[tid]?.name ?? tid;
+                          return (
+                            <span
+                              key={tid}
+                              className="px-2 py-0.5 rounded-md bg-[#0B1118]/90 border border-[#283B52] text-[10px] font-semibold text-[#FBBF24]"
+                            >
+                              {tName}
+                            </span>
+                          );
+                        })}
+                        {(pm.startingHeirlooms ?? []).map((hid) => {
+                          const hDef = SAGA_HEIRLOOMS_MAP[hid];
+                          if (!hDef) return null;
+                          return (
+                            <span
+                              key={hid}
+                              className="px-2 py-0.5 rounded-md bg-[#3B181E] border border-[#F59E0B]/50 text-[10px] font-semibold text-[#FDE68A]"
+                            >
+                              {isFa ? `میراث: ${hDef.nameFa}` : `Heirloom: ${hDef.nameEn}`}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                   <div className="w-11 h-11 rounded-xl bg-[#F59E0B] text-[#0B1118] flex items-center justify-center shrink-0">
@@ -749,9 +815,83 @@ export function CharacterCreation({
                 options={settlementsInRegion.map((s) => ({
                   value: s.id,
                   label: isFa ? SETTLEMENTS_FA[s.id]?.name ?? s.name : s.name.split(' (')[0],
-                  sublabel: s.settlementType ? `Type: ${s.settlementType}` : undefined,
+                  sublabel: s.settlementType
+                    ? SETTLEMENT_TYPE_LABELS[lang][s.settlementType] ?? s.settlementType
+                    : undefined,
                 }))}
               />
+
+              {/* Ragnarsættin — Blood of Ragnar Optional Lineage Claim */}
+              <div
+                className={`p-3.5 rounded-xl border transition-colors space-y-2.5 ${
+                  ragnarBloodline
+                    ? 'bg-gradient-to-r from-[#2A1015] via-[#1B1420] to-[#121A28] border-[#EF4444]/70'
+                    : 'bg-[#0B1118] border-[#233246]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                        {isFa
+                          ? 'تبار راگنار لُدبروک (Ragnarsættin — Blood of Ragnar)'
+                          : 'Ragnarsættin — Blood of Ragnar'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/25 border border-[#EF4444]/60 text-[10px] font-mono font-bold text-[#FCA5A5] uppercase">
+                        {isFa ? 'ادعای اسطوره‌ای' : 'LEGENDARY CLAIM'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
+                      {isFa
+                        ? 'موهبت «خونِ گرگ» (+۲۵٪ شهرت، +۲۰٪ غنیمت و +۱۲ قدرت رزم در یورش به انگلستان) در برابر بارِ «بدهی انتقام خون (هِفند)» و چرخه ۹ فصلی انتقام از چاه مارهای شاه ائلا.'
+                        : 'Grants "Wolf-Blood" (+25% Fame, +20% Loot & +12 Combat in raids on England) at the cost of the "Debt of Vengeance" (Hefnd 0–100) meter and the 9-chapter Lothbrok Cycle.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !ragnarBloodline;
+                      setRagnarBloodline(nextVal);
+                      if (nextVal) {
+                        setWinGoalId('avenge_ragnar_england');
+                      }
+                    }}
+                    className={`min-h-[38px] px-3 rounded-lg text-xs font-bold border transition-colors shrink-0 cursor-pointer ${
+                      ragnarBloodline
+                        ? 'bg-[#EF4444] border-[#F87171] text-white'
+                        : 'bg-[#131D2B] border-[#283B52] text-[#94A3B8] hover:text-[#F1F5F9]'
+                    }`}
+                  >
+                    {ragnarBloodline
+                      ? isFa
+                        ? 'فعال ✓'
+                        : 'Claimed ✓'
+                      : isFa
+                        ? 'انتخاب تبار'
+                        : 'Claim Blood'}
+                  </button>
+                </div>
+
+                {ragnarBloodline && (
+                  <NordicSelect
+                    label={
+                      isFa
+                        ? 'شاخه نسبِ خاندان راگنار لُدبروک'
+                        : 'Claimed Descent Branch (Ragnarsættin)'
+                    }
+                    value={bloodlineBranch}
+                    icon={<Swords className="w-4 h-4 text-[#F87171]" />}
+                    onChange={(val) => setBloodlineBranch(val as RagnarBloodlineBranch)}
+                    options={LOTHBROK_BLOODLINE_BRANCHES.map((b) => ({
+                      value: b.id,
+                      label: isFa ? b.nameFa : b.nameEn,
+                      sublabel: isFa ? b.descFa : b.descEn,
+                      badge: isFa ? 'ادعای اسطوره‌ای' : 'Legendary Claim',
+                      badgeTone: 'gold',
+                    }))}
+                  />
+                )}
+              </div>
 
               {/* 2. Social Class & Occupation */}
               <NordicSelect

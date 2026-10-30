@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -8,10 +8,17 @@ import {
   GitBranch,
   History,
   Lock,
+  ShieldAlert,
   Sparkles,
+  Swords,
   Trophy,
 } from 'lucide-react';
 import { BITLIFE_ACHIEVEMENTS } from '../data/deathsAndAchievements';
+import {
+  LOTHBROK_BLOODLINE_BRANCHES,
+  LOTHBROK_CHAPTER_METADATA,
+  SAGA_HEIRLOOMS_MAP,
+} from '../data/lothbrokCycle';
 import { calculateLegacyScore } from '../engine/gameEngine';
 import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
 import { SHORT_TITLE_LABELS } from '../i18n/ui';
@@ -42,10 +49,33 @@ export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChro
   );
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | BadgeCategory>('all');
   const [inspectedBadgeId, setInspectedBadgeId] = useState<string | null>(null);
+  const [showLothbrokChapters, setShowLothbrokChapters] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [copiedSeed, setCopiedSeed] = useState(false);
 
   const legacyScore = calculateLegacyScore(state);
+  const hefnd = state.hefndMeter ?? 0;
+  const clampedHefnd = Math.min(100, Math.max(0, Math.round(hefnd)));
+  const prevHefndRef = useRef<number>(clampedHefnd);
+  const [hefndDelta, setHefndDelta] = useState<number>(0);
+
+  useEffect(() => {
+    const diff = clampedHefnd - prevHefndRef.current;
+    prevHefndRef.current = clampedHefnd;
+    if (diff !== 0) {
+      setHefndDelta(diff);
+      const timer = window.setTimeout(() => setHefndDelta(0), 950);
+      return () => window.clearTimeout(timer);
+    }
+  }, [clampedHefnd]);
+
+  const completedSet = new Set(state.lothbrokChaptersCompleted ?? []);
+  const completedChaptersCount = LOTHBROK_CHAPTER_METADATA.filter(
+    (ch) => completedSet.has(ch.id) || completedSet.has(ch.eventId)
+  ).length;
+  const branchInfo = state.bloodlineBranch
+    ? LOTHBROK_BLOODLINE_BRANCHES.find((b) => b.id === state.bloodlineBranch)
+    : undefined;
 
   const handleCopySeed = () => {
     navigator.clipboard?.writeText(state.seedString).catch(() => {});
@@ -140,6 +170,248 @@ export function SagaChroniclePanel({ state, initialSubTab = 'badges' }: SagaChro
             </button>
           </div>
         </div>
+      </div>
+
+      {/* The Lothbrok Cycle & Debt of Vengeance (Hefnd) Panel */}
+      <div className="p-3.5 rounded-2xl bg-[#15121E] border border-[#F59E0B]/40 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#3B181E] border border-[#F59E0B]/50 text-[#FBBF24] flex items-center justify-center shrink-0">
+              <Swords className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs sm:text-sm font-bold text-[#F1F5F9]">
+                  {isFa
+                    ? 'چرخه راگنار لُدبروک و سوگند انتقام (Hefnd)'
+                    : 'The Lothbrok Cycle & Debt of Vengeance (Hefnd)'}
+                </span>
+                {state.ragnarBloodline && (
+                  <span className="px-2 py-0.5 rounded-md bg-[#F59E0B]/20 border border-[#F59E0B]/50 text-[10px] font-bold text-[#FDE68A]">
+                    {isFa ? 'میراث اسطوره‌ای راگنار' : 'LEGENDARY CLAIM: RAGNARSÆTTIN'}
+                  </span>
+                )}
+              </div>
+              <div className="text-[11px] text-[#CBD5E1]">
+                {branchInfo
+                  ? isFa
+                    ? `${branchInfo.nameFa} · ${completedChaptersCount}/9 فصل تکمیل‌شده`
+                    : `${branchInfo.nameEn} · ${completedChaptersCount}/9 Chapters Completed`
+                  : isFa
+                    ? `${completedChaptersCount}/9 فصل حماسه‌ی راگنار و ارتش بزرگ در انگلستان`
+                    : `${completedChaptersCount}/9 Chapters of Ragnar & the Great Heathen Army`}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowLothbrokChapters((v) => !v)}
+            className="px-3 py-1.5 rounded-xl bg-[#1F1A2C] hover:bg-[#2A223B] border border-[#F59E0B]/45 text-xs font-bold text-[#FDE68A] cursor-pointer transition-colors"
+          >
+            {showLothbrokChapters
+              ? isFa
+                ? 'بستن فصل‌ها'
+                : 'Hide Chapters'
+              : isFa
+                ? 'مشاهده ۹ فصل حماسه'
+                : 'View 9 Chapters'}
+          </button>
+        </div>
+
+        {/* Hefnd (Vengeance) Meter — 0–100 Gauge in Dark Nordic Container (#0F1722) with Blood-Red Gradient (#991b1b to #dc2626) */}
+        <div
+          className={`p-3.5 rounded-xl bg-[#0F1722] border transition-[border-color,box-shadow] duration-500 space-y-2.5 ${
+            hefndDelta > 0
+              ? 'border-[#dc2626] shadow-[0_0_20px_rgba(220,38,38,0.45),inset_0_0_12px_rgba(153,27,27,0.35)]'
+              : hefndDelta < 0
+                ? 'border-emerald-500/70 shadow-[0_0_16px_rgba(16,185,129,0.25),inset_0_0_10px_rgba(15,23,34,0.8)]'
+                : 'border-[#991b1b]/60 shadow-inner'
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <ShieldAlert
+                className={`w-4 h-4 text-[#dc2626] shrink-0 transition-transform duration-500 ${
+                  hefndDelta > 0 ? 'scale-125 drop-shadow-[0_0_8px_rgba(220,38,38,0.9)]' : ''
+                }`}
+              />
+              <span className="font-bold text-[#F8FAFC]">
+                {isFa
+                  ? 'هفند — کین‌خواهی و انتقام خون (Hefnd · Vengeance)'
+                  : 'Hefnd (Vengeance) · هفند (انتقام خون)'}
+              </span>
+              <span className="text-[10px] font-mono tracking-widest text-rose-200 px-1.5 py-0.5 rounded bg-[#991b1b]/35 border border-[#dc2626]/40">
+                ᚺᛖᚠᚾᛞ
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {hefndDelta !== 0 && (
+                <span
+                  dir="ltr"
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-extrabold animate-pulse ${
+                    hefndDelta > 0
+                      ? 'bg-[#dc2626]/30 text-rose-200 border border-[#dc2626]/70'
+                      : 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50'
+                  }`}
+                >
+                  {hefndDelta > 0 ? `+${hefndDelta}` : hefndDelta}
+                </span>
+              )}
+              <span
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-colors duration-500 ${
+                  clampedHefnd >= 68
+                    ? 'bg-[#991b1b]/40 border-[#dc2626]/70 text-rose-200'
+                    : clampedHefnd > 20
+                      ? 'bg-[#991b1b]/25 border-[#dc2626]/40 text-rose-300'
+                      : 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300'
+                }`}
+              >
+                {clampedHefnd >= 68
+                  ? isFa
+                    ? 'خون ناآرام — کاهش سالانه شرافت'
+                    : 'Unavenged Blood Bleeds Honor'
+                  : clampedHefnd <= 20
+                    ? isFa
+                      ? 'سوگند انتقام آرام گرفته'
+                      : 'Vengeance Satisfied'
+                    : isFa
+                      ? 'سوگند خون در جریان'
+                      : 'Oath of Blood Active'}
+              </span>
+              <span
+                dir="ltr"
+                className={`font-mono text-xs font-extrabold text-white bg-gradient-to-r from-[#991b1b] to-[#dc2626] px-2.5 py-0.5 rounded-md border border-rose-400/40 shadow-sm transition-transform duration-500 ${
+                  hefndDelta > 0 ? 'scale-105 ring-2 ring-[#dc2626]/60' : ''
+                }`}
+              >
+                {clampedHefnd} / 100
+              </span>
+            </div>
+          </div>
+
+          {/* 0–100 Gauge with Blood-Red Gradient (#991b1b to #dc2626) & Visceral Width Transition */}
+          <div
+            dir="ltr"
+            role="meter"
+            aria-label="Hefnd (Vengeance) — هفند (انتقام خون)"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={clampedHefnd}
+            className="relative w-full h-3.5 rounded-full bg-[#090D14] border border-[#991b1b]/70 overflow-hidden shadow-inner"
+          >
+            {/* Threshold markers at 20 and 68 */}
+            <div
+              style={{ left: '20%' }}
+              className="absolute inset-y-0 w-px bg-[#FDE68A]/40 z-10"
+              title={isFa ? 'مرز آرامش انتقام (۲۰)' : 'Satisfied Threshold (20)'}
+            />
+            <div
+              style={{ left: '68%' }}
+              className="absolute inset-y-0 w-px bg-rose-300/70 z-10"
+              title={isFa ? 'مرز نفرین خون بی‌انتقام (۶۸)' : 'Unavenged Penalty Threshold (68)'}
+            />
+
+            {/* Blood-Red Gradient Fill (#991b1b -> #dc2626) with Smooth Visceral Width Transition */}
+            <div
+              style={{
+                width: `${clampedHefnd}%`,
+                transition:
+                  'width 750ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 500ms ease-out, filter 500ms ease-out',
+              }}
+              className={`h-full rounded-full bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#dc2626] transition-[width,box-shadow,filter] duration-700 ease-out will-change-[width] relative ${
+                hefndDelta > 0
+                  ? 'shadow-[0_0_20px_rgba(220,38,38,0.95)] brightness-125'
+                  : clampedHefnd >= 68
+                    ? 'shadow-[0_0_16px_rgba(220,38,38,0.85)]'
+                    : 'shadow-[0_0_12px_rgba(220,38,38,0.65)]'
+              }`}
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-white/10 via-rose-200/25 to-white/35" />
+              {clampedHefnd > 0 && (
+                <div className="absolute right-0 inset-y-0 w-2 rounded-full bg-rose-200/80 blur-[1px] shadow-[0_0_10px_#dc2626]" />
+              )}
+            </div>
+          </div>
+
+          {/* Gauge Scale (0–100) & Mechanical Legend */}
+          <div className="flex items-center justify-between gap-2 text-[10px] text-[#94A3B8]">
+            <span className="font-mono font-bold text-rose-300/80">0</span>
+            <span className="text-center text-[#CBD5E1]/90">
+              {isFa
+                ? 'یورش به انگلستان بدهی خون را فرو می‌نشاند (Hefnd ↓) و بی‌تفاوتی یا مرگ خویشاوندان آن را شعله‌ور می‌کند (Hefnd ↑)'
+                : 'Raiding England quenches Hefnd (↓); slain kin or neglected oaths fan the blood-debt (↑)'}
+            </span>
+            <span className="font-mono font-bold text-[#dc2626]">100</span>
+          </div>
+        </div>
+
+        {/* Owned Saga Heirlooms */}
+        {(state.heirlooms ?? []).length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(state.heirlooms ?? []).map((hid) => {
+              const h = SAGA_HEIRLOOMS_MAP[hid];
+              if (!h) return null;
+              return (
+                <div
+                  key={hid}
+                  title={isFa ? `${h.loreFa} (${h.effectsLabelFa})` : `${h.loreEn} (${h.effectsLabelEn})`}
+                  className="px-2.5 py-1 rounded-xl bg-[#27151D] border border-[#F59E0B]/45 text-xs text-[#FDE68A] flex items-center gap-1.5"
+                >
+                  <span className="font-serif text-amber-400">{h.rune}</span>
+                  <span className="font-bold">{isFa ? h.nameFa : h.nameEn}</span>
+                  <span className="text-[10px] text-[#CBD5E1]">
+                    ({isFa ? h.effectsLabelFa : h.effectsLabelEn})
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 9 Chapters Accordion */}
+        {showLothbrokChapters && (
+          <div className="grid grid-cols-1 gap-2 pt-1">
+            {LOTHBROK_CHAPTER_METADATA.map((ch) => {
+              const isDone = completedSet.has(ch.id) || completedSet.has(ch.eventId);
+              return (
+                <div
+                  key={ch.id}
+                  className={`p-3 rounded-xl border space-y-1.5 ${
+                    isDone
+                      ? 'bg-[#1D1829] border-[#F59E0B]/60 text-[#F1F5F9]'
+                      : 'bg-[#0E1520] border-[#233246] text-[#94A3B8]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-bold text-xs sm:text-sm text-[#F1F5F9]">
+                      {isFa
+                        ? `فصل ${ch.roman}: ${ch.titleFa}`
+                        : `Chapter ${ch.roman}: ${ch.titleEn}`}{' '}
+                      <span className="text-[11px] font-mono text-[#38BDF8]">({ch.yearHint})</span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        isDone
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : 'bg-[#162232] text-[#94A3B8]'
+                      }`}
+                    >
+                      {isDone ? (isFa ? 'روایت‌شده ✓' : 'Chronicled ✓') : isFa ? 'در انتظار' : 'Awaiting'}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-[#CBD5E1]">
+                    {isFa ? ch.summaryFa : ch.summaryEn}
+                  </p>
+                  <div className="p-2 rounded-lg bg-[#0B1018] border border-[#26354A] text-[11px] text-[#FDE68A] leading-relaxed">
+                    {isFa ? ch.sagaVsChronicleFa : ch.sagaVsChronicleEn}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Visually Distinct Unlocked Badges & Historical Seals Showcase */}

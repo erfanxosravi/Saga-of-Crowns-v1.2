@@ -155,7 +155,8 @@ export type EventIconType =
   | 'coin'
   | 'religion'
   | 'family'
-  | 'crown';
+  | 'crown'
+  | 'dragon';
 
 export type SourceProvenance =
   | 'Anglo-Saxon Chronicle'
@@ -348,6 +349,18 @@ export interface ActivePlot {
   discovered?: boolean;
 }
 
+export type MilitaryPurchaseAction =
+  | 'recruit_bondi'
+  | 'recruit_hird'
+  | 'recruit_archers'
+  | 'recruit_berserkers'
+  | 'build_snekkja'
+  | 'build_longship'
+  | 'build_knarr'
+  | 'buy_warhorses'
+  | 'buy_pack_horses'
+  | 'buy_war_gear';
+
 export interface RealmState {
   silver: number;
   landFarms: number;
@@ -361,6 +374,15 @@ export interface RealmState {
   tradeNetworks: number;
   holdings: Holding[];
   thrallsOwned: number;
+  // Detailed military & quartermaster breakdown (optional for save compatibility)
+  bondiSpearmen?: number;
+  huscarls?: number;
+  norseArchers?: number;
+  berserkers?: number;
+  snekkjas?: number;
+  warhorses?: number;
+  packHorses?: number;
+  warGearTier?: number;
 }
 
 export interface Settlement {
@@ -427,7 +449,20 @@ export interface EventEffects {
   marryRivalPeace?: boolean;
   birthChild?: boolean;
   divergenceNote?: string;
+  hefndDelta?: number;
+  addHeirloomIds?: string[];
+  completeLothbrokChapterId?: string;
 }
+
+export type RagnarBloodlineBranch =
+  | 'ivar'
+  | 'bjorn'
+  | 'halfdan'
+  | 'ubba'
+  | 'sigurd'
+  | 'hvitserk'
+  | 'lagertha'
+  | 'aslaug';
 
 export interface EventChoice {
   id: string;
@@ -479,6 +514,7 @@ export interface HistoricalVikingEvent {
   mildText?: string;
   provenance?: SourceProvenance;
   isSemiLegendary?: boolean;
+  sagaVsChronicleNote?: string;
   conditions: EventConditions;
   choices: EventChoice[];
 }
@@ -490,6 +526,7 @@ export interface GameEvent {
   iconType?: EventIconType;
   provenance?: SourceProvenance;
   isSemiLegendary?: boolean;
+  sagaVsChronicleNote?: string;
   conditions?: EventConditions;
   eras?: (1 | 2 | 3 | 4)[];
   exactYear?: number;
@@ -656,6 +693,11 @@ export interface FullGameState {
   specialTitles?: string[];
   startingHomeland?: StartingHomeland;
   startingOccupation?: StartingOccupation;
+  ragnarBloodline?: boolean;
+  bloodlineBranch?: RagnarBloodlineBranch;
+  hefndMeter?: number;
+  heirlooms?: string[];
+  lothbrokChaptersCompleted?: string[];
   character: CharacterState;
   realm: RealmState;
   relationships: RelationshipPerson[];
@@ -685,9 +727,15 @@ export interface PremadeCharacter {
   id: string;
   name: string;
   patronymic: string;
+  epithet?: string;
   subtitle: string;
   historicalContext: string;
   isSagaInspired?: boolean;
+  isLegendaryClaim?: boolean;
+  ragnarBloodline?: boolean;
+  bloodlineBranch?: RagnarBloodlineBranch;
+  startingHeirlooms?: string[];
+  signatureEventId?: string;
   year: number;
   age: number;
   sex: Sex;

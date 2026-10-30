@@ -21,6 +21,7 @@ import {
   BattleTactic,
   BuildingType,
   FullGameState,
+  MilitaryPurchaseAction,
   PlotType,
   TabId,
   TributeBurden,
@@ -41,7 +42,7 @@ interface MoreMenuPanelProps {
   state: FullGameState;
   onNavigateTab: (tab: TabId, realmSection?: RealmSection) => void;
   onClaimRank?: () => void;
-  onBuildShipOrHird?: (action: 'recruit_hird' | 'build_longship' | 'build_knarr') => void;
+  onBuildShipOrHird?: (action: MilitaryPurchaseAction) => void;
   onBuildHoldingStructure?: (settlementId: string, building: BuildingType) => void;
   onClearFirstFarm?: () => void;
   onConquerCity?: (settlementId: string) => void;
