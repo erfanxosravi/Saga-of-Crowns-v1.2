@@ -73,6 +73,8 @@ export interface LegendRegistryEntry {
   baseOrdstirr: number;
   appearance: CharacterAppearance;
   heirloomId?: string;
+  heirloomIds?: string[];
+  sourceNote?: { en: string; fa: string };
   bioEn: string;
   bioFa: string;
   relationships: LegendRelationshipRef[];
@@ -913,7 +915,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     norseName: 'Göngu-Hrólfr Rögnvaldsson',
     epithet: 'The Walker, First Ruler of Normandy',
     epithetFa: 'هرولفِ پیاده‌رو، بنیان‌گذار دوک‌نشین نورماندی',
-    statusTag: 'DOCUMENTED',
+    statusTag: 'CONTESTED',
     provenance: 'Frankish Annals',
     historicalSourcesEn: 'Dudo of Saint-Quentin, Flodoard of Reims, Heimskringla (Haralds saga hárfagra).',
     historicalSourcesFa: 'تواریخ دودو سن‌کانتن، سالنامه فلودوارد رنس و هایمس‌کرینگلا.',
@@ -927,10 +929,15 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [878, 930],
     baseOrdstirr: 75,
     appearance: { skinTone: 1, hairColor: 'brown', hairStyle: 2, beardStyle: 2 },
+    heirloomId: 'rollo_rouen_armring',
+    sourceNote: {
+      en: 'CONTESTED: Norse saga tradition says Göngu-Hrólfr was the son of Rognvald of Møre; Dudo of Saint-Quentin instead gives Rollo a Danish origin.',
+      fa: 'مورد مناقشه: سنت حماسی نورس می‌گوید گونگو-هرولف پسر رَگنوالدِ موره بود؛ دودو سن‌کانتن در برابر، برای رولو تباری دانمارکی می‌آورد.',
+    },
     bioEn:
-      'So tall and broad-shouldered that no northern pony could bear his weight — earning him the saga byname Göngu-Hrólfr (“Hrólfr the Walker”). Outlawed in Norway, he sailed to the Seine and in 911 concluded the Treaty of Saint-Clair-sur-Epte with King Charles the Simple, founding the Duchy of Normandy.',
+      'Norse saga tradition says he was so tall and broad-shouldered that no northern pony could bear his weight — earning him the byname Göngu-Hrólfr (“Hrólfr the Walker”). Outlawed in Norway, he sailed to the Seine and in 911 concluded the Treaty of Saint-Clair-sur-Epte with King Charles the Simple, founding the Duchy of Normandy.',
     bioFa:
-      'پهلوانی چنان بلندبالا و چهارشانه که هیچ اسب شمالی تاب حمل او را نداشت و ازاین‌رو «هرولفِ پیاده‌رو» لقب گرفت. او در سال ۹۱۱ میلادی پیمان سن‌کلر-سور-اپت را با شارل ساده بست و دوک‌نشین نورماندی را در روآن بنیان نهاد.',
+      'سنت حماسی نورس می‌گوید او چنان بلندبالا و چهارشانه بود که هیچ اسب شمالی تاب حملش را نداشت و ازاین‌رو «هرولفِ پیاده‌رو» لقب گرفت. او در سال ۹۱۱ میلادی پیمان سن‌کلر-سور-اپت را با شارل ساده بست و دوک‌نشین نورماندی را در روآن بنیان نهاد.',
     relationships: [
       { legendId: 'harald_fairhair', roleEn: 'Exiled by King Harald', roleFa: 'تبعیدشده از نروژ به فرمان هارالد موی‌زیبا' },
       { legendId: 'charles_the_simple', roleEn: 'Treaty Partner & Liege (911)', roleFa: 'طرف پیمان سن‌کلر در سال ۹۱۱ میلادی' },
@@ -1322,6 +1329,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     baseOrdstirr: 72,
     appearance: { skinTone: 1, hairColor: 'brown', hairStyle: 2, beardStyle: 2 },
     heirloomId: 'bragarfull_horn_lejre',
+    heirloomIds: ['bragarfull_horn_lejre', 'tyne_land_rod'],
     bioEn:
       'Commander of the Great Heathen Army at Reading, London, and Repton. In 876 the Anglo-Saxon Chronicle records that Halfdan shared out the lands of Northumbria, and his warriors “proceeded to plough and to support themselves.”',
     bioFa:
@@ -1414,6 +1422,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [850, 879],
     baseOrdstirr: 58,
     appearance: { skinTone: 0, hairColor: 'blonde', hairStyle: 2, beardStyle: 1 },
+    heirloomId: 'hvitserk_eastern_blade',
     bioEn:
       'In saga tradition, after avenging his father in England alongside his brothers, Hvitserk turned his prows toward the Baltic and Eastern river routes (Austrvegr), choosing to die atop a blazing pyre of fallen foes rather than yield in captivity.',
     bioFa:
@@ -1780,6 +1789,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [802, 839],
     baseOrdstirr: 62,
     appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 0, beardStyle: 2 },
+    heirloomId: 'ecbert_bretwalda_signet',
     bioEn:
       'Having spent his youth as an exile at Charlemagne’s Frankish court, Ecgberht broke Mercian supremacy at Ellandun (825), defeated a combined Cornish-Viking host at Hingston Down (838), and left a unified southern crown to his son Æthelwulf and grandsons.',
     bioFa:
@@ -1870,6 +1880,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [862, 867],
     baseOrdstirr: 55,
     appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 1, beardStyle: 1 },
+    heirloomId: 'aella_york_crown_brooch',
     bioEn:
       'Seized the Northumbrian throne from King Osberht in 862. In saga tradition he cast Ragnar Lothbrok into the snake-pit; in the Anglo-Saxon Chronicle he reconciled too late with Osberht and fell trying to retake York from the Great Army on 21 March 867.',
     bioFa:
@@ -1964,6 +1975,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [868, 899],
     baseOrdstirr: 85,
     appearance: { skinTone: 0, hairColor: 'brown', hairStyle: 1, beardStyle: 1 },
+    heirloomId: 'alfred_gold_aestel',
     bioEn:
       'Youngest son of Æthelwulf and grandson of Ecgberht. Driven into the Somerset marshes of Athelney in the winter of 878 by Guthrum’s surprise raid at Chippenham, he rallied the West Saxon shires to win the decisive Battle of Edington and establish the Danelaw boundary.',
     bioFa:
@@ -2056,6 +2068,7 @@ export const LEGENDS_REGISTRY: LegendRegistryEntry[] = [
     activeYears: [871, 890],
     baseOrdstirr: 65,
     appearance: { skinTone: 1, hairColor: 'blonde', hairStyle: 2, beardStyle: 2 },
+    heirloomId: 'guthrum_wedmore_cross_torque',
     bioEn:
       'Leader of the Great Summer Army that reinforced Halfdan in 871. He nearly conquered Wessex at Twelfth Night 878 before his defeat at Edington, after which he took the baptismal name Æthelstan and ruled East Anglia in peace until 890.',
     bioFa:

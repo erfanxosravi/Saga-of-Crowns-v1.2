@@ -66,11 +66,15 @@ async function main() {
     geoMod,
     legendsMod,
     typesMod,
+    heirloomMod,
+    storageMod,
   ] = await Promise.all([
     loadModule('src/engine/gameEngine.ts'),
     loadModule('src/data/geography.ts'),
     loadModule('src/data/legendsRegistry.ts'),
     loadModule('src/types/game.ts'),
+    loadModule('src/data/lothbrokCycle.ts'),
+    loadModule('src/engine/storage.ts'),
   ]);
 
   const {
@@ -86,6 +90,8 @@ async function main() {
 
   const { SETTLEMENTS_BY_ID, isSettlementActiveInYear } = geoMod;
   const { LEGENDS_REGISTRY, LEGENDS_BY_ID } = legendsMod;
+  const { SAGA_HEIRLOOMS } = heirloomMod;
+  const { migrateGameState } = storageMod;
   const ALL_LEGEND_BEATS_BY_ID = {};
   for (const leg of LEGENDS_REGISTRY) {
     for (const beat of leg.timeline ?? []) {
@@ -181,7 +187,111 @@ async function main() {
     }
   }
 
+  function makeHeirloomTestState() {
+    const state = createNewGame(
+      {
+        givenName: 'Test',
+        patronymic: 'Hakonsson',
+        sex: Sex.Male,
+        year: 838,
+        startAge: 30,
+        birthplaceId: 'lade_hladir',
+        socialClass: SocialClass.HersirKin,
+        religion: Religion.NorsePagan,
+        traits: [],
+        winGoalId: 'freeform_dynasty',
+        seedString: 'HEIRLOOM-ANNUAL-EFFECTS',
+        startingHomeland: 'norway',
+        startingOccupation: 'warrior',
+        ragnarBloodline: false,
+        sagaMode: true,
+      },
+      defaultSettings
+    );
+    state.activeEvent = null;
+    state.pendingDeath = null;
+    state.character.age = 30;
+    state.character.stats = {
+      health: 50,
+      strength: 50,
+      cunning: 50,
+      charisma: 50,
+      honor: 50,
+      wyrd: 50,
+      faith: 50,
+      happiness: 50,
+    };
+    state.character.skills = {
+      combat: 40,
+      seamanship: 40,
+      farming: 40,
+      trade: 40,
+      diplomacy: 40,
+      law: 40,
+      craft: 40,
+      skaldcraft: 40,
+      seidr: 40,
+    };
+    state.realm.fame = 25;
+    state.realm.holdings = [];
+    state.heirlooms = [];
+    return state;
+  }
+
+  let annualHeirloomsVerified = 0;
+  for (const heirloom of SAGA_HEIRLOOMS.filter((item) => item.annualEffects)) {
+    const baseline = makeHeirloomTestState();
+    const withHeirloom = structuredClone(baseline);
+    withHeirloom.heirlooms = [heirloom.id];
+    const expected = heirloom.annualEffects;
+    const baselineAfter = advanceTurn(baseline);
+    const heirloomAfter = advanceTurn(withHeirloom);
+
+    if (heirloomAfter.realm.fame - baselineAfter.realm.fame !== (expected.fame ?? 0)) {
+      errors.push(`[${heirloom.id}] Annual fame effect did not match its catalog value`);
+    }
+    for (const [stat, bonus] of Object.entries(expected.stats ?? {})) {
+      if (heirloomAfter.character.stats[stat] - baselineAfter.character.stats[stat] !== bonus) {
+        errors.push(`[${heirloom.id}] Annual ${stat} effect did not match its catalog value`);
+      }
+    }
+    for (const [skill, bonus] of Object.entries(expected.skills ?? {})) {
+      if (heirloomAfter.character.skills[skill] - baselineAfter.character.skills[skill] !== bonus) {
+        errors.push(`[${heirloom.id}] Annual ${skill} effect did not match its catalog value`);
+      }
+    }
+    annualHeirloomsVerified++;
+  }
+
+  const migrationState = makeHeirloomTestState();
+  migrationState.heirlooms = [
+    'ragna_ring_of_seine',
+    'lagertha_spear_of_gaular',
+    'floki_sunstone_compass',
+    'rollo_seine_charter',
+  ];
+  const migratedState = migrateGameState(migrationState);
+  const migratedHeirlooms = migratedState?.heirlooms ?? [];
+  const expectedMigratedHeirlooms = [
+    'ragnar_serpent_armring',
+    'lagertha_hlathgerd_spear',
+    'floki_raven_lodestone',
+    'rollo_rouen_armring',
+  ];
+  if (
+    expectedMigratedHeirlooms.some((id) => !migratedHeirlooms.includes(id)) ||
+    migratedHeirlooms.length !== expectedMigratedHeirlooms.length
+  ) {
+    errors.push('[Save migration] Legacy heirloom IDs did not migrate to the canonical IDs');
+  }
+
   console.log('=== HEADLESS ENGINE SMOKE TEST (100-YEAR CAMPAIGNS) ===');
+  console.log(
+    `Heirloom annual effects verified: ${annualHeirloomsVerified}/${SAGA_HEIRLOOMS.filter((h) => h.annualEffects).length}`
+  );
+  console.log(
+    `Legacy heirloom IDs migrated: ${migratedHeirlooms.length}/${expectedMigratedHeirlooms.length}`
+  );
 
   for (const cfg of CAMPAIGNS) {
     let state = createNewGame(

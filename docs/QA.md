@@ -1,6 +1,6 @@
 # Saga of Crowns — Living Legends QA Cheat Sheet (`docs/QA.md`)
 
-This QA cheat sheet documents the exact deterministic trigger conditions for all **37 Living Legends encounters** across the **22 historical and semi-legendary figures** in **Saga of Crowns** (`حماسه‌ی تاج‌ها`), along with the quickest fixed PRNG seed (`SAGA-793`) and step-by-step route to reach each encounter in **Saga Mode** (`realityMode: 'SAGA'`) without adding any debug UI or cheat toggles to the game.
+This QA cheat sheet documents the exact deterministic trigger conditions for all **39 Living Legends encounters** across the **22 historical and semi-legendary figures** in **Saga of Crowns** (`حماسه‌ی تاج‌ها`), along with the quickest fixed PRNG seed (`SAGA-793`) and step-by-step route to reach each encounter in **Saga Mode** (`realityMode: 'SAGA'`) without adding any debug UI or cheat toggles to the game.
 
 ---
 
@@ -16,17 +16,25 @@ This QA cheat sheet documents the exact deterministic trigger conditions for all
 
 ---
 
-## 2. Master Trigger Table — All 37 Legend Encounters
+## First 10 Minutes — Saga Mode, Norway, 838 AD
+
+1. Start a new Saga Mode game in Norway in **838 AD**, at **Hlaðir (Lade)**, age 18 or older. Use a fixed seed (for repeatable QA, `SAGA-793`) and stay in the Norway region while advancing the year.
+2. The settlements active in Norway in 838 are **Kaupang**, **Tunsberg & Borre**, **Avaldsnes (Karmøy)**, **Hlaðir (Lade)**, and **Borg in Lofoten (Hålogaland)**. Giske & Borgund, Nidaros, and later-founded Norwegian settlements are not active yet.
+3. The starting encounter pool includes `leg_enc_aldwin_01_captive_scribe`, `leg_enc_ragnar_01_bench`, `leg_enc_lagertha_01_headland`, `leg_enc_aslaug_01_harp_loom`, and `leg_enc_horik_01_hedeby`. Encounters are weighted, not all guaranteed on the first annual roll. Resolve Aldwin’s captive-scribe encounter in Norway, Denmark, or the British Isles by 858; its three choices set the player’s religion to Christian, Norse Pagan, or Syncretic.
+4. Choose any Aldwin I outcome to queue `leg_enc_aldwin_02_cross_and_grove` **two in-game years later**. It presents a separate decision about a chapel, the sacred grove, or a bilingual peace-law, again applying the selected religion through the game’s `newReligion` effect.
+5. Living Legends beats progress on their historical dates and reach Lade after the listed regional travel delay: Ecgberht’s Hingston Down (838 Summer; 2 seasons), Ecgberht’s death at Winchester (839 Summer; 2), Ragnar’s Kattegat muster (840 Spring; 2), Lagertha’s fleet at Roskilde (842 Summer; 2), Hastein at Noirmoutier (843 Summer; 3), Floki at Kaupang (844 Spring; 0), Ragnar at Paris and Aldwin at Paris (845 Spring; 3), and Horik’s Hamburg fleet (845 Summer; 2). A beat occurs in its dated year; the rumor arrives later according to its delay and the player’s location.
+
+## 2. Master Trigger Table — All 39 Legend Encounters
 
 | # | Encounter ID | Legend (`legendId`) | Year Range | Min Age | Eligible Regions (`regions`) | Required Flags (`requiredFlags`) | Blocked By Flags (`blockedByFlags`) | Heirloom Granted (Choice) |
 |---|---|---|---|---|---|---|---|---|
 | 1 | `leg_enc_ragnar_01_bench` | `ragnar_lothbrok` | `834–852` | `15` | `Denmark`, `Norway`, `Sweden`, `Baltic` | None | `legend_ragnar_dead_865`, `leg_enc_ragnar_01_done` | — |
 | 2 | `leg_enc_ragnar_02_seine` | `ragnar_lothbrok` | `842–855` | `16` | Any (Queued by `leg_enc_ragnar_01_bench` +1 yr) | `leg_enc_ragnar_01_done` | `legend_ragnar_dead_865`, `leg_enc_ragnar_02_done` | — |
-| 3 | `leg_enc_ragnar_04_elegy` | `ragnar_lothbrok` | `865–872` | `15` | Any (Triggers after Ragnar's 865 death beat) | `legend_ragnar_dead_865` | `leg_enc_ragnar_04_elegy_done` | `ragna_ring_of_seine` (Choice 1/2) |
+| 3 | `leg_enc_ragnar_04_elegy` | `ragnar_lothbrok` | `865–872` | `15` | Any (Triggers after Ragnar's 865 death beat) | `legend_ragnar_dead_865` | `leg_enc_ragnar_04_elegy_done` | `ragnar_serpent_armring` (Choice 1/2) |
 | 4 | `leg_enc_lagertha_01_headland` | `lagertha_shieldmaiden` | `825–868` | `15` | `Norway`, `Denmark`, `British Isles` | None | `leg_enc_lagertha_01_done` | — |
-| 5 | `leg_enc_lagertha_02_usurper` | `lagertha_shieldmaiden` | `835–873` | `16` | Any (Queued by `leg_enc_lagertha_01_headland` +2 yrs) | `leg_enc_lagertha_01_done` | `leg_enc_lagertha_02_done` | `lagertha_spear_of_gaular` (Choice 1) |
+| 5 | `leg_enc_lagertha_02_usurper` | `lagertha_shieldmaiden` | `835–873` | `16` | Any (Queued by `leg_enc_lagertha_01_headland` +2 yrs) | `leg_enc_lagertha_01_done` | `leg_enc_lagertha_02_done` | `lagertha_hlathgerd_spear` (Choice 1) |
 | 6 | `leg_enc_floki_01_keel` | `floki_raven_sailor` & `brother_aldwin_scribe` | `846–875` | `15` | `Norway`, `Denmark`, `British Isles`, `North Atlantic` | None | `leg_enc_floki_01_done` | — |
-| 7 | `leg_enc_floki_02_iceland` | `floki_raven_sailor` | `860–885` | `16` | Any (Queued by `leg_enc_floki_01_keel` +2 yrs) | `leg_enc_floki_01_done` | `leg_enc_floki_02_done` | `floki_sunstone_compass` (Choice 1/2) |
+| 7 | `leg_enc_floki_02_iceland` | `floki_raven_sailor` | `860–885` | `16` | Any (Queued by `leg_enc_floki_01_keel` +2 yrs) | `leg_enc_floki_01_done` | `leg_enc_floki_02_done` | `floki_raven_lodestone` (Choice 1/2) |
 | 8 | `leg_enc_rollo_01_walker` | `rollo_normandy` | `876–908` | `15` | `Norway`, `Denmark`, `Continent`, `British Isles` | None | `leg_enc_rollo_01_done` | — |
 | 9 | `leg_enc_rollo_02_epte` | `rollo_normandy` | `890–928` | `16` | `Continent`, `British Isles`, `Denmark`, `Norway` (or +2 yr chain) | None | `leg_enc_rollo_02_done` | `rollo_rouen_armring` (Choice 1) |
 | 10 | `leg_enc_ivar_01_shield_council` | `ivar_boneless` | `856–872` | `15` | `British Isles`, `Ireland`, `Denmark` | None | `leg_enc_ivar_01_done` | — |
@@ -57,6 +65,8 @@ This QA cheat sheet documents the exact deterministic trigger conditions for all
 | 35 | `leg_enc_odo_01_paris_towers` | `count_odo_paris` | `880–898` | `15` | `Continent`, `British Isles`, `Denmark` | None | `leg_enc_odo_01_done` | — |
 | 36 | `leg_enc_harald_01_hafrsfjord` | `harald_fairhair` | `865–928` | `15` | `Norway`, `North Atlantic`, `British Isles`, `Denmark` | None | `leg_enc_harald_01_done` | — |
 | 37 | `leg_enc_rurik_01_ladoga` | `rurik_of_ladoga` | `855–879` | `15` | `Kievan Rus & Rivers`, `Baltic`, `Sweden` | None | `leg_enc_rurik_01_done` | — |
+| 38 | `leg_enc_aldwin_01_captive_scribe` | `brother_aldwin_scribe` | `838–858` | `15` | `Norway`, `Denmark`, `British Isles` | None | `leg_enc_aldwin_01_done` | — |
+| 39 | `leg_enc_aldwin_02_cross_and_grove` | `brother_aldwin_scribe` | `840–878` | `16` | Any (queued by Aldwin I +2 yrs) | `leg_enc_aldwin_01_done` | `leg_enc_aldwin_02_done` | — |
 
 ---
 
@@ -71,7 +81,7 @@ This QA cheat sheet documents the exact deterministic trigger conditions for all
    - **Trigger**: `leg_enc_ecbert_01_winchester_court` fires in `British Isles` (`weight: 22`). Select Choice 1 (`ecbert_seal_winchester_charter`) to claim **King Ecgberht's Bretwalda Ring** (`ecbert_bretwalda_signet`) and automatically queue `leg_enc_ecbert_02_hingston_down` 1 year later (or trigger it directly between `825–839`).
 2. **`leg_enc_lagertha_01_headland` (`825–868`) & `leg_enc_lagertha_02_usurper` (`835–873`)**:
    - **Steps**: Remain in or sail to `Norway` (`lade_hladir` / `kaupang`) or `Denmark` (`roskilde_lejre`) starting in `825 AD`.
-   - **Trigger**: `leg_enc_lagertha_01_headland` triggers (`weight: 18`). Choose Choice 1 (`lagertha_spar_wing_drill`) to queue `leg_enc_lagertha_02_usurper` (+2 years), then choose Choice 1 (`lagertha_storm_gate_together`) to earn **Lagertha's Winged Spear of Gaular** (`lagertha_spear_of_gaular`).
+   - **Trigger**: `leg_enc_lagertha_01_headland` triggers (`weight: 18`). Choose Choice 1 (`lagertha_spar_wing_drill`) to queue `leg_enc_lagertha_02_usurper` (+2 years), then choose Choice 1 (`lagertha_storm_gate_together`) to earn **Lagertha's Winged Spear of Gaular** (`lagertha_hlathgerd_spear`).
 3. **`leg_enc_aslaug_01_harp_loom` (`825–872`) & `leg_enc_aslaug_02_randalin_tears` (`860–875`)**:
    - **Steps**: Stay in `Denmark` (`roskilde_lejre` / `hedeby`), `Norway`, or `Sweden` (`birka` / `uppsala`) from `825 AD` onward.
    - **Trigger**: `leg_enc_aslaug_01_harp_loom` fires (`weight: 19`). Pick Choice 1 (`aslaug_answer_ordstirr_riddle`) to immediately receive **Aslaug's Unwoven Shirt** (`aslaug_unwoven_shirt`) and queue `leg_enc_aslaug_02_randalin_tears`.
@@ -83,10 +93,10 @@ This QA cheat sheet documents the exact deterministic trigger conditions for all
    - **Trigger**:
      1. In `leg_enc_ragnar_01_bench`, pick Choice 1 (`swear_ragnar_bench_oath`) or Choice 2 (`sail_independent_partner`), which sets `leg_enc_ragnar_01_done` and queues `leg_enc_ragnar_02_seine` (+1 year).
      2. Advance 4 seasons to trigger `leg_enc_ragnar_02_seine` (Siege of Paris, 7,000 lbs silver ransom).
-     3. Advance to `865 AD`: Ragnar's canonical death beat (`ragnar_beat_865_snake_pit`) sets `legend_ragnar_dead_865`, unlocking `leg_enc_ragnar_04_elegy` (`weight: 26`), where Choice 1 or 2 grants **Ragnar's Arm-Ring of the Seine** (`ragna_ring_of_seine`).
+     3. Advance to `865 AD`: Ragnar's canonical death beat (`ragnar_beat_865_snake_pit`) sets `legend_ragnar_dead_865`, unlocking `leg_enc_ragnar_04_elegy` (`weight: 26`), where Choice 1 or 2 grants **Ragnar's Ouroboros Arm-Ring** (`ragnar_serpent_armring`).
 6. **`leg_enc_floki_01_keel` (`846–875`) & `leg_enc_floki_02_iceland` (`860–885`)**:
    - **Steps**: Stay in `Norway` (`avaldsnes` / `lade_hladir`) or `Denmark` from `846 AD` onward.
-   - **Trigger**: `leg_enc_floki_01_keel` triggers both **Hrafna-Flóki** and **Brother Aldwin** standing effects (`floki_honor_ravens_blot`, `floki_bridge_aldwin_stars`, or `floki_side_with_aldwin_christ`) and queues `leg_enc_floki_02_iceland` (+2 years), which grants **Floki's Sunstone & Raven-Cage** (`floki_sunstone_compass`).
+   - **Trigger**: `leg_enc_floki_01_keel` triggers both **Hrafna-Flóki** and **Brother Aldwin** standing effects (`floki_honor_ravens_blot`, `floki_bridge_aldwin_stars`, or `floki_side_with_aldwin_christ`) and queues `leg_enc_floki_02_iceland` (+2 years), which grants **Floki's Sunstone & Raven-Cage** (`floki_raven_lodestone`).
 
 ---
 
@@ -158,7 +168,7 @@ This QA cheat sheet documents the exact deterministic trigger conditions for all
 
 ## 4. Automated CLI Verification
 
-You can verify all 22 legends, 88 world beats, 37 encounters, 15 heirlooms, and the engine simulation at any time from the terminal without touching the UI:
+You can verify all 22 legends, 98 world beats, 39 encounters, 16 canonical heirlooms, and the engine simulation at any time from the terminal without touching the UI:
 
 ```bash
 npm run check:legends

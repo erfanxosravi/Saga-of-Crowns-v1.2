@@ -578,6 +578,163 @@ export const LEGEND_ENCOUNTER_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 'leg_enc_aldwin_01_captive_scribe',
+    title: 'Hall of Legends · The Captive Scribe at the Winter Thing',
+    category: 'Historical Set-Piece',
+    iconType: 'religion',
+    provenance: 'Social History',
+    isSemiLegendary: true,
+    sagaVsChronicleNote:
+      'LEGENDARY: Brother Aldwin is an original composite character; the encounter draws on documented contact between Norse households and Christian clerics.',
+    yearRange: [838, 858],
+    ageMin: 15,
+    regions: ['Norway', 'Denmark', 'British Isles'],
+    blockedByFlags: ['leg_enc_aldwin_01_done'],
+    weight: 20,
+    text: 'At a winter Thing beside the fjord, Brother Aldwin waits under guard with a small chest of damp books rescued from a coastal raid. He has translated your tally sticks into Latin and a Frankish baptismal offer into plain Norse, refusing to hide either side’s terms. The local law-speakers disagree over what should happen next: some call the captive a useful guest, while others fear that a cross beside the carved posts will invite foreign rule. Aldwin asks neither for a church nor for release without terms. He asks for a hearing, a safe place to copy the laws, and permission to pray without mocking the gods of his captors. Your household’s choice will decide whether he remains a prisoner, becomes a protected teacher, or helps shape a faith that can speak in both hall and chapel.',
+    choices: [
+      {
+        id: 'aldwin_01_accept_christian_teaching',
+        label: 'Accept Aldwin’s teaching and grant him a protected place to worship',
+        tooltipHint: 'Adopt Christianity · +Law & Diplomacy · Aldwin becomes a trusted teacher',
+        outcomeText:
+          'You give Aldwin a dry corner for his books and promise that no one will mock his prayers. His careful lessons turn your hall toward the Christian faith; in return, he teaches your stewards to read treaties before they seal them.',
+        effects: {
+          fame: 8,
+          stats: { faith: 8, charisma: 3 },
+          skills: { law: 4, diplomacy: 4 },
+          newReligion: Religion.Christian,
+          addFlags: ['leg_enc_aldwin_01_done', 'aldwin_protected_teacher'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 22,
+            addOath: 'Protected Aldwin and accepted his Christian teaching at the Thing',
+          },
+        },
+        chain: { eventId: 'leg_enc_aldwin_02_cross_and_grove', delayYears: 2 },
+      },
+      {
+        id: 'aldwin_01_keep_norse_custom',
+        label: 'Keep the old rites, but let Aldwin teach letters and law',
+        tooltipHint: 'Keep Norse Paganism · +Honor & Law · Aldwin earns a hearing',
+        outcomeText:
+          'You tell Aldwin that the household will keep its old gods, but forbid anyone to destroy his books. He accepts the boundary and teaches the law-speakers to compare foreign charters with local custom, earning a place at the Thing without converting your house.',
+        effects: {
+          fame: 7,
+          stats: { honor: 5, faith: 2 },
+          skills: { law: 5, craft: 2 },
+          newReligion: Religion.NorsePagan,
+          addFlags: ['leg_enc_aldwin_01_done', 'aldwin_kept_norse_household'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 16,
+            addOath: 'Allowed Aldwin to teach under Norse law without compelling conversion',
+          },
+        },
+        chain: { eventId: 'leg_enc_aldwin_02_cross_and_grove', delayYears: 2 },
+      },
+      {
+        id: 'aldwin_01_make_shared_house',
+        label: 'Set a shared hall for Christian prayer and Norse observance',
+        tooltipHint: 'Adopt the syncretic faith · +Stability & Diplomacy · Bridge both traditions',
+        outcomeText:
+          'You appoint Aldwin as a protected scribe and invite a Norse law-speaker to answer him openly. The two traditions remain distinct, but your household adopts a syncretic faith and gains a reputation for settling disputes without forcing worship.',
+        effects: {
+          fame: 10,
+          stability: 5,
+          stats: { faith: 6, honor: 3 },
+          skills: { diplomacy: 5, law: 2 },
+          newReligion: Religion.Syncretic,
+          addFlags: ['leg_enc_aldwin_01_done', 'aldwin_shared_hall'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 26,
+            addOath: 'Established a protected shared hall for Aldwin and Norse law-speakers',
+          },
+        },
+        chain: { eventId: 'leg_enc_aldwin_02_cross_and_grove', delayYears: 2 },
+      },
+    ],
+  },
+  {
+    id: 'leg_enc_aldwin_02_cross_and_grove',
+    title: 'Hall of Legends · The Cross, the Grove, and the Household Oath',
+    category: 'Historical Set-Piece',
+    iconType: 'religion',
+    provenance: 'Social History',
+    isSemiLegendary: true,
+    sagaVsChronicleNote:
+      'LEGENDARY: Brother Aldwin is an original composite character; this imagined dispute reflects varied local responses to conversion in the Viking Age.',
+    yearRange: [840, 878],
+    ageMin: 16,
+    requiredFlags: ['leg_enc_aldwin_01_done'],
+    blockedByFlags: ['leg_enc_aldwin_02_done'],
+    weight: 22,
+    text: 'Two winters after the Thing, Aldwin brings you a request from a small Christian household settled near your farms. They want a wooden cross beside their meeting room, while neighboring Norse families ask that the grove and its seasonal offerings remain undisturbed. No one has drawn a weapon, yet both sides fear that a royal priest or a local war-leader will turn worship into a test of loyalty. Aldwin lays a bilingual agreement on the table: it protects the families, names the public duties they share, and leaves room for each household’s prayers. He will not ask you to pretend the gods are one, only to decide whether peace needs one faith, two protected customs, or a compromise shaped by your court. The oath you make now will set how your realm handles belief.',
+    choices: [
+      {
+        id: 'aldwin_02_raise_cross',
+        label: 'Accept the Christian household and let Aldwin establish a chapel',
+        tooltipHint: 'Adopt Christianity · +Faith & Stability · Christian worship protected',
+        outcomeText:
+          'You approve the chapel and place Aldwin’s agreement under your seal. The Christian families gain a public place of worship, and your household embraces their faith while promising the Norse neighbors that their farms and legal rights remain protected.',
+        effects: {
+          fame: 9,
+          stability: 5,
+          stats: { faith: 7, honor: 2 },
+          skills: { law: 3, diplomacy: 3 },
+          newReligion: Religion.Christian,
+          addFlags: ['leg_enc_aldwin_02_done', 'aldwin_chapel_charter'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 20,
+            addOath: 'Sealed a charter protecting Aldwin’s Christian chapel and its neighbors',
+          },
+        },
+      },
+      {
+        id: 'aldwin_02_guard_old_rites',
+        label: 'Keep the grove open and forbid either side from compelling worship',
+        tooltipHint: 'Keep Norse Paganism · +Honor & Stability · Local rites protected',
+        outcomeText:
+          'You keep the grove and its seasonal rites open, while making violence or forced conversion an offense before the Thing. Aldwin remains free to teach and pray in private; the settlement keeps its Norse faith, and both households accept the same peace-law.',
+        effects: {
+          fame: 8,
+          stability: 7,
+          stats: { honor: 5, faith: 2 },
+          skills: { law: 4, diplomacy: 2 },
+          newReligion: Religion.NorsePagan,
+          addFlags: ['leg_enc_aldwin_02_done', 'aldwin_grove_protected'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 18,
+            addOath: 'Protected the grove and Aldwin’s private worship under one Thing-law',
+          },
+        },
+      },
+      {
+        id: 'aldwin_02_write_shared_oath',
+        label: 'Seal a syncretic peace-law that protects both public customs',
+        tooltipHint: 'Adopt the syncretic faith · +Law & Diplomacy · A shared civic oath',
+        outcomeText:
+          'You ask Aldwin and the local law-speakers to write the terms in both languages. The chapel and grove remain, while shared civic duties bind their households; your court adopts the syncretic faith and makes the agreement a model for future settlements.',
+        effects: {
+          fame: 12,
+          stability: 9,
+          stats: { faith: 5, honor: 4 },
+          skills: { law: 4, diplomacy: 4 },
+          newReligion: Religion.Syncretic,
+          addFlags: ['leg_enc_aldwin_02_done', 'aldwin_syncretic_peace_law'],
+          legendStandingDelta: {
+            legendId: 'brother_aldwin_scribe',
+            delta: 28,
+            addOath: 'Wrote a bilingual peace-law protecting the chapel and sacred grove alike',
+          },
+        },
+      },
+    ],
+  },
   ...LEGEND_ENCOUNTERS_PHASE_23_EVENTS,
 ];
 
@@ -769,6 +926,58 @@ export const LEGEND_ENCOUNTERS_FA: Record<string, GameEventFa> = {
           'با یادآوری سرمای بی‌رحم زمستان‌های شمال، نیمی از پاروزنان را به درو کردن علفزارهای واتنس‌فیورد می‌گماری. به برکت دوراندیشی تو، دام‌های کاروان فلوکی از یخبندان بهار جان سالم به در می‌برند و او نیز سنگ خورشید خود را به تو هدیه می‌دهد!',
         divergenceNote:
           'با هشدار یکی از ناخدایان هم‌سفر در واتنس‌فیورد، کاروان هرافنا-فلوکی علوفه کافی برای زمستان انبار کرد و دام‌هایش از نخستین زمستان ایسلند جان به در بردند.',
+      },
+    },
+  },
+  leg_enc_aldwin_01_captive_scribe: {
+    title: 'تالار افسانه‌ها · کاتب اسیر در شورای زمستانی',
+    text: 'در شورای زمستانی کنار آبدره، برادر آلدوین زیر نگهبانی با صندوق کوچکی از کتاب‌های نم‌کشیده که در یورش ساحلی نجات داده، منتظر است. او لوح‌های شمارش تو را به لاتین و پیشنهاد تعمید فرانکی‌ها را به زبان ساده نورس ترجمه کرده و حاضر نشده بندهای هیچ‌یک از طرفین را پنهان کند. سخنوران قانون درباره سرنوشت او اختلاف دارند: برخی او را میهمانی سودمند می‌دانند و برخی می‌ترسند که صلیبی کنار ستون‌های کنده‌کاری‌شده، فرمانروایی بیگانه را به همراه آورد. آلدوین نه کلیسا می‌خواهد و نه آزادی بی‌قیدوشرط؛ تنها خواستار شنیده شدن، جایی امن برای رونویسی قوانین و اجازه نیایش بدون تمسخر خدایان اسیرکنندگانش است. انتخاب خاندان تو تعیین می‌کند که او زندانی بماند، آموزگاری تحت حمایت شود یا در شکل‌دادن ایمانی یاری رساند که هم در تالار و هم در نیایشگاه سخن بگوید. اگر آزادش کنی، بایگانی شورا را نیز به او می‌سپاری تا از هر رأی، پیمان و دادخواهی نسخه‌ای نگه دارد. هیچ‌کس حق ندارد نوشته‌ای را بی‌گواهی کاتب تغییر دهد.',
+    sagaVsChronicleNote:
+      'افسانه‌ای (LEGENDARY): برادر آلدوین شخصیتی ترکیبی و اصیل است؛ این رویداد از تماس مستند میان خاندان‌های نورس و روحانیان مسیحی الهام می‌گیرد.',
+    choices: {
+      aldwin_01_accept_christian_teaching: {
+        label: 'پذیرفتن آموزش آلدوین و دادن جایگاهی امن برای نیایش به او',
+        tooltipHint: 'پذیرش مسیحیت · +قانون و دیپلماسی · آلدوین آموزگار مورد اعتماد می‌شود',
+        outcomeText:
+          'گوشه‌ای خشک برای کتاب‌های آلدوین فراهم می‌کنی و قول می‌دهی کسی نیایشش را مسخره نکند. آموزش دقیق او خاندان تو را به سوی آیین مسیحی می‌برد؛ در برابر، به مباشرانت می‌آموزد پیش از مهر کردن پیمان‌ها آن‌ها را بخوانند.',
+      },
+      aldwin_01_keep_norse_custom: {
+        label: 'پایبندی به آیین کهن و اجازه آموزش خواندن و قانون به آلدوین',
+        tooltipHint: 'پایبندی به آیین نورس · +شرافت و قانون · شنیده شدن آلدوین',
+        outcomeText:
+          'به آلدوین می‌گویی خاندان خدایان کهن خود را نگاه می‌دارد، اما اجازه نمی‌دهی کسی کتاب‌هایش را نابود کند. او این مرز را می‌پذیرد و به سخنوران قانون می‌آموزد منشورهای بیگانه را با رسم محلی بسنجند؛ بی‌آن‌که خاندان تو تغییر آیین دهد، در شورا جایگاهی می‌یابد.',
+      },
+      aldwin_01_make_shared_house: {
+        label: 'برپایی تالاری مشترک برای نیایش مسیحی و آیین نورس',
+        tooltipHint: 'پذیرش آیین آمیخته · +ثبات و دیپلماسی · پیوند دو سنت',
+        outcomeText:
+          'آلدوین را کاتب تحت حمایت می‌گماری و از سخنور قانون نورس می‌خواهی آشکارا به او پاسخ دهد. دو سنت جدا می‌مانند، اما خاندان تو آیینی آمیخته می‌پذیرد و آوازه‌ای می‌یابد که اختلاف‌ها را بی‌اجبار به نیایش حل می‌کند.',
+      },
+    },
+  },
+  leg_enc_aldwin_02_cross_and_grove: {
+    title: 'تالار افسانه‌ها · صلیب، بیشه و سوگند خاندان',
+    text: 'دو زمستان پس از شورای ثینگ، آلدوین خواسته‌ای از خانواده‌ای کوچک و مسیحی در نزدیکی مزارع تو می‌آورد. آن‌ها صلیبی چوبی کنار تالار گردهمایی‌شان می‌خواهند و خانواده‌های نورس همسایه درخواست دارند بیشه و نذرهای فصلی دست‌نخورده بماند. هنوز کسی سلاح نکشیده، اما هر دو گروه بیم دارند کاهنی شاهی یا سرداری محلی نیایش را آزمون وفاداری سازد. آلدوین پیمانی دوزبانه روی میز می‌گذارد: از خانواده‌ها پشتیبانی می‌کند، وظایف عمومی مشترکشان را مشخص می‌سازد و برای نیایش هر خانه جا می‌گذارد. او نمی‌خواهد وانمود کنی خدایان یکی هستند؛ تنها می‌خواهد تصمیم بگیری که صلح به یک آیین، دو رسمِ مورد حمایت یا سازشی در دربار نیاز دارد. سوگندی که اکنون می‌خوری، شیوه برخورد قلمروت با باورها را تعیین خواهد کرد. در تالار، کشاورزان نیز از تو می‌پرسند در روزهای بازار کدام پیمان معتبر خواهد بود و آیا شهادت همسایه‌ای با آیینی دیگر ارزش یکسان دارد. آلدوین پیشنهاد می‌کند نسخه‌ای از قانون بر در هر دو جای نیایش نصب شود تا همه بتوانند آن را بخوانند.',
+    sagaVsChronicleNote:
+      'افسانه‌ای (LEGENDARY): برادر آلدوین شخصیتی ترکیبی و اصیل است؛ این اختلاف خیالی بازتاب پاسخ‌های گوناگون جوامع محلی به گرویدن به مسیحیت در عصر وایکینگ‌هاست.',
+    choices: {
+      aldwin_02_raise_cross: {
+        label: 'پذیرش خانواده مسیحی و اجازه ساخت نیایشگاه به آلدوین',
+        tooltipHint: 'پذیرش مسیحیت · +ایمان و ثبات · حمایت از نیایش مسیحی',
+        outcomeText:
+          'با مُهر خود ساخت نیایشگاه و پیمان آلدوین را تأیید می‌کنی. خانواده‌های مسیحی مکانی عمومی برای نیایش می‌یابند و خاندان تو آیین آنان را می‌پذیرد، اما به همسایگان نورس اطمینان می‌دهد که مزارع و حقوق قانونی‌شان پابرجا خواهد ماند.',
+      },
+      aldwin_02_guard_old_rites: {
+        label: 'گشوده نگاه داشتن بیشه و منع اجبار هر دو گروه به تغییر آیین',
+        tooltipHint: 'پایبندی به آیین نورس · +شرافت و ثبات · پاسداری از آیین محلی',
+        outcomeText:
+          'بیشه و آیین فصلی آن را گشوده می‌گذاری و خشونت یا گرواندن اجباری را در شورا جرم اعلام می‌کنی. آلدوین آزاد است بیاموزد و در خلوت نیایش کند؛ آبادی آیین نورس خود را حفظ می‌کند و دو خانواده یک قانون صلح را می‌پذیرند.',
+      },
+      aldwin_02_write_shared_oath: {
+        label: 'مهر کردن قانون صلحی آمیخته که هر دو رسم عمومی را پشتیبانی کند',
+        tooltipHint: 'پذیرش آیین آمیخته · +قانون و دیپلماسی · سوگند مدنی مشترک',
+        outcomeText:
+          'از آلدوین و سخنوران قانون می‌خواهی شرایط را به هر دو زبان بنویسند. نیایشگاه و بیشه هر دو پابرجا می‌مانند و وظایف مدنی مشترک دو خانواده را پیوند می‌دهد؛ دربارت آیین آمیخته می‌پذیرد و این پیمان را الگویی برای آبادی‌های دیگر می‌سازد.',
       },
     },
   },

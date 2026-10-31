@@ -24,6 +24,7 @@ import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
 import { SHORT_TITLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
 import longhouseHearthUrl from '../assets/images/norse_longhouse_hearth_fire_1793047791880.jpg';
+import longhouseHearthWebpUrl from '../assets/images/norse_longhouse_hearth_fire_1793047791880.webp';
 import { NorseBottomSheet, NorseCornerOrnament, RuneDivider } from './NorseMotifs';
 
 const HallOfLegendsPanel = lazy(() =>
@@ -132,13 +133,16 @@ export function SagaChroniclePanel({
       {/* Nordic Dynasty Banner (wrapped titles, min 12px) */}
       <div className="relative min-h-[144px] rounded-2xl overflow-hidden border border-border-subtle bg-surface-elevated flex flex-col justify-end p-4">
         {!imgFailed ? (
-          <img
-            src={longhouseHearthUrl}
-            alt="Norse longhouse hearth"
-            referrerPolicy="no-referrer"
-            onError={() => setImgFailed(true)}
-            className="absolute inset-0 w-full h-full object-cover opacity-70"
-          />
+          <picture className="absolute inset-0 block w-full h-full">
+            <source srcSet={longhouseHearthWebpUrl} type="image/webp" />
+            <img
+              src={longhouseHearthUrl}
+              alt="Norse longhouse hearth"
+              referrerPolicy="no-referrer"
+              onError={() => setImgFailed(true)}
+              className="absolute inset-0 w-full h-full object-cover opacity-70"
+            />
+          </picture>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-surface-secondary">
             <Flame className="w-8 h-8 text-accent-amber" />
@@ -405,13 +409,18 @@ export function SagaChroniclePanel({
                 <div
                   key={hid}
                   title={isFa ? `${h.loreFa} (${h.effectsLabelFa})` : `${h.loreEn} (${h.effectsLabelEn})`}
-                  className="px-2.5 py-1 rounded-xl bg-surface-crimson-tint border border-gold-500/45 text-xs text-accent-amber-strong flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-xl bg-surface-crimson-tint border border-gold-500/45 text-xs text-accent-amber-strong flex flex-wrap items-center gap-1.5"
                 >
                   <span className="font-serif text-accent-amber">{h.rune}</span>
                   <span className="font-bold">{isFa ? h.nameFa : h.nameEn}</span>
                   <span className="text-[10px] text-ink-secondary">
                     ({isFa ? h.effectsLabelFa : h.effectsLabelEn})
                   </span>
+                  {h.sourceNote && (
+                    <span className="basis-full text-[10px] text-ink-muted">
+                      {isFa ? h.sourceNote.fa : h.sourceNote.en}
+                    </span>
+                  )}
                 </div>
               );
             })}

@@ -13,7 +13,7 @@ const SEASON_ORDER = {
   Winter: 3,
 };
 
-const TARGET_12_LEGENDS = [
+const TARGET_LEGENDS = [
   'rollo_normandy',
   'ivar_boneless',
   'bjorn_ironside',
@@ -26,6 +26,7 @@ const TARGET_12_LEGENDS = [
   'king_aella_northumbria',
   'alfred_the_great',
   'guthrum_danelaw',
+  'brother_aldwin_scribe',
 ];
 
 async function loadModule(entryRelPath) {
@@ -47,12 +48,18 @@ async function main() {
     { LEGENDS_REGISTRY, LEGENDS_BY_ID },
     { SETTLEMENTS_BY_ID, isSettlementActiveInYear },
     { LEGEND_ENCOUNTER_EVENTS, LEGEND_ENCOUNTERS_FA },
-    { SAGA_HEIRLOOMS_MAP },
+    { SAGA_HEIRLOOMS, SAGA_HEIRLOOMS_MAP, LOTHBROK_CYCLE_EVENTS, LOTHBROK_SIGNATURE_EVENTS, LOTHBROK_BLOODLINE_BRANCHES },
+    { ALL_EVENTS },
+    { PREMADE_CHARACTERS },
+    { LEGACY_HEIRLOOM_ID_MAP },
   ] = await Promise.all([
     loadModule('src/data/legendsRegistry.ts'),
     loadModule('src/data/geography.ts'),
     loadModule('src/data/legendEncounters.ts'),
     loadModule('src/data/lothbrokCycle.ts'),
+    loadModule('src/data/events.ts'),
+    loadModule('src/data/namesAndTraits.ts'),
+    loadModule('src/engine/storage.ts'),
   ]);
 
   const errors = [];
@@ -78,7 +85,7 @@ async function main() {
       continue;
     }
 
-    if (TARGET_12_LEGENDS.includes(legend.id) && timeline.length < 4) {
+    if (TARGET_LEGENDS.includes(legend.id) && timeline.length < 4) {
       errors.push(
         `[${legend.id}] Target legend has only ${timeline.length} timeline beats (expected >= 4)`
       );
@@ -213,7 +220,7 @@ async function main() {
     }
   }
 
-  for (const targetId of TARGET_12_LEGENDS) {
+  for (const targetId of TARGET_LEGENDS) {
     const count = encounterCountByLegend[targetId] || 0;
     if (count < 2) {
       errors.push(
@@ -222,10 +229,86 @@ async function main() {
     }
   }
 
+  const allHeirloomEvents = [
+    ...(ALL_EVENTS ?? []),
+    ...(LEGEND_ENCOUNTER_EVENTS ?? []),
+    ...(LOTHBROK_CYCLE_EVENTS ?? []),
+    ...(LOTHBROK_SIGNATURE_EVENTS ?? []),
+  ];
+
+  // Audit the canonical heirloom catalog, owners, grant encounters, and every data reference.
+  const heirloomIds = new Set();
+  for (const heirloom of SAGA_HEIRLOOMS) {
+    if (heirloomIds.has(heirloom.id)) {
+      errors.push(`[Heirloom ${heirloom.id}] Duplicate canonical ID`);
+    }
+    heirloomIds.add(heirloom.id);
+
+    const owner = LEGENDS_BY_ID[heirloom.ownerLegendId];
+    if (!owner) {
+      errors.push(
+        `[Heirloom ${heirloom.id}] Unknown owner legend "${heirloom.ownerLegendId}"`
+      );
+    } else if (
+      owner.heirloomId !== heirloom.id &&
+      !(owner.heirloomIds ?? []).includes(heirloom.id)
+    ) {
+      errors.push(
+        `[Heirloom ${heirloom.id}] Owner "${owner.id}" does not point back to this heirloom`
+      );
+    }
+
+    const grantEvent = allHeirloomEvents.find(
+      (event) => event.id === heirloom.grantingEncounterId
+    );
+    if (!grantEvent) {
+      errors.push(
+        `[Heirloom ${heirloom.id}] Missing granting encounter "${heirloom.grantingEncounterId}"`
+      );
+    } else if (
+      !grantEvent.choices.some((choice) =>
+        (choice.effects?.addHeirloomIds ?? []).includes(heirloom.id)
+      )
+    ) {
+      errors.push(
+        `[Heirloom ${heirloom.id}] Granting encounter "${grantEvent.id}" does not grant it`
+      );
+    }
+  }
+
+  const referencedHeirloomIds = new Set([
+    ...LEGENDS_REGISTRY.flatMap((legend) => [
+      ...(legend.heirloomId ? [legend.heirloomId] : []),
+      ...(legend.heirloomIds ?? []),
+    ]),
+    ...allHeirloomEvents.flatMap((event) =>
+      (event.choices ?? []).flatMap((choice) => choice.effects?.addHeirloomIds ?? [])
+    ),
+    ...LOTHBROK_BLOODLINE_BRANCHES.map((branch) => branch.startingHeirloomId).filter(Boolean),
+    ...PREMADE_CHARACTERS.flatMap((character) => character.startingHeirlooms ?? []),
+  ]);
+  for (const heirloomId of referencedHeirloomIds) {
+    if (!SAGA_HEIRLOOMS_MAP[heirloomId]) {
+      errors.push(`[Heirloom reference] Unknown heirloom ID "${heirloomId}"`);
+    }
+  }
+  for (const [legacyId, canonicalId] of Object.entries(LEGACY_HEIRLOOM_ID_MAP)) {
+    if (!SAGA_HEIRLOOMS_MAP[canonicalId]) {
+      errors.push(
+        `[Heirloom migration] "${legacyId}" maps to unknown canonical ID "${canonicalId}"`
+      );
+    }
+  }
+
   console.log('=== LEGEND CONSISTENCY CHECK ===');
   console.log(`Total Legends Registered: ${LEGENDS_REGISTRY.length}`);
   console.log(`Total Timeline Beats:     ${seenBeatIds.size}`);
   console.log(`Total Encounter Events:   ${(LEGEND_ENCOUNTER_EVENTS ?? []).length}\n`);
+  console.log(`Canonical Heirlooms:      ${SAGA_HEIRLOOMS.length}`);
+  console.log(
+    `Heirlooms with Annual Effects: ${SAGA_HEIRLOOMS.filter((h) => h.annualEffects).length}`
+  );
+  console.log(`Legacy Heirloom Aliases:  ${Object.keys(LEGACY_HEIRLOOM_ID_MAP).length}\n`);
 
   for (const phase of [1, 2, 3]) {
     const inPhase = LEGENDS_REGISTRY.filter((l) => l.phase === phase);
@@ -250,7 +333,7 @@ async function main() {
   }
 
   console.log(
-    '\nPASS: 0 legend consistency errors (all beats within [birthYear, deathYear], monotonic dates, >=4 beats & >=2 bilingual encounters for all 12 target legends, valid heirlooms & settlements).'
+    '\nPASS: 0 legend consistency errors (valid beats, bilingual encounters, canonical heirloom owners/grants/references, migrations, and settlements).'
   );
 }
 

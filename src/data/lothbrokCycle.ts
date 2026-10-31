@@ -2,8 +2,10 @@ import { GameEventFa } from '../i18n/eventsFa';
 import {
   ContentIntensity,
   GameEvent,
+  PersonalStats,
   RagnarBloodlineBranch,
   Religion,
+  SkillsState,
   TitleRank,
 } from '../types/game';
 import { hashSeedString, SeededRNG } from '../engine/prng';
@@ -121,10 +123,12 @@ export const LOTHBROK_BLOODLINE_BRANCHES: LothbrokBranchDef[] = [
 
 export interface SagaHeirloomDef {
   id: string;
+  ownerLegendId: string;
+  grantingEncounterId: string;
   nameEn: string;
   nameFa: string;
   norseName: string;
-  type: 'garment' | 'banner' | 'ship' | 'weapon' | 'horn' | 'shield';
+  type: 'garment' | 'banner' | 'ship' | 'weapon' | 'horn' | 'shield' | 'tool';
   rune: string;
   loreEn: string;
   loreFa: string;
@@ -132,11 +136,19 @@ export interface SagaHeirloomDef {
   effectsLabelFa: string;
   raidPowerBonus: number;
   englishFameBonus: number;
+  annualEffects?: {
+    fame?: number;
+    stats?: Partial<PersonalStats>;
+    skills?: Partial<SkillsState>;
+  };
+  sourceNote?: { en: string; fa: string };
 }
 
 export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   {
     id: 'aslaug_unwoven_shirt',
+    ownerLegendId: 'aslaug_kraka',
+    grantingEncounterId: 'leg_enc_aslaug_01_harp_loom',
     nameEn: "Aslaug's Unwoven Shirt",
     nameFa: 'پیراهن بی‌درز اسلاگ',
     norseName: 'Skyrta Áslaugar',
@@ -153,6 +165,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'hrafnsmerki_banner',
+    ownerLegendId: 'ivar_boneless',
+    grantingEncounterId: 'leg_enc_ivar_02_dumbarton_banner',
     nameEn: 'Hrafnsmerki (The Raven Banner)',
     nameFa: 'پرچم زاغ سیاه (هرافنزمِرکی)',
     norseName: 'Hrafnsmerki Ragnarsdóttur',
@@ -166,9 +180,15 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+15 قدرت یورش به انگلستان · +12 شهرت در هر غارت · +8 روحیه سپاه',
     raidPowerBonus: 15,
     englishFameBonus: 12,
+    sourceNote: {
+      en: 'CONTESTED / ALTERNATE: Saga tradition associates the Raven Banner with Ubba and its capture at Cynwit in 878; this game follows an alternate account in which Ivar awards it after Dumbarton.',
+      fa: 'مورد مناقشه / روایت جایگزین: سنت حماسی پرچم زاغ سیاه را به اوبّا و افتادنش در سینویت در ۸۷۸ پیوند می‌دهد؛ این بازی روایت جایگزینی را دنبال می‌کند که در آن ایوار پس از دمبارتون پرچم را می‌بخشد.',
+    },
   },
   {
     id: 'serpent_of_the_wash',
+    ownerLegendId: 'ubba_ragnarsson',
+    grantingEncounterId: 'leg_enc_ubba_02_cynwit',
     nameEn: 'Ormrinn (Serpent of the Wash Longship)',
     nameFa: 'کشتی «مار دریای شمال» (اورمرین)',
     norseName: 'Ormrinn · Dreki',
@@ -185,6 +205,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'fang_of_fafnir',
+    ownerLegendId: 'sigurd_snake_eye',
+    grantingEncounterId: 'leg_enc_sigurd_02_eider_peace',
     nameEn: 'Fáfnisbani Shard (Völsung Blade)',
     nameFa: 'تیغ «نیش فافنیر» (یادگار ولسونگ)',
     norseName: 'rein-egg Gramr',
@@ -198,9 +220,12 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+10 مهارت رزم · +6 قدرت بدنی · +12 قدرت یورش',
     raidPowerBonus: 12,
     englishFameBonus: 10,
+    annualEffects: { stats: { wyrd: 2 } },
   },
   {
     id: 'bragarfull_horn_lejre',
+    ownerLegendId: 'halfdan_ragnarsson',
+    grantingEncounterId: 'leg_enc_halfdan_02_ploughland',
     nameEn: 'Bragarfull Oath-Horn of Lejre',
     nameFa: 'شاخ سوگند لیره (جام براگارفول)',
     norseName: 'Bragarfull Hleiðrar',
@@ -214,9 +239,12 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+10 شرافت · +8 کاریزما · ۲۵٪ پاداش بیشتر از ادای انتقام (هفند)',
     raidPowerBonus: 8,
     englishFameBonus: 10,
+    annualEffects: { fame: 4 },
   },
   {
     id: 'shield_of_ironside',
+    ownerLegendId: 'bjorn_ironside',
+    grantingEncounterId: 'leg_enc_bjorn_02_luna_bier',
     nameEn: 'Bossed Shield of Ironside',
     nameFa: 'سپر پولادین بیورن پهلوآهنین',
     norseName: 'Skjöldr Járnsíðu',
@@ -233,6 +261,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'ragnar_serpent_armring',
+    ownerLegendId: 'ragnar_lothbrok',
+    grantingEncounterId: 'leg_enc_ragnar_02_seine',
     nameEn: "Ragnar's Ouroboros Arm-Ring",
     nameFa: 'بازوبند زرین مارپیچ راگنار',
     norseName: 'Ormbaugr Ragnars',
@@ -246,9 +276,12 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+10 کاریزما · +8 شرافت · +10 قدرت یورش',
     raidPowerBonus: 10,
     englishFameBonus: 9,
+    annualEffects: { fame: 5, stats: { honor: 2 } },
   },
   {
     id: 'lagertha_hlathgerd_spear',
+    ownerLegendId: 'lagertha_shieldmaiden',
+    grantingEncounterId: 'leg_enc_lagertha_02_usurper',
     nameEn: 'Wing-Spear of Gaular (Geirr Hlaðgerðar)',
     nameFa: 'نیزه بال‌دار گولار (یادگار لاگرتا)',
     norseName: 'Geirr Hlaðgerðar',
@@ -262,9 +295,12 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+12 مهارت رزم · +6 ذکاوت · +9 قدرت یورش',
     raidPowerBonus: 9,
     englishFameBonus: 6,
+    annualEffects: { skills: { combat: 1 } },
   },
   {
     id: 'floki_raven_lodestone',
+    ownerLegendId: 'floki_raven_sailor',
+    grantingEncounterId: 'leg_enc_floki_02_iceland',
     nameEn: "Hrafna-Flóki's Sunstone & Raven-Compass",
     nameFa: 'سنگ خورشید و قطب‌نمای زاغ فلوکی',
     norseName: 'Sólarsteinn Hrafna-Flóka',
@@ -278,9 +314,12 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+14 دریانوردی · +8 صنعتگری · ایمنی سفرهای اقیانوس اطلس',
     raidPowerBonus: 7,
     englishFameBonus: 5,
+    annualEffects: { stats: { wyrd: 1 }, skills: { seamanship: 1 } },
   },
   {
     id: 'rollo_rouen_armring',
+    ownerLegendId: 'rollo_normandy',
+    grantingEncounterId: 'leg_enc_rollo_02_epte',
     nameEn: "Rollo's Seine-Warden Torque",
     nameFa: 'طوق نقره و طلای رولو (نگهبان رود سن)',
     norseName: 'Hringr Göngu-Hrólfs',
@@ -297,6 +336,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'hvitserk_eastern_blade',
+    ownerLegendId: 'hvitserk_ragnarsson',
+    grantingEncounterId: 'leg_enc_hvitserk_02_steppe_stand',
     nameEn: "Hvitserk's Eastern River-Sabre",
     nameFa: 'شمشیر خاوری هویتسرک پیراهن‌سپید',
     norseName: 'Austr-Sax Hvítserks',
@@ -313,6 +354,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'ecbert_bretwalda_signet',
+    ownerLegendId: 'king_ecbert_wessex',
+    grantingEncounterId: 'leg_enc_ecbert_01_winchester_court',
     nameEn: "King Ecgberht's Bretwalda Ring",
     nameFa: 'انگشتری و نشان برتوالدای شاه اکبرت',
     norseName: 'Konungshringr Egberhts',
@@ -329,6 +372,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'aella_york_crown_brooch',
+    ownerLegendId: 'king_aella_northumbria',
+    grantingEncounterId: 'leg_enc_aella_02_roman_breach',
     nameEn: 'Northumbrian Boar-Clasp of Eoforwic',
     nameFa: 'سنجاق سلطنتی گراز یورک (غنیمت شاه ائلا)',
     norseName: 'Jórvíkur-Sylgja Ellu',
@@ -345,6 +390,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'alfred_gold_aestel',
+    ownerLegendId: 'alfred_the_great',
+    grantingEncounterId: 'leg_enc_alfred_02_wedmore_burhs',
     nameEn: "King Alfred's Gold Jewel-Pointer (Æstel)",
     nameFa: 'نشانگر زرین و میناکاری‌شده شاه آلفرد کبیر (اَستل)',
     norseName: 'Gull-Æstel Álfráðs',
@@ -361,6 +408,8 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
   },
   {
     id: 'guthrum_wedmore_cross_torque',
+    ownerLegendId: 'guthrum_danelaw',
+    grantingEncounterId: 'leg_enc_guthrum_02_aethelstan_mint',
     nameEn: "Guthrum-Æthelstan's Wedmore Peace-Torque",
     nameFa: 'طوق دوگانه گوتورم-اتلستن (یادگار پیمان ودمور)',
     norseName: 'Friðbaugr Gorms Enska',
@@ -374,6 +423,28 @@ export const SAGA_HEIRLOOMS: SagaHeirloomDef[] = [
     effectsLabelFa: '+10 تجارت · +8 دیپلماسی · +8 قدرت یورش',
     raidPowerBonus: 8,
     englishFameBonus: 9,
+  },
+  {
+    id: 'tyne_land_rod',
+    ownerLegendId: 'halfdan_ragnarsson',
+    grantingEncounterId: 'sig_halfdan_tyne_plough',
+    nameEn: "Halfdan's Tyne Land-Measuring Rod",
+    nameFa: 'میله زمین‌پیمای تاین هالفدان',
+    norseName: 'Mælistafr Týns',
+    type: 'tool',
+    rune: 'ᛏ',
+    loreEn:
+      'A notched ashwood rod used beside the survey rope to mark the shares granted to Halfdan’s veteran crews along the Tyne and Ouse.',
+    loreFa:
+      'میله‌ای از چوب زبان‌گنجشک با شیارهای اندازه‌گیری که در کنار طناب زمین‌پیما برای نشانه‌گذاری سهم جنگجویان کهنه‌کار هالفدان در کرانه تاین و اوز به کار می‌رفت.',
+    effectsLabelEn: 'Marks inherited wapentake boundaries',
+    effectsLabelFa: 'نشانه‌گذاری مرزهای موروثی وپن‌تیک',
+    raidPowerBonus: 0,
+    englishFameBonus: 0,
+    sourceNote: {
+      en: 'CONTESTED / FICTIONALIZED: The Anglo-Saxon Chronicle records land-sharing and ploughing in Northumbria, not a surviving measuring rod; the artifact is an original game interpretation.',
+      fa: 'مورد مناقشه / داستان‌پردازی: وقایع‌نامه آنگلو-ساکسون از تقسیم زمین و کشاورزی در نورثامبریا می‌گوید، نه از میله‌ای اندازه‌گیری‌شده که باقی مانده باشد؛ این یادگار ساخته روایت بازی است.',
+    },
   },
 ];
 
@@ -1276,6 +1347,7 @@ export const LOTHBROK_SIGNATURE_EVENTS: GameEvent[] = [
           silver: 60,
           fame: 50,
           hefndDelta: -15,
+          addHeirloomIds: ['tyne_land_rod'],
           stats: { honor: 12, cunning: 6 },
           skills: { farming: 10, law: 10 },
         },
