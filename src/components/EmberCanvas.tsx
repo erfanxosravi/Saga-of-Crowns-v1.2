@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { ThemeMode } from '../types/game';
 
 interface EmberCanvasProps {
   enabled: boolean;
+  theme?: ThemeMode;
 }
 
 interface EmberParticle {
@@ -15,8 +17,10 @@ interface EmberParticle {
   warmth: number;
 }
 
-export function EmberCanvas({ enabled }: EmberCanvasProps) {
+export function EmberCanvas({ enabled, theme }: EmberCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const themeRef = useRef<ThemeMode | undefined>(theme);
+  themeRef.current = theme;
 
   useEffect(() => {
     if (!enabled) return;
@@ -57,6 +61,14 @@ export function EmberCanvas({ enabled }: EmberCanvasProps) {
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
+      const activeTheme =
+        themeRef.current ??
+        (typeof document !== 'undefined' &&
+        document.documentElement.dataset.theme === 'dark'
+          ? 'dark'
+          : 'light');
+      const isLight = activeTheme !== 'dark';
+
       for (const p of particles) {
         p.x += p.vx + Math.sin(p.y * 0.015) * 0.14;
         p.y += p.vy;
@@ -68,9 +80,6 @@ export function EmberCanvas({ enabled }: EmberCanvasProps) {
           p.alpha = 0.25 + Math.random() * 0.4;
         }
 
-        const isLight =
-          typeof document !== 'undefined' &&
-          document.documentElement.dataset.theme !== 'dark';
         const effectiveAlpha = isLight ? p.alpha * 0.48 : p.alpha;
 
         ctx.beginPath();

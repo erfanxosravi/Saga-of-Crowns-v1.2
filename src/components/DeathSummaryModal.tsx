@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -13,8 +13,13 @@ import { formatPersonName } from '../i18n/gameDataFa';
 import { EPITHET_FA, formatAgeLabel, isRtl, ROLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
 import { useModalA11y } from '../utils/useModalA11y';
-import { SagaSharePosterModal } from './SagaSharePosterModal';
 import { VikingPortrait } from './VikingPortrait';
+
+const SagaSharePosterModal = lazy(() =>
+  import('./SagaSharePosterModal').then((m) => ({
+    default: m.SagaSharePosterModal,
+  }))
+);
 
 interface DeathSummaryModalProps {
   state: FullGameState;
@@ -325,11 +330,15 @@ export function DeathSummaryModal({
         </div>
       </div>
 
-      <SagaSharePosterModal
-        isOpen={isPosterModalOpen}
-        onClose={() => setIsPosterModalOpen(false)}
-        state={state}
-      />
+      {isPosterModalOpen && (
+        <Suspense fallback={null}>
+          <SagaSharePosterModal
+            isOpen={isPosterModalOpen}
+            onClose={() => setIsPosterModalOpen(false)}
+            state={state}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

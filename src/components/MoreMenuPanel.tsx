@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { lazy, ReactNode, Suspense, useState } from 'react';
 import {
   Award,
   Castle,
@@ -28,15 +28,20 @@ import {
   TabId,
   TributeBurden,
 } from '../types/game';
-import { HallOfLegendsPanel } from './HallOfLegendsPanel';
 import {
   NorseAccent,
   NorseBottomSheet,
   NorseCornerOrnament,
   RuneDivider,
 } from './NorseMotifs';
-import { RealmPanel } from './RealmPanel';
 import { SagaChroniclePanel } from './SagaChroniclePanel';
+
+const HallOfLegendsPanel = lazy(() =>
+  import('./HallOfLegendsPanel').then((m) => ({ default: m.HallOfLegendsPanel }))
+);
+const RealmPanel = lazy(() =>
+  import('./RealmPanel').then((m) => ({ default: m.RealmPanel }))
+);
 
 export type RealmSection = 'holdings' | 'fleet' | 'intrigue';
 type MoreSheetId = 'holdings' | 'fleet' | 'intrigue' | 'rank_goal' | 'badges' | 'lineage' | 'hall_of_legends';
@@ -420,27 +425,35 @@ export function MoreMenuPanel({
                   : 'Estates, Cities & Buildings'
           }
         >
-          <RealmPanel
-            state={state}
-            initialSection={activeModal === 'intrigue' ? 'politics' : activeModal}
-            onClaimRank={() => onClaimRank && onClaimRank()}
-            onBuildShipOrHird={(act) => onBuildShipOrHird && onBuildShipOrHird(act)}
-            onBuildHoldingStructure={(sid, b) =>
-              onBuildHoldingStructure && onBuildHoldingStructure(sid, b)
+          <Suspense
+            fallback={
+              <div className="p-6 text-center text-xs text-ink-muted">
+                {isFa ? 'در حال بارگذاری قلمرو...' : 'Loading Realm...'}
+              </div>
             }
-            onClearFirstFarm={() => onClearFirstFarm && onClearFirstFarm()}
-            onConquerCity={onConquerCity}
-            onSendSettlers={onSendSettlers}
-            onStationGarrison={onStationGarrison}
-            onSetTributeBurden={onSetTributeBurden}
-            onAppointJarl={onAppointJarl}
-            onTakeHostages={onTakeHostages}
-            onToggleTolerance={onToggleTolerance}
-            onExecutePlot={onExecutePlot}
-            onClaimSpecialTitle={onClaimSpecialTitle}
-            onResolveBattleTactic={onResolveBattleTactic}
-            onCancelBattle={onCancelBattle}
-          />
+          >
+            <RealmPanel
+              state={state}
+              initialSection={activeModal === 'intrigue' ? 'politics' : activeModal}
+              onClaimRank={() => onClaimRank && onClaimRank()}
+              onBuildShipOrHird={(act) => onBuildShipOrHird && onBuildShipOrHird(act)}
+              onBuildHoldingStructure={(sid, b) =>
+                onBuildHoldingStructure && onBuildHoldingStructure(sid, b)
+              }
+              onClearFirstFarm={() => onClearFirstFarm && onClearFirstFarm()}
+              onConquerCity={onConquerCity}
+              onSendSettlers={onSendSettlers}
+              onStationGarrison={onStationGarrison}
+              onSetTributeBurden={onSetTributeBurden}
+              onAppointJarl={onAppointJarl}
+              onTakeHostages={onTakeHostages}
+              onToggleTolerance={onToggleTolerance}
+              onExecutePlot={onExecutePlot}
+              onClaimSpecialTitle={onClaimSpecialTitle}
+              onResolveBattleTactic={onResolveBattleTactic}
+              onCancelBattle={onCancelBattle}
+            />
+          </Suspense>
         </NorseBottomSheet>
       )}
 
@@ -579,10 +592,18 @@ export function MoreMenuPanel({
               : `${state.year} AD · Ragnar Lothbrok & His Circle`
           }
         >
-          <HallOfLegendsPanel
-            state={state}
-            onPayForLegendNews={onPayForLegendNews}
-          />
+          <Suspense
+            fallback={
+              <div className="p-6 text-center text-xs text-ink-muted">
+                {isFa ? 'در حال گشودن تالار افسانه‌ها...' : 'Opening Hall of Legends...'}
+              </div>
+            }
+          >
+            <HallOfLegendsPanel
+              state={state}
+              onPayForLegendNews={onPayForLegendNews}
+            />
+          </Suspense>
         </NorseBottomSheet>
       )}
     </div>

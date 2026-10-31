@@ -1464,7 +1464,7 @@ export function advanceTurn(state: FullGameState): FullGameState {
 
   const reached1066Now = nextYear >= 1066 && !state.epilogue1066Shown;
 
-  // Handle historical settlement transitions (e.g., Lade -> Nidaros in 997 AD, newly founded royal seats)
+  // Handle historical settlement bounds (note: Lade and Nidaros coexist after 997 AD)
   char.locationId = resolveActiveSettlementId(char.locationId, nextYear);
   const migratedHoldingsMap = new Map<string, Holding>();
   for (const h of realm.holdings) {

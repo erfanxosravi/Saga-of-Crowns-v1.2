@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   CloudRain,
@@ -25,7 +25,6 @@ import { DeathSummaryModal } from './components/DeathSummaryModal';
 import { DecisionModal } from './components/DecisionModal';
 import { EmberCanvas } from './components/EmberCanvas';
 import { Epilogue1066Modal } from './components/Epilogue1066Modal';
-import { FamilyPanel } from './components/FamilyPanel';
 import { HeaderMenuDropdown } from './components/HeaderMenuDropdown';
 import {
   HonorToast,
@@ -35,14 +34,26 @@ import {
 import { LifeFeed } from './components/LifeFeed';
 import { MoreMenuPanel, RealmSection } from './components/MoreMenuPanel';
 import { QuickGuideModal } from './components/QuickGuideModal';
-import { RealmPanel } from './components/RealmPanel';
 import { SagaChroniclePanel } from './components/SagaChroniclePanel';
-import { SagaSharePosterModal } from './components/SagaSharePosterModal';
 import { SeasonalWeatherOverlay } from './components/SeasonalWeatherOverlay';
 import { SettingsSaveModal } from './components/SettingsSaveModal';
 import { StatBar } from './components/StatBar';
-import { VikingMap } from './components/VikingMap';
 import { VikingPortrait } from './components/VikingPortrait';
+
+const VikingMap = lazy(() =>
+  import('./components/VikingMap').then((m) => ({ default: m.VikingMap }))
+);
+const RealmPanel = lazy(() =>
+  import('./components/RealmPanel').then((m) => ({ default: m.RealmPanel }))
+);
+const FamilyPanel = lazy(() =>
+  import('./components/FamilyPanel').then((m) => ({ default: m.FamilyPanel }))
+);
+const SagaSharePosterModal = lazy(() =>
+  import('./components/SagaSharePosterModal').then((m) => ({
+    default: m.SagaSharePosterModal,
+  }))
+);
 import { getSeasonalWeatherProfile, SETTLEMENTS_BY_ID } from './data/geography';
 import { ALL_TRAITS_MAP } from './data/namesAndTraits';
 import {
@@ -533,7 +544,7 @@ export default function App() {
         dir={rtl ? 'rtl' : 'ltr'}
         className={`h-dvh max-h-dvh w-full flex flex-col overflow-hidden bg-surface-canvas ${textScaleClass}`}
       >
-        <EmberCanvas enabled={settings.emberAnimation} />
+        <EmberCanvas enabled={settings.emberAnimation} theme={theme} />
         <CharacterCreation
           lang={lang}
           onOpenGuide={() => setIsGuideOpen(true)}
@@ -636,7 +647,7 @@ export default function App() {
       dir={rtl ? 'rtl' : 'ltr'}
       className={`h-dvh max-h-dvh overflow-hidden bg-surface-canvas text-ink-primary flex flex-col select-none ${textScaleClass}`}
     >
-      <EmberCanvas enabled={settings.emberAnimation} />
+      <EmberCanvas enabled={settings.emberAnimation} theme={theme} />
       <SeasonalWeatherOverlay
         season={gameState.season}
         enabled={settings.weatherOverlayEnabled}
@@ -924,59 +935,83 @@ export default function App() {
             )}
 
             {activeTab === TabId.Realm && (
-              <RealmPanel
-                state={gameState}
-                initialSection={realmSection}
-                onClaimRank={() => handleGeneralAction('claim_rank')}
-                onBuildShipOrHird={(act) => handleGeneralAction(act)}
-                onBuildHoldingStructure={handleBuildStructure}
-                onClearFirstFarm={() => handleGeneralAction('farm_settle')}
-                onConquerCity={handleConquerCity}
-                onSendSettlers={handleSendSettlers}
-                onStationGarrison={handleStationGarrison}
-                onSetTributeBurden={handleSetTributeBurden}
-                onAppointJarl={handleAppointJarl}
-                onTakeHostages={handleTakeHostages}
-                onToggleTolerance={handleToggleTolerance}
-                onExecutePlot={handleExecutePlot}
-                onClaimSpecialTitle={handleClaimSpecialTitle}
-                onResolveBattleTactic={handleResolveBattleTactic}
-                onCancelBattle={handleCancelBattle}
-              />
+              <Suspense
+                fallback={
+                  <div className="p-6 text-center text-xs text-ink-muted">
+                    {isFa ? 'در حال بارگذاری قلمرو...' : 'Loading Realm...'}
+                  </div>
+                }
+              >
+                <RealmPanel
+                  state={gameState}
+                  initialSection={realmSection}
+                  onClaimRank={() => handleGeneralAction('claim_rank')}
+                  onBuildShipOrHird={(act) => handleGeneralAction(act)}
+                  onBuildHoldingStructure={handleBuildStructure}
+                  onClearFirstFarm={() => handleGeneralAction('farm_settle')}
+                  onConquerCity={handleConquerCity}
+                  onSendSettlers={handleSendSettlers}
+                  onStationGarrison={handleStationGarrison}
+                  onSetTributeBurden={handleSetTributeBurden}
+                  onAppointJarl={handleAppointJarl}
+                  onTakeHostages={handleTakeHostages}
+                  onToggleTolerance={handleToggleTolerance}
+                  onExecutePlot={handleExecutePlot}
+                  onClaimSpecialTitle={handleClaimSpecialTitle}
+                  onResolveBattleTactic={handleResolveBattleTactic}
+                  onCancelBattle={handleCancelBattle}
+                />
+              </Suspense>
             )}
 
             {activeTab === TabId.Family && (
-              <FamilyPanel
-                state={gameState}
-                onFamilyAction={(act, targetId) => handleGeneralAction(act, targetId)}
-                onMemberInteraction={(personId: string, interaction: FamilyInteractionType) => {
-                  playSound('click', settings.soundEnabled);
-                  setGameState((prev) =>
-                    prev ? executeFamilyMemberInteraction(prev, personId, interaction) : prev
-                  );
-                }}
-              />
+              <Suspense
+                fallback={
+                  <div className="p-6 text-center text-xs text-ink-muted">
+                    {isFa ? 'در حال بارگذاری خاندان...' : 'Loading Kin...'}
+                  </div>
+                }
+              >
+                <FamilyPanel
+                  state={gameState}
+                  onFamilyAction={(act, targetId) => handleGeneralAction(act, targetId)}
+                  onMemberInteraction={(personId: string, interaction: FamilyInteractionType) => {
+                    playSound('click', settings.soundEnabled);
+                    setGameState((prev) =>
+                      prev ? executeFamilyMemberInteraction(prev, personId, interaction) : prev
+                    );
+                  }}
+                />
+              </Suspense>
             )}
 
             {activeTab === TabId.Map && (
-              <VikingMap
-                state={gameState}
-                onSailTo={handleSail}
-                onRaidPort={handleRaid}
-                onConquerCity={handleConquerCity}
-                onTradeHere={() => handleGeneralAction('trade_voyage')}
-                onBesiege={handleBesiege}
-                onSettle={handleSettle}
-                onDiplomacy={handleDiplomacy}
-                onMarryLocal={handleMarryLocal}
-                onBuildHoldingStructure={handleBuildStructure}
-                onSendSettlers={handleSendSettlers}
-                onStationGarrison={handleStationGarrison}
-                onSetTributeBurden={handleSetTributeBurden}
-                onAppointJarl={handleAppointJarl}
-                onTakeHostages={handleTakeHostages}
-                onToggleTolerance={handleToggleTolerance}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center p-6 text-xs text-ink-muted">
+                    {isFa ? 'در حال ترسیم نقشه دریاها...' : 'Charting Northern Seas...'}
+                  </div>
+                }
+              >
+                <VikingMap
+                  state={gameState}
+                  onSailTo={handleSail}
+                  onRaidPort={handleRaid}
+                  onConquerCity={handleConquerCity}
+                  onTradeHere={() => handleGeneralAction('trade_voyage')}
+                  onBesiege={handleBesiege}
+                  onSettle={handleSettle}
+                  onDiplomacy={handleDiplomacy}
+                  onMarryLocal={handleMarryLocal}
+                  onBuildHoldingStructure={handleBuildStructure}
+                  onSendSettlers={handleSendSettlers}
+                  onStationGarrison={handleStationGarrison}
+                  onSetTributeBurden={handleSetTributeBurden}
+                  onAppointJarl={handleAppointJarl}
+                  onTakeHostages={handleTakeHostages}
+                  onToggleTolerance={handleToggleTolerance}
+                />
+              </Suspense>
             )}
 
             {activeTab === TabId.Saga && (
@@ -1306,11 +1341,15 @@ export default function App() {
       )}
 
       {/* Shareable Character Saga Story Poster Modal */}
-      <SagaSharePosterModal
-        isOpen={isPosterModalOpen}
-        onClose={() => setIsPosterModalOpen(false)}
-        state={gameState}
-      />
+      {isPosterModalOpen && (
+        <Suspense fallback={null}>
+          <SagaSharePosterModal
+            isOpen={isPosterModalOpen}
+            onClose={() => setIsPosterModalOpen(false)}
+            state={gameState}
+          />
+        </Suspense>
+      )}
 
       {/* Event Decision Modal */}
       {gameState.activeEvent && (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -24,8 +24,11 @@ import { formatDynastyName, formatPersonName } from '../i18n/gameDataFa';
 import { SHORT_TITLE_LABELS } from '../i18n/ui';
 import { FullGameState } from '../types/game';
 import longhouseHearthUrl from '../assets/images/norse_longhouse_hearth_fire_1793047791880.jpg';
-import { HallOfLegendsPanel } from './HallOfLegendsPanel';
 import { NorseBottomSheet, NorseCornerOrnament, RuneDivider } from './NorseMotifs';
+
+const HallOfLegendsPanel = lazy(() =>
+  import('./HallOfLegendsPanel').then((m) => ({ default: m.HallOfLegendsPanel }))
+);
 import {
   BADGE_CATEGORY_LABELS,
   BadgeCategory,
@@ -252,7 +255,15 @@ export function SagaChroniclePanel({
             closeLabel={isFa ? 'بستن' : 'Close'}
             title={isFa ? 'تالار افسانه‌ها — خبر از سرزمین‌ها' : 'The Hall of Legends — Word from the Lands'}
           >
-            <HallOfLegendsPanel state={state} onPayForLegendNews={onPayForLegendNews} />
+            <Suspense
+              fallback={
+                <div className="p-6 text-center text-xs text-ink-muted">
+                  {isFa ? 'در حال بارگذاری تالار افسانه‌ها...' : 'Loading Hall of Legends...'}
+                </div>
+              }
+            >
+              <HallOfLegendsPanel state={state} onPayForLegendNews={onPayForLegendNews} />
+            </Suspense>
           </NorseBottomSheet>
         )}
 

@@ -765,13 +765,14 @@ export const SETTLEMENTS: Settlement[] = [
     primaryCultureFa: 'نورس کهن (دانمارکی)',
     defaultStatus: 'independent',
     factionColor: '#EA580C',
+    foundedYear: 980,
     isThingSite: true,
     baseWealth: 7,
     baseDefense: 7,
     historicalSummary:
-      'Central island sanctuary of Odin (“Odin’s Vi”) on Funen commanding the Belt straits; fortified by Harald Bluetooth c. 980 with the Nonnebakken geometric ring-fortress.',
+      'Central island sanctuary of Odin (“Odin’s Vi”) on Funen commanding the Belt straits; fortified by Harald Bluetooth c. 980 AD with the Nonnebakken geometric ring-fortress and first attested in writing in Emperor Otto III’s charter of 18 March 988 AD. Historical note (uncertain): toponymy points to an older pagan vi-sanctuary, but pre-980 urban settlement continuity is uncertain.',
     controllersByEra: [
-      { untilYear: 965, ruler: 'Funen Goðar & Jarls', polity: 'Danish Isles', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 980, ruler: 'Funen Goðar & Jarls', polity: 'Danish Isles', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'House of Jelling & Danish Crown', polity: 'Kingdom of Denmark', religion: Religion.Christian, factionColor: '#EA580C', status: 'independent' },
     ],
   },
@@ -844,7 +845,7 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 8,
     baseDefense: 7,
     historicalSummary:
-      'Ancient royal seat on Karmøy island commanding the narrow Karmsund strait — the literal “North-Way” (Norðvegr) shipping lane. Famed for the late-8th-century Storhaug and Grønhaug ship burials and chosen by Harald Fairhair as his primary royal manor after Hafrsfjord (872).',
+      'Ancient royal seat on Karmøy island commanding the narrow Karmsund strait — the literal “North-Way” (Norðvegr) shipping lane. Archaeologically attested from the start of the Viking Age by the Storhaug (dendro-dated 779 AD) and Grønhaug (c. 790–795 AD) ship burials, and chosen by Harald Fairhair as his primary royal manor after Hafrsfjord (c. 872).',
     controllersByEra: [
       { untilYear: 872, ruler: 'Sea-Kings of Rogaland & Agder', polity: 'Western Fjord Kingdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 995, ruler: 'Harald Fairhair & Eric Bloodaxe’s Line', polity: 'Kingdom of Norway', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
@@ -853,8 +854,8 @@ export const SETTLEMENTS: Settlement[] = [
   },
   {
     id: 'giske_more',
-    name: 'Giske & Møre',
-    norseName: 'Giski á Mæri',
+    name: 'Giske & Borgund (Møre)',
+    norseName: 'Giski ok Borgund á Mæri',
     regionGroup: 'Norway',
     subRegion: 'Sunnmøre / Western Fjords',
     lat: 62.35,
@@ -866,10 +867,11 @@ export const SETTLEMENTS: Settlement[] = [
     primaryCultureFa: 'نورس کهن (نروژی)',
     defaultStatus: 'independent',
     factionColor: '#F59E0B',
+    foundedYear: 860,
     baseWealth: 6,
     baseDefense: 6,
     historicalSummary:
-      'Strategic island earldom seat of Ragnvald Eysteinsson (Earl of Møre, father of Göngu-Hrólfr/Rollo and Torf-Einarr of Orkney) and later the powerful Arnmøding clan. Historical note (uncertain): saga tradition places Ragnvald’s 9th-century seat in Møre, while exact early hall layers between Giske and Borgund are partly reconstructed.',
+      'Strategic island earldom seat of Ragnvald Eysteinsson (Earl of Møre from c. 860–870 AD, father of Göngu-Hrólfr/Rollo and Torf-Einarr of Orkney), the Borgund fjord market, and later the powerful Arnmøding clan on Giske. Historical note (uncertain): 9th-century attestation rests on saga tradition of Earl Ragnvald (c. 860), while archaeological hall layers at Giske and the Borgund kaupang date primarily to the late 10th–11th centuries.',
     controllersByEra: [
       { untilYear: 870, ruler: 'Petty Kings of Møre & Romsdal', polity: 'Møre Chiefdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 995, ruler: 'Ragnvald Earl of Møre & Kin', polity: 'Earldom of Møre', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
@@ -882,8 +884,8 @@ export const SETTLEMENTS: Settlement[] = [
     norseName: 'Hlaðir í Þrándheimi',
     regionGroup: 'Norway',
     subRegion: 'Trøndelag',
-    lat: 63.44,
-    lon: 10.44,
+    lat: 63.52,
+    lon: 10.55,
     settlementType: 'jarldom_seat',
     norsePopulation: 1200,
     nativePopulation: 240,
@@ -891,15 +893,15 @@ export const SETTLEMENTS: Settlement[] = [
     primaryCultureFa: 'نورس کهن (نروژی)',
     defaultStatus: 'independent',
     factionColor: '#F59E0B',
-    abandonedYear: 996,
     isThingSite: true,
     baseWealth: 7,
     baseDefense: 7,
     historicalSummary:
-      'Pre-Christian power seat of Trøndelag on the Lade peninsula beside the Trondheimsfjord; stronghold of the semi-sovereign Earls of Lade (Håkon Grjotgardsson, Sigurd Håkonsson, and Håkon Sigurdsson the Mighty) and their great pagan hof until Olaf Tryggvason founded Nidaros across the river in 997.',
+      'Ancestral power seat of the Earls of Lade (Hlaðajarlar) on the Lade peninsula beside the Trondheimsfjord — stronghold of Håkon Grjotgardsson, Sigurd Håkonsson, and Håkon Sigurdsson the Mighty. After Olaf Tryggvason founded Nidaros in 997 AD, Lade was not abandoned: Earls Eirik, Svein, and Håkon Eiriksson kept Hlaðir as the jarls’ seat into the early 11th century while Nidaros grew slowly beside it.',
     controllersByEra: [
-      { untilYear: 996, ruler: 'Jarls of Lade (Håkon Grjotgardsson to Håkon Sigurdsson)', polity: 'Earldom of Lade (Trøndelag)', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
-      { untilYear: 1100, ruler: 'Earls Eirik & Svein Håkonsson', polity: 'Trøndelag Earldom', religion: Religion.Syncretic, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 995, ruler: 'Jarls of Lade (Håkon Grjotgardsson to Håkon Sigurdsson)', polity: 'Earldom of Lade (Trøndelag)', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1030, ruler: 'Earls Eirik & Svein Håkonsson', polity: 'Earldom of Lade (Trøndelag)', religion: Religion.Syncretic, factionColor: '#F59E0B', status: 'independent' },
+      { untilYear: 1100, ruler: 'Einar Tambarskjelve & Crown Stewards', polity: 'Trøndelag Earldom', religion: Religion.Christian, factionColor: '#F59E0B', status: 'independent' },
     ],
   },
   {
@@ -908,8 +910,8 @@ export const SETTLEMENTS: Settlement[] = [
     norseName: 'Niðaróss',
     regionGroup: 'Norway',
     subRegion: 'Trøndelag',
-    lat: 63.43,
-    lon: 10.40,
+    lat: 63.40,
+    lon: 10.32,
     settlementType: 'jarldom_seat',
     norsePopulation: 1350,
     nativePopulation: 250,
@@ -922,7 +924,7 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 8,
     baseDefense: 7,
     historicalSummary:
-      'Royal kaupang and Christian capital founded at the mouth of the Nidelva by King Olaf Tryggvason in 997 AD — superseding nearby pagan Hlaðir (Lade) as the seat of Trøndelag and the Øreting, and after 1030 revered as the shrine of St. Olaf.',
+      'Royal kaupang and Christian capital founded at the mouth of the Nidelva by King Olaf Tryggvason in 997 AD. Nidaros grew gradually alongside the neighboring Earls’ seat at Hlaðir (Lade) during the early 11th century, rising after 1030 as the metropolitan shrine of St. Olaf.',
     controllersByEra: [
       { untilYear: 997, ruler: 'Jarls of Lade (Håkon Sigurdsson)', polity: 'Trøndelag Earldom', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'Christian Kings of Norway (Olaf Tryggvason to Harald Hardrada)', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
@@ -997,7 +999,7 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 7,
     baseDefense: 7,
     historicalSummary:
-      'Founded c. 1048 AD by King Harald Hardrada at the head of the Viken fjord (Heimskringla) as a strategic naval and market base facing Denmark. Historical note: Christian graves near St. Clement’s date to c. 1000, while Snorri places the royal town foundation around 1048.',
+      'Founded c. 1048 AD by King Harald Hardrada at the head of the Viken fjord (Heimskringla) as a strategic naval and market base facing Denmark. Historical note (uncertain): Christian graves near St. Clement’s date to c. 1000 AD, while Snorri places the royal town foundation around 1048.',
     controllersByEra: [
       { untilYear: 1047, ruler: 'Viken Chieftains', polity: 'Viken', religion: Religion.Syncretic, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'Harald Hardrada & Olaf Kyrre', polity: 'Kingdom of Norway', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
@@ -1078,7 +1080,7 @@ export const SETTLEMENTS: Settlement[] = [
   },
   {
     id: 'skara_gotaland',
-    name: 'Skara & Göta Älv',
+    name: 'Skara & Västergötland',
     norseName: 'Skara í Gautlandi',
     regionGroup: 'Sweden',
     subRegion: 'Västergötland',
@@ -1091,11 +1093,12 @@ export const SETTLEMENTS: Settlement[] = [
     primaryCultureFa: 'نورس کهن (گوتلند غربی)',
     defaultStatus: 'independent',
     factionColor: '#F59E0B',
+    foundedYear: 985,
     isThingSite: true,
     baseWealth: 7,
     baseDefense: 6,
     historicalSummary:
-      'Heartland assembly seat of the Western Geats (Allra Göta þing) and corridor to the Göta Älv estuary looking toward Denmark and Norway; near here Olof Skötkonung was baptized at Husaby c. 1008 and Sweden’s oldest bishopric was established c. 1014. Historical note (uncertain): early Viking Age pagan sanctuary attested in tradition, while urban town layers date mainly from c. 1000 AD.',
+      'Heartland assembly and episcopal seat of the Western Geats (Allra Göta þing) near Husaby, where Olof Skötkonung was baptized c. 1008 and Sweden’s oldest bishopric was founded under Bishop Thurgot c. 1014 (Adam of Bremen). Historical note (uncertain): earliest urban archaeological layers at Skara date to c. 985–1000 AD; earlier 9th–10th century assembly activity in Västergötland is uncertainly tied to the later town site.',
     controllersByEra: [
       { untilYear: 1000, ruler: 'Geatish Jarls & Lawspeakers of Västergötland', polity: 'Västergötland (Gautland)', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'Christian Earls (Ragnvald Ulfsson & Stenkil)', polity: 'Kingdom of Sweden', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
@@ -1119,7 +1122,7 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 7,
     baseDefense: 6,
     historicalSummary:
-      'Strategic Baltic sound between Småland and the island of Öland (Köpingsvik market and Eketorp ring-fort), where Swedish fleets mustered for the Eastern Route (Austrvegr) and Danish border wars.',
+      'Strategic Baltic sound anchored in the Viking Age by the rich island trading emporium of Köpingsvik and the Eketorp ring-fort on Öland (archaeologically active from c. 750–800 AD), where fleets mustered for the Eastern Route (Austrvegr). Historical note (uncertain): while Köpingsvik flourished from the late 8th century, mainland Kalmar (*Kalmarnir*) is first attested on an 11th-century runestone (Sö 333) and its pre-11th-century urban status is uncertain.',
     controllersByEra: [
       { untilYear: 1020, ruler: 'Öland & Småland Sea-Chieftains', polity: 'Eastern Götaland', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 1100, ruler: 'Swedish Crown & Coastal Leidang', polity: 'Kingdom of Sweden', religion: Religion.Christian, factionColor: '#38BDF8', status: 'independent' },
@@ -2380,11 +2383,14 @@ export function getActiveSettlementsForYear(year: number): Settlement[] {
 
 /**
  * Maps a settlement ID to its active historical counterpart if it is before its
- * `foundedYear` or after its `abandonedYear` (e.g., Hlaðir/Lade < 997 <-> Nidaros >= 997).
+ * `foundedYear` or after its `abandonedYear`. Note: Hlaðir (Lade) and Nidaros
+ * coexist after 997 AD, as the Earls of Lade kept Hlaðir as their seat into the 11th century.
  */
 export function resolveActiveSettlementId(settlementId: string, year: number): string {
   if (settlementId === 'nidaros' && year < 997) return 'lade_hladir';
-  if (settlementId === 'lade_hladir' && year >= 997) return 'nidaros';
+  if (settlementId === 'odense' && year < 980) return 'jelling';
+  if (settlementId === 'giske_more' && year < 860) return 'avaldsnes';
+  if (settlementId === 'skara_gotaland' && year < 985) return 'birka';
   if (settlementId === 'sigtuna' && year < 975) return 'birka';
   if (settlementId === 'oslo' && year < 1048) return 'tunsberg';
   if (settlementId === 'sarpsborg' && year < 1016) return 'tunsberg';
@@ -2771,6 +2777,7 @@ export const SEA_ROUTES: [string, string][] = [
   ['giske_more', 'lade_hladir'],
   ['giske_more', 'nidaros'],
   ['giske_more', 'shetland'],
+  ['lade_hladir', 'nidaros'],
   ['lade_hladir', 'kaupang'],
   ['lade_hladir', 'shetland'],
   ['lade_hladir', 'halogaland_borg'],

@@ -41,7 +41,7 @@ const CAMPAIGNS = [
     bloodlineBranch: 'ivar',
   },
   {
-    name: 'Saga Mode · Lade-to-Nidaros Transition (950–1050 AD)',
+    name: 'Saga Mode · Lade & Nidaros Coexistence (950–1050 AD)',
     seed: 'SAGA-SMOKE-TRONDELAG-950',
     sagaMode: true,
     startYear: 950,
