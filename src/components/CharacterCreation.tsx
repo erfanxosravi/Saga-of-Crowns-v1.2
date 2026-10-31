@@ -72,6 +72,7 @@ import {
   StartingOccupation,
 } from '../types/game';
 import longshipHeroUrl from '../assets/images/viking_longship_ember_dusk_1793047790383.jpg';
+import longshipHeroWebpUrl from '../assets/images/viking_longship_ember_dusk_1793047790383.webp';
 import { NordicAccordion, NordicSelect } from './NordicControls';
 import { VikingPortrait } from './VikingPortrait';
 
@@ -535,13 +536,16 @@ export function CharacterCreation({
     >
       {!bgFailed && (
         <div className="pointer-events-none fixed inset-x-0 top-0 h-80 opacity-25 overflow-hidden">
-          <img
-            src={longshipHeroUrl}
-            alt="Viking longship at dusk"
-            referrerPolicy="no-referrer"
-            onError={() => setBgFailed(true)}
-            className="w-full h-full object-cover"
-          />
+          <picture className="block w-full h-full">
+            <source srcSet={longshipHeroWebpUrl} type="image/webp" />
+            <img
+              src={longshipHeroUrl}
+              alt="Viking longship at dusk"
+              referrerPolicy="no-referrer"
+              onError={() => setBgFailed(true)}
+              className="w-full h-full object-cover"
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-surface-canvas/75 to-surface-canvas" />
         </div>
       )}

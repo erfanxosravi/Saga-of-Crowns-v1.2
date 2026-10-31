@@ -9,7 +9,7 @@
 ## 2. Changed & Added Files Inventory
 
 1. `/docs/PROJECT_REPORT.md` — Updated comprehensive technical and historical report with exact heirloom counts, Lade coexistence fix, settlement years table, legend depth metrics, and build bundle outputs.
-2. `/docs/QA.md` — Added QA Cheat Sheet listing all 37 legend encounters, their exact trigger conditions (`yearRange`, `ageMin`, `regions`, `requiredFlags`, `blockedByFlags`), and the quickest fixed-seed steps to reach each in Saga Mode without any in-game debug features.
+2. `/docs/QA.md` — Added QA Cheat Sheet listing all 39 legend encounters, their exact trigger conditions (`yearRange`, `ageMin`, `regions`, `requiredFlags`, `blockedByFlags`), and a Saga Mode Norway 838 first-10-minutes checklist.
 3. `/docs/THEMING.md` — Documented the semantic CSS custom property architecture for Daylight (`data-theme="light"`) and Night (`data-theme="dark"`) modes.
 4. `/package.json` — Added automated verification scripts (`check:colors`, `check:contrast`, `check:legends`, `check:engine`).
 5. `/src/App.tsx` — Converted `VikingMap`, `RealmPanel`, `FamilyPanel`, and `SagaSharePosterModal` to `React.lazy` with `<Suspense>` fallbacks and passed `theme={theme}` to `<EmberCanvas />`.
@@ -20,15 +20,15 @@
 10. `/src/components/SagaChroniclePanel.tsx` — Converted `HallOfLegendsPanel` to `React.lazy` with `<Suspense>` fallback so `HallOfLegendsPanel` splits into its own chunk (`37.24 kB`).
 11. `/src/components/VikingMap.tsx` — Added distinct label anchor hints for `lade_hladir` (`{ anchor: 'start', dx: 8, dy: -5 }`) and `nidaros` (`{ anchor: 'end', dx: -8, dy: 6 }`) so both Trondheimsfjord settlements coexist cleanly after 997 AD without label overlap.
 12. `/src/data/geography.ts` — Removed `abandonedYear: 996` and migration from `lade_hladir` so Lade coexists with `nidaros` after 997 AD as the Earls of Lade's seat; refined `foundedYear` and `"uncertain"` historical notes for `odense` (`980`), `giske_more` (`860`), `skara_gotaland` (`985`), `tunsberg` (`871`), `oslo` (`1000`), and `kalmar_oland` (`800`).
-13. `/src/data/legendEncounters.ts` — Expanded all 7 Phase 1 encounters (`ragnar_lothbrok`, `lagertha_shieldmaiden`, `floki_raven_sailor`, `brother_aldwin_scribe`) to 142–174 body words in both English and Persian.
-14. `/src/data/legendEncountersPhase23.ts` — Added and deepened 30 Phase 2 & Phase 3 signature encounters across all 18 Phase 2/3 legends (`124–177` body words in both English and Persian, `37` total encounters).
+13. `/src/data/legendEncounters.ts` — Expanded the Phase 1 encounters and added two independent bilingual Brother Aldwin encounters exploring old gods and the new faith through a captive scribe.
+14. `/src/data/legendEncountersPhase23.ts` — Added and deepened 30 Phase 2 & Phase 3 signature encounters across all 18 Phase 2/3 legends (`39` total encounters including Brother Aldwin's two).
 15. `/src/data/legendsRegistry.ts` — Registered all 22 historical and semi-legendary figures across Phases 1–3 with `98` total chronological world beats (`>= 4` beats per legend).
-16. `/src/data/lothbrokCycle.ts` — Defined all `15` saga heirlooms (`9` pre-existing + `6` net-new Phase 2/3 heirlooms) with bilingual provenance and stat bonuses.
+16. `/src/data/lothbrokCycle.ts` — Defines 16 canonical saga heirlooms, owner/grant metadata, annual passive effects, historical source notes, and the newly added Tyne Land Rod.
 17. `/src/engine/gameEngine.ts` — Integrated historical settlement availability (`resolveActiveSettlementId`), multi-hop sea-route BFS news propagation, and legend encounter chaining.
 18. `/src/engine/legendEngine.ts` — Implemented deterministic Living Legends world-beat progression, Ordstirr calculation, and regional rumor travel delay.
 19. `/src/i18n/gameDataFa.ts` — Updated Persian settlement names, summaries (`SETTLEMENTS_FA`), and ruler translations (`RULER_PHRASE_MAP_FA`) for Lade/Nidaros coexistence and all uncertain foundation dates.
 20. `/tools/check-colors.mjs` — Static AST/regex verifier ensuring 0 hardcoded hex or raw Tailwind palette classes across all 27 UI components.
-21. `/tools/check-legends.mjs` — Consistency verifier checking all 22 legends, 98 timeline beats, 37 encounters, heirlooms, and active settlement references.
+21. `/tools/check-legends.mjs` — Consistency verifier checking all 22 legends, 98 timeline beats, 39 encounters, canonical heirloom references/owners/grants/migrations, and active settlement references.
 22. `/tools/contrast-check.mjs` — WCAG 2.1 AA contrast verifier auditing all text, surface, border, and CTA token pairs in both Light and Dark themes.
 23. `/tools/test-engine.mjs` — Headless 400-turn (4 × 100-year) campaign simulator verifying engine invariants, heir succession, and Lade & Nidaros coexistence (`950–1050 AD`).
 
@@ -45,10 +45,10 @@
 
 ---
 
-## 4. Exact Saga Heirloom Audit (`9` Before → `15` After)
+## 4. Exact Saga Heirloom Audit (`15` Before → `16` After)
 
-- **Before**: `9` heirlooms (`6` original Lothbrok Cycle heirlooms + `3` Phase 1 Legend heirlooms).
-- **After**: `15` heirlooms (`+6` net-new heirloom definitions added to `SAGA_HEIRLOOMS` in `src/data/lothbrokCycle.ts`, plus `5` pre-existing Lothbrok Cycle heirlooms newly wired into Phase 2 legend encounters).
+- **Before this change**: `15` canonical definitions.
+- **After this change**: `16` canonical definitions; the Tyne Land Rod is a new heirloom granted by Halfdan's Tyne signature encounter. Four legacy IDs migrate to canonical IDs: `ragna_ring_of_seine` → `ragnar_serpent_armring`, `lagertha_spear_of_gaular` → `lagertha_hlathgerd_spear`, `floki_sunstone_compass` → `floki_raven_lodestone`, and `rollo_seine_charter` → `rollo_rouen_armring`.
 
 | # | Heirloom ID | Name (EN) | Norse Name | Owner Legend (`legendId`) | Status |
 |---|---|---|---|---|---|
@@ -58,15 +58,16 @@
 | 4 | `aslaug_unwoven_shirt` | Aslaug's Unwoven Shirt | *Skyrta Áslaugar* | `aslaug_kraka` | Pre-existing (wired to `leg_enc_aslaug_01_harp_loom`) |
 | 5 | `bragarfull_horn_lejre` | Oath-Horn of Lejre | *Bragarfull Hleiðrar* | `halfdan_ragnarsson` | Pre-existing (wired to `leg_enc_halfdan_02_ploughland`) |
 | 6 | `serpent_of_the_wash` | The Serpent of the Wash | *Ormrinn* | `ubba_ragnarsson` | Pre-existing (wired to `leg_enc_ubba_02_cynwit`) |
-| 7 | `ragna_ring_of_seine` | Ragnar's Arm-Ring of the Seine | *Hringr Ragnars af Signu* | `ragnar_lothbrok` | Pre-existing (Phase 1 — `leg_enc_ragnar_04_elegy`) |
-| 8 | `lagertha_spear_of_gaular` | Lagertha's Winged Spear of Gaular | *Geirr Hlaðgerðar* | `lagertha_shieldmaiden` | Pre-existing (Phase 1 — `leg_enc_lagertha_02_usurper`) |
-| 9 | `floki_sunstone_compass` | Floki's Sunstone & Raven-Cage | *Sólarsteinn Hrafna-Flóka* | `floki_raven_sailor` | Pre-existing (Phase 1 — `leg_enc_floki_02_iceland`) |
+| 7 | `ragnar_serpent_armring` | Ragnar's Ouroboros Arm-Ring | *Ormbaugr Ragnars* | `ragnar_lothbrok` | Canonical (`leg_enc_ragnar_02_seine`; annual: +5 fame, +2 Honor) |
+| 8 | `lagertha_hlathgerd_spear` | Wing-Spear of Gaular | *Geirr Hlaðgerðar* | `lagertha_shieldmaiden` | Canonical (`leg_enc_lagertha_02_usurper`; annual: +1 Combat) |
+| 9 | `floki_raven_lodestone` | Floki's Sunstone & Raven-Compass | *Sólarsteinn Hrafna-Flóka* | `floki_raven_sailor` | Canonical (`leg_enc_floki_02_iceland`; annual: +1 Wyrd, +1 Seamanship) |
 | 10 | `rollo_rouen_armring` | Rollo's Arm-Ring of the Seine | *Hringr Göngu-Hrólfs* | `rollo_normandy` | **Net-New** (`leg_enc_rollo_02_epte`) |
 | 11 | `hvitserk_eastern_blade` | Hvitserk's Eastern Blade | *Austr-Sax Hvítserks* | `hvitserk_ragnarsson` | **Net-New** (`leg_enc_hvitserk_02_steppe_stand`) |
 | 12 | `ecbert_bretwalda_signet` | King Ecgberht's Bretwalda Ring | *Konungshringr Egberhts* | `king_ecbert_wessex` | **Net-New** (`leg_enc_ecbert_01_winchester_court`) |
 | 13 | `aella_york_crown_brooch` | King Ælla's Boar-Brooch of Eoforwic | *Jórvíkur-Sylgja Ellu* | `king_aella_northumbria` | **Net-New** (`leg_enc_aella_02_roman_breach`) |
 | 14 | `alfred_gold_aestel` | King Alfred's Gold Æstel | *Gull-Æstel Álfráðs* | `alfred_the_great` | **Net-New** (`leg_enc_alfred_02_wedmore_burhs`) |
-| 15 | `guthrum_wedmore_cross_torque` | Guthrum-Æthelstan's Wedmore Torque | *Friðbaugr Gorms* | `guthrum_danelaw` | **Net-New** (`leg_enc_guthrum_02_aethelstan_mint`) |
+| 15 | `guthrum_wedmore_cross_torque` | Guthrum-Æthelstan's Wedmore Torque | *Friðbaugr Gorms* | `guthrum_danelaw` | `leg_enc_guthrum_02_aethelstan_mint` |
+| 16 | `tyne_land_rod` | Halfdan's Tyne Land Rod | Historical measuring rod | `halfdan_ragnarsson` | New (`sig_halfdan_tyne_plough`) |
 
 ---
 

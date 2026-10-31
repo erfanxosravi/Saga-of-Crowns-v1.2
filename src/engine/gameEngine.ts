@@ -1327,22 +1327,19 @@ export function advanceTurn(state: FullGameState): FullGameState {
   });
 
   // 2b. Lothbrok Hefnd (Debt of Vengeance) & Heirloom Annual Effects
-  if ((state.heirlooms ?? []).includes('bragarfull_horn_lejre')) {
-    realm.fame += 4;
-  }
-  if ((state.heirlooms ?? []).includes('fang_of_fafnir')) {
-    char.stats.wyrd = clampStat(char.stats.wyrd + 2);
-  }
-  if ((state.heirlooms ?? []).includes('ragnar_serpent_armring')) {
-    realm.fame += 5;
-    char.stats.honor = clampStat(char.stats.honor + 2);
-  }
-  if ((state.heirlooms ?? []).includes('lagertha_hlathgerd_spear')) {
-    char.skills.combat = clampSkill(char.skills.combat + 1);
-  }
-  if ((state.heirlooms ?? []).includes('floki_raven_lodestone')) {
-    char.skills.seamanship = clampSkill(char.skills.seamanship + 1);
-    char.stats.wyrd = clampStat(char.stats.wyrd + 1);
+  for (const heirloomId of state.heirlooms ?? []) {
+    const annualEffects = SAGA_HEIRLOOMS_MAP[heirloomId]?.annualEffects;
+    if (!annualEffects) continue;
+
+    realm.fame += annualEffects.fame ?? 0;
+    for (const stat of Object.keys(annualEffects.stats ?? {}) as (keyof PersonalStats)[]) {
+      char.stats[stat] = clampStat(char.stats[stat] + (annualEffects.stats?.[stat] ?? 0));
+    }
+    for (const skill of Object.keys(annualEffects.skills ?? {}) as (keyof SkillsState)[]) {
+      char.skills[skill] = clampSkill(
+        char.skills[skill] + (annualEffects.skills?.[skill] ?? 0)
+      );
+    }
   }
   if (state.ragnarBloodline || state.character.traits.includes('wolf_blood')) {
     if (nextHefndMeter >= 68) {

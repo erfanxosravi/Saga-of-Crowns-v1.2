@@ -160,6 +160,17 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
     () => evaluatedLegends.find((i) => i.legend.id === selectedLegendId) ?? null,
     [evaluatedLegends, selectedLegendId]
   );
+  const selectedHeirlooms = selectedItem
+    ? Array.from(
+        new Set([
+          ...(selectedItem.legend.heirloomIds ?? []),
+          ...(selectedItem.legend.heirloomId ? [selectedItem.legend.heirloomId] : []),
+        ])
+      ).flatMap((id) => {
+        const heirloom = SAGA_HEIRLOOMS_MAP[id];
+        return heirloom ? [{ id, heirloom }] : [];
+      })
+    : [];
 
   useEffect(() => {
     setVisibleBeatsLimit(8);
@@ -667,6 +678,16 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                   ? selectedItem.legend.historicalSourcesFa
                   : selectedItem.legend.historicalSourcesEn}
               </div>
+              {selectedItem.legend.sourceNote && (
+                <p className="mt-2 rounded-lg border border-border-amber-subtle bg-surface-amber-tint p-2 text-[11px] text-ink-secondary">
+                  <span className="font-bold text-accent-amber">
+                    {isFa ? 'یادداشت منبع: ' : 'Source note: '}
+                  </span>
+                  {isFa
+                    ? selectedItem.legend.sourceNote.fa
+                    : selectedItem.legend.sourceNote.en}
+                </p>
+              )}
             </div>
 
             {/* In-Modal Segmented Tabs */}
@@ -838,19 +859,19 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Signature Heirloom if any */}
-                  {selectedItem.legend.heirloomId &&
-                    SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId] && (
-                      <div className="p-3 rounded-xl bg-surface-secondary border border-border-subtle space-y-1">
+                  {/* Signature Heirlooms if any */}
+                  {selectedHeirlooms.map(({ id, heirloom }) => (
+                      <div
+                        key={id}
+                        className="p-3 rounded-xl bg-surface-secondary border border-border-subtle space-y-1"
+                      >
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-bold text-accent-amber">
                             {isFa ? 'میراث و یادگار ویژه:' : 'Signature Heirloom:'}{' '}
-                            {isFa
-                              ? SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].nameFa
-                              : SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].nameEn}
+                            {isFa ? heirloom.nameFa : heirloom.nameEn}
                           </span>
                           <span className="text-[11px] font-bold text-accent-emerald">
-                            {(state.heirlooms ?? []).includes(selectedItem.legend.heirloomId)
+                            {(state.heirlooms ?? []).includes(id)
                               ? isFa
                                 ? 'در خزانه خاندان شما ✓'
                                 : 'In Your Treasury ✓'
@@ -860,12 +881,18 @@ export const HallOfLegendsPanel: React.FC<HallOfLegendsPanelProps> = ({
                           </span>
                         </div>
                         <p className="text-xs text-ink-secondary">
-                          {isFa
-                            ? SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].loreFa
-                            : SAGA_HEIRLOOMS_MAP[selectedItem.legend.heirloomId].loreEn}
+                          {isFa ? heirloom.loreFa : heirloom.loreEn}
                         </p>
+                        {heirloom.sourceNote && (
+                          <p className="rounded-lg border border-border-amber-subtle bg-surface-amber-tint p-2 text-[11px] text-ink-secondary">
+                            <span className="font-bold text-accent-amber">
+                              {isFa ? 'یادداشت منبع: ' : 'Source note: '}
+                            </span>
+                            {isFa ? heirloom.sourceNote.fa : heirloom.sourceNote.en}
+                          </p>
+                        )}
                       </div>
-                    )}
+                    ))}
 
                   {/* Sworn Oaths */}
                   <div className="space-y-1.5">

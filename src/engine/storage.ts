@@ -18,7 +18,14 @@ const LANG_PREF_KEY = 'eldsaga_lang_pref_v1';
 const THEME_PREF_KEY = 'eldsaga_theme_pref_v2';
 const SESSION_ACTIVE_KEY = 'eldsaga_session_active_v1';
 
-export const CURRENT_SAVE_VERSION = 2;
+export const CURRENT_SAVE_VERSION = 3;
+
+export const LEGACY_HEIRLOOM_ID_MAP: Record<string, string> = {
+  ragna_ring_of_seine: 'ragnar_serpent_armring',
+  lagertha_spear_of_gaular: 'lagertha_hlathgerd_spear',
+  floki_sunstone_compass: 'floki_raven_lodestone',
+  rollo_seine_charter: 'rollo_rouen_armring',
+};
 
 export interface SaveSlotSummary {
   slot: number;
@@ -174,8 +181,7 @@ function deduplicateById<T extends { id: string }>(items: T[] | undefined): T[] 
 }
 
 /**
- * Non-destructive v1 -> v2 save migration so existing saves in localStorage or ELDSAGA1
- * export strings load cleanly with all new Viking BitLife fields populated.
+ * Non-destructive save migration so existing local and exported saves retain their heirlooms.
  */
 export function migrateGameState(raw: unknown): FullGameState | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -223,7 +229,15 @@ export function migrateGameState(raw: unknown): FullGameState | null {
     bloodlineBranch: parsed.bloodlineBranch,
     hefndMeter:
       typeof parsed.hefndMeter === 'number' ? Math.max(0, Math.min(100, parsed.hefndMeter)) : 0,
-    heirlooms: Array.isArray(parsed.heirlooms) ? parsed.heirlooms : [],
+    heirlooms: Array.isArray(parsed.heirlooms)
+      ? Array.from(
+          new Set(
+            parsed.heirlooms
+              .filter((id): id is string => typeof id === 'string')
+              .map((id) => LEGACY_HEIRLOOM_ID_MAP[id] ?? id)
+          )
+        )
+      : [],
     lothbrokChaptersCompleted: Array.isArray(parsed.lothbrokChaptersCompleted)
       ? parsed.lothbrokChaptersCompleted
       : [],

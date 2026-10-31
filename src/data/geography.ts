@@ -871,7 +871,7 @@ export const SETTLEMENTS: Settlement[] = [
     baseWealth: 6,
     baseDefense: 6,
     historicalSummary:
-      'Strategic island earldom seat of Ragnvald Eysteinsson (Earl of Møre from c. 860–870 AD, father of Göngu-Hrólfr/Rollo and Torf-Einarr of Orkney), the Borgund fjord market, and later the powerful Arnmøding clan on Giske. Historical note (uncertain): 9th-century attestation rests on saga tradition of Earl Ragnvald (c. 860), while archaeological hall layers at Giske and the Borgund kaupang date primarily to the late 10th–11th centuries.',
+      'CONTESTED: Strategic island earldom seat associated by Norse saga tradition with Ragnvald Eysteinsson (Earl of Møre c. 860–870 AD), said in that tradition to be the father of Göngu-Hrólfr/Rollo and Torf-Einarr of Orkney. It was also the site of the Borgund fjord market and later the powerful Arnmøding clan. The 9th-century attestation rests on saga tradition; archaeological hall layers at Giske and the Borgund kaupang date primarily to the late 10th–11th centuries.',
     controllersByEra: [
       { untilYear: 870, ruler: 'Petty Kings of Møre & Romsdal', polity: 'Møre Chiefdoms', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
       { untilYear: 995, ruler: 'Ragnvald Earl of Møre & Kin', polity: 'Earldom of Møre', religion: Religion.NorsePagan, factionColor: '#F59E0B', status: 'independent' },
